@@ -21,6 +21,7 @@ interface Props {
 const HomePage = (props: Props) => {
 	// const { promotions, categories, bestSellers } = props;
 	const { promotions, categories, bestSellers } = props;
+	console.log("promotions", promotions);	
 
 	const [numOfColumn, setNumOfColumn] = useState<number>();
 	const [catsArrays, setCatsArrays] = useState<
@@ -83,7 +84,7 @@ const HomePage = (props: Props) => {
 							}}>
 							{promotions &&
 								promotions.map((item) => (
-									<div key={item._id}>
+									<div key={item.id}>
 										<img
 											src={item.imageURL}
 											style={{
@@ -209,7 +210,7 @@ const HomePage = (props: Props) => {
 					<div className='row'>
 						{bestSellers &&
 							bestSellers.map((item) => (
-								<ProductItem item={item} key={item._id} />
+								<ProductItem item={item} key={item.id} />
 							))}
 					</div>
 				</Section>

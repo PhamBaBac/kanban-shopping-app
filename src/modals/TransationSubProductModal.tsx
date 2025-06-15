@@ -1,133 +1,185 @@
 /** @format */
 
-import handleAPI from '@/apis/handleApi';
-import { SubProductModel } from '@/models/Products';
-import { authSelector } from '@/redux/reducers/authReducer';
+import handleAPI from "@/apis/handleApi";
+import { SubProductModel } from "@/models/Products";
+import { authSelector } from "@/redux/reducers/authReducer";
 import {
-	addProduct,
-	CartItemModel,
-	cartSelector,
-	changeProduct,
-	removeProduct,
-	syncProducts,
-} from '@/redux/reducers/cartReducer';
-import { Button, Modal, Space, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+  addProduct,
+  CartItemModel,
+  cartSelector,
+  removeProduct,
+} from "@/redux/reducers/cartReducer";
+import { Button, message, Modal, Space, Typography } from "antd";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 interface Props {
-	visible: boolean;
-	onClose: () => void;
-	productSelected: CartItemModel;
+  visible: boolean;
+  onClose: () => void;
+  productSelected: CartItemModel; // giữ CartItemModel nếu bạn có interface đó
 }
 
-const TransationSubProductModal = (props: Props) => {
-	const { productSelected, visible, onClose } = props;
+const TransationSubProductModal = ({
+  visible,
+  onClose,
+  productSelected,
+}: Props) => {
+  const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
+  const [itemSelected, setItemSelected] = useState<SubProductModel>();
+  const dispatch = useDispatch();
+  const auth = useSelector(authSelector);
 
-	const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
-	const [itemSeclected, setItemSeclected] = useState<SubProductModel>();
+  useEffect(() => {
+    if (productSelected?.productId) {
+      getProductDetail();
+    }
+  }, [productSelected]);
 
-	const dispatch = useDispatch();
-	const auth = useSelector(authSelector);
+  const getProductDetail = async () => {
+    try {
+      const res: any = await handleAPI(
+        `/subProducts/get-all-sub-product/${productSelected.productId}`
+      );
+      const updated = res.result.map((sub: any) => ({
+        ...sub,
+        productId: productSelected.productId,
+      }));
+      setSubProducts(updated);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-	useEffect(() => {
-		getProductDetail();
-	}, [productSelected]);
+  const handleChangeSubProduct = async () => {
+    if (!itemSelected) return;
 
-	const getProductDetail = async () => {
-		const api = `/products/detail?id=${productSelected.productId}`;
-		try {
-			const res = await handleAPI({
-				url: api,
-			});
-			const data = res.data.data;
+    const item = itemSelected;
+    const newCount =
+      productSelected.count > item.qty ? item.qty : productSelected.count;
 
-			setSubProducts(data.subProducts);
-			setItemSeclected(data.subProducts[0]);
-		} catch (error) {
-			console.log(error);
-		}
-	};
+    if (productSelected.count > item.qty) {
+      message.warning(
+        `Số lượng bạn chọn vượt quá tồn kho hiện tại. Đã giảm còn ${item.qty}`
+      );
+    }
 
-	const handleChangeSubProduct = async () => {
-		if (itemSeclected) {
-			const item = itemSeclected;
-			const value = {
-				createdBy: auth._id,
-				count: productSelected.count,
-				subProductId: item._id,
-				title: productSelected.title,
-				size: item.size,
-				color: item.color,
-				price: item.discount ? item.discount : item.price,
-				qty: item.qty,
-				productId: item.productId,
-				image: item.images[0] ?? '',
-			};
+    const updatedItem = {
+      ...productSelected,
+      count: newCount,
+      subProductId: item.id,
+      size: item.size,
+      color: item.color,
+      price: item.discount ?? item.price,
+      qty: item.qty,
+      productId: item.productId,
+      image: item.images[0] ?? "",
+    };
 
-			try {
-				await handleAPI({
-					url: `/carts/update?id=${productSelected._id}`,
-					data: value,
-					method: 'put',
-				});
+    try {
+      if (auth.userId) {
+        await handleAPI(
+          `/carts/updateFull?id=${productSelected.id}`,
+          updatedItem,
+          "put"
+        );
 
-				dispatch(changeProduct({ id: productSelected._id, data: value }));
-				setItemSeclected(undefined);
-				onClose();
-			} catch (error) {
-				console.log(error);
-			}
-		}
-	};
+        dispatch(
+          removeProduct({
+            id: productSelected.id,
+            subProductId: productSelected.subProductId,
+          })
+        );
+        dispatch(addProduct(updatedItem));
+      } else {
+        const sessionId = localStorage.getItem("sessionId");
 
-	return (
-		<Modal
-			onOk={() => handleChangeSubProduct()}
-			open={visible}
-			onCancel={onClose}
-			onClose={onClose}>
-			<img
-				src={itemSeclected?.images[0]}
-				alt=''
-				style={{
-					width: 100,
-					height: 120,
-					objectFit: 'cover',
-				}}
-			/>
-			<div className='mt-4'>
-				<Typography.Title level={4}>Sizes</Typography.Title>
-				<Space>
-					{subProducts.map(
-						(item) =>
-							productSelected.size !== item.size && (
-								<Button
-									key={`${item._id}-${item.size}`}
-									onClick={() => setItemSeclected(item)}>
-									{item.size}
-								</Button>
-							)
-					)}
-				</Space>
-			</div>
-			<div className='mt-4'>
-				<Typography.Title level={4}>Colors</Typography.Title>
-				<Space>
-					{subProducts.map(
-						(item) =>
-							productSelected.color !== item.color && (
-								<Button
-									key={`${item._id}-${item.color}`}
-									onClick={() => setItemSeclected(item)}
-									style={{ backgroundColor: item.color }}
-								/>
-							)
-					)}
-				</Space>
-			</div>
-		</Modal>
-	);
+        if (!sessionId) {
+          message.error("Phiên chưa được tạo. Không thể thay đổi sản phẩm.");
+          return;
+        }
+
+        await handleAPI(
+          `/redisCarts/updateFull?sessionId=${sessionId}&currentSubProductId=${productSelected.subProductId}`,
+          updatedItem,
+          "put"
+        );
+
+        // Không có id khi lưu Redis nên chỉ dùng subProductId làm key
+        dispatch(
+          removeProduct({
+            subProductId: productSelected.subProductId,
+          })
+        );
+        dispatch(addProduct(updatedItem));
+      }
+
+      setItemSelected(undefined);
+      onClose();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
+  return (
+    <Modal
+      onOk={handleChangeSubProduct}
+      open={visible}
+      onCancel={() => {
+        setItemSelected(undefined);
+        onClose();
+      }}
+      title="Chuyển biến thể"
+    >
+      {itemSelected?.images?.[0] && (
+        <img
+          src={itemSelected.images[0]}
+          alt=""
+          style={{
+            width: 100,
+            height: 120,
+            objectFit: "cover",
+          }}
+        />
+      )}
+      <div className="mt-4">
+        <Typography.Title level={4}>Sizes</Typography.Title>
+        <Space wrap>
+          {subProducts.map(
+            (item) =>
+              productSelected.size !== item.size && (
+                <Button
+                  key={`size-${item.id}`}
+                  onClick={() => setItemSelected(item)}
+                  type={itemSelected?.id === item.id ? "primary" : "default"}
+                >
+                  {item.size}
+                </Button>
+              )
+          )}
+        </Space>
+      </div>
+      <div className="mt-4">
+        <Typography.Title level={4}>Colors</Typography.Title>
+        <Space wrap>
+          {subProducts.map(
+            (item) =>
+              productSelected.color !== item.color && (
+                <Button
+                  key={`color-${item.id}`}
+                  onClick={() => setItemSelected(item)}
+                  style={{
+                    backgroundColor: item.color,
+                    border:
+                      itemSelected?.id === item.id ? "2px solid black" : "",
+                  }}
+                />
+              )
+          )}
+        </Space>
+      </div>
+    </Modal>
+  );
 };
 
 export default TransationSubProductModal;

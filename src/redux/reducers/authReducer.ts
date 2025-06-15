@@ -6,8 +6,8 @@ const authSlice = createSlice({
 	name: 'auth',
 	initialState: {
 		data: {
-			accesstoken: '',
-			_id: '',
+			accessToken: '',
+			userId: '',
 		},
 	},
 	reducers: {
@@ -16,8 +16,8 @@ const authSlice = createSlice({
 		},
 		removeAuth: (state, _action) => {
 			state.data = {
-				accesstoken: '',
-				_id: '',
+				accessToken: '',
+				userId: '',
 			};
 		},
 	},

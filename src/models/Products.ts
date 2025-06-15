@@ -14,7 +14,7 @@ export interface CategoyModel {
 }
 
 export interface ProductModel {
-	_id: string;
+	id: string;
 	title: string;
 	slug: string;
 	description: string;
@@ -23,7 +23,7 @@ export interface ProductModel {
 	supplier: string;
 	createdAt: string;
 	updatedAt: string;
-	__v: number;
+	v: number;
 	isDeleted: boolean;
 	subItems: SubProductModel[];
 	price: number[];
@@ -36,11 +36,11 @@ export interface SubProductModel {
 	qty: number;
 	productId: string;
 	images: any[];
-	_id: string;
+	id: string;
 	createdAt: string;
 	discount?: number;
 	updatedAt: string;
-	__v: number;
+	v: number;
 	imgURL?: string;
 	count: number;
 	createdBy: string;

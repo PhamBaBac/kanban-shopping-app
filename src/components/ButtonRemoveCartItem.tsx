@@ -1,10 +1,11 @@
 /** @format */
 
 import handleAPI from '@/apis/handleApi';
+import { authSelector } from '@/redux/reducers/authReducer';
 import { CartItemModel, removeProduct } from '@/redux/reducers/cartReducer';
 import { Button, Modal } from 'antd';
 import { IoTrash } from 'react-icons/io5';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 interface Props {
 	item: CartItemModel;
@@ -12,20 +13,34 @@ interface Props {
 
 const ButtonRemoveCartItem = (props: Props) => {
 	const { item } = props;
-	const dispatch = useDispatch();
+	console.log("item", item);
+	  const auth = useSelector(authSelector);
+  const dispatch = useDispatch();
 
 	const handleRemoveCartItem = async (item: any) => {
-		const api = `/carts/remove?id=${item._id}`;
+    if (!auth.accessToken || !auth.userId) {
+      try {
+        const sessionId = localStorage.getItem("sessionId");
+		console.log("sessionId", sessionId); // hoặc nơi bạn lưu sessionId
+       const res = await handleAPI(
+          `/redisCarts/remove?sessionId=${sessionId}&cartId=${item.subProductId}`,
+          null,
+          "delete"
+        );
+        dispatch(removeProduct(item));
+      } catch (error) {
+        console.error("Lỗi khi xóa cart Redis:", error);
+      }
+    } else {
+      try {
+        await handleAPI(`/carts/remove?id=${item.id}`, null, "delete");
+        dispatch(removeProduct(item));
+      } catch (error) {
+        console.error("Lỗi khi xóa cart DB:", error);
+      }
+    }
+  };
 
-		console.log(api);
-		// try {
-		// 	await handleAPI({ url: api, data: undefined, method: 'delete' });
-
-		// 	dispatch(removeProduct(item));
-		// } catch (error) {
-		// 	console.log(error);
-		// }
-	};
 
 	return (
 		<Button

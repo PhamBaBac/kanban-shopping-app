@@ -30,13 +30,12 @@ const ProductItem = (props: Props) => {
 		setElementWidth(width);
 	}, []);
 
-	// @daoquang-livecode
 
 	return (
 		<Link
-			href={`/products/${item.slug}/${item._id}`}
+			href={`/products/${item.slug}/${item.id}`}
 			ref={ref}
-			key={item._id}
+			key={item.id}
 			className='col-sm-6 col-md-4 col-lg-3 mb-4 product-item'>
 			<div>
 				{item.images && item.images.length > 0 ? (
@@ -88,7 +87,7 @@ const ProductItem = (props: Props) => {
 					</div>
 					<div className='text-center'>
 						<Button
-							onClick={() => router.push(`/products/${item.slug}/${item._id}`)}
+							onClick={() => router.push(`/products/${item.slug}/${item.id}`)}
 							size='large'
 							style={{ width: '80%' }}>
 							Detail

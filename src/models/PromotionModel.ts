@@ -1,7 +1,7 @@
 /** @format */
 
 export interface PromotionModel {
-	_id: string;
+	id: string;
 	title: string;
 	description: string;
 	code: string;
@@ -13,5 +13,5 @@ export interface PromotionModel {
 	imageURL: string;
 	createdAt: string;
 	updatedAt: string;
-	__v: number;
+	v: number;
 }
