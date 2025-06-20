@@ -38,7 +38,6 @@ const HeaderComponent = () => {
 	const [visibleModalTransationProduct, setVisibleModalTransationProduct] =
 		useState(false);
 	const [productSeleted, setProductSeleted] = useState<CartItemModel>();
-  console.log("productSeleted", productSeleted);
 	const [isVisibleMenuDrawe, setIsVisibleMenuDrawe] = useState(false);
 
 	const auth = useSelector(authSelector);

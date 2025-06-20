@@ -50,7 +50,7 @@ const ListCart = () => {
 				<Space className='btn-groups'>
 					<Button
 						key={'btn-add'}
-						onClick={() => dispatch(changeCount({ id: item._id, val: 1 }))}
+						onClick={() => dispatch(changeCount({ id: item.id, val: 1 }))}
 						disabled={item.count === item.qty}
 						icon={<MdAdd size={22} className='text-muted' />}
 						type='text'
@@ -60,7 +60,7 @@ const ListCart = () => {
 					</Typography.Text>
 					<Button
 						key={`btn-minus`}
-						onClick={() => dispatch(changeCount({ id: item._id, val: -1 }))}
+						onClick={() => dispatch(changeCount({ id: item.id, val: -1 }))}
 						disabled={item.count === 1}
 						icon={<LuMinus size={22} className='text-muted' />}
 						type='text'

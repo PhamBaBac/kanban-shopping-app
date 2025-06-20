@@ -37,6 +37,7 @@ const Login = () => {
       const res: any = await handleAPI(api, values, "post", {
         "X-Session-Id": sessionId,
       });
+      
 
       dispatch(addAuth(res.result));
       localStorage.setItem("authData", JSON.stringify(res.result));

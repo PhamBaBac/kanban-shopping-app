@@ -11,10 +11,10 @@ interface Props {
 
 const AddressModal = (props: Props) => {
 	const { visible, onClose, onAddAddress } = props;
+	
 
 	const handleClose = () => {
 		onClose();
-		console.log('fafaa');
 	};
 
 	return (

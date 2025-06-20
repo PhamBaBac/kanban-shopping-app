@@ -52,7 +52,7 @@ const PersionalInfomations = () => {
 		try {
 			const api = `/customers/update`;
 
-			const res = await handleAPI({
+			const res = await handleAPI(api, {
 				url: api,
 				data: {
 					...data,

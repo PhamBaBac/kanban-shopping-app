@@ -98,12 +98,21 @@ axiosClient.interceptors.request.use((config: any) => {
 axiosClient.interceptors.response.use(
   (res) => {
     if (res.data && res.status >= 200 && res.status < 300) {
-      return res.data
+      return res.data;
     }
     throw new Error("Request failed");
   },
   async (error) => {
     const originalRequest = error.config;
+
+    const isLoginRequest = originalRequest.url?.includes("/auth/authenticate");
+    const isRefreshRequest = originalRequest.url?.includes(
+      "/auth/refresh-token"
+    );
+
+    if (isLoginRequest || isRefreshRequest) {
+      return Promise.reject(error.response?.data || error.message);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -113,7 +122,7 @@ axiosClient.interceptors.response.use(
         if (!newToken) return Promise.reject("Unable to refresh token");
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return axiosClient(originalRequest); 
+        return axiosClient(originalRequest);
       } catch (refreshError) {
         return Promise.reject(refreshError);
       }

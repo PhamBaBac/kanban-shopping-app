@@ -31,6 +31,7 @@ const AddNewAddress = (props: Props) => {
 		districts: [],
 		wards: [],
 	});
+	console.log('locationData', locationData);
 	const [locationValues, setLocationValues] = useState<any>({
 		ward: '',
 		district: '',
@@ -115,6 +116,7 @@ const AddNewAddress = (props: Props) => {
 			const data = res.map((item) => ({ label: item.name, value: item.id }));
 			const val: any = {};
 			val[url] = data;
+			console.log('val', val);
 
 			setLocationData({ ...locationData, ...val });
 		} catch (error) {
@@ -157,13 +159,13 @@ const AddNewAddress = (props: Props) => {
 		} else {
 			setIsLoading(true);
 			try {
-				const res: any = await handleAPI({
-					url: `/carts/${
+				const res: any = await handleAPI(
+					values ? 'put' : 'post',
+					`/carts/${
 						values ? `update-address?id=${values._id}` : 'add-new-address'
 					}`,
-					data: datas,
-					method: values ? 'put' : 'post',
-				});
+					datas
+				);
 
 				onAddnew && onAddnew(res.data.data);
 				form.resetFields();

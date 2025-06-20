@@ -13,7 +13,6 @@ interface Props {
 
 const ButtonRemoveCartItem = (props: Props) => {
 	const { item } = props;
-	console.log("item", item);
 	  const auth = useSelector(authSelector);
   const dispatch = useDispatch();
 

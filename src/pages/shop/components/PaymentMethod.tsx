@@ -3,6 +3,7 @@
 import { Button, List, Modal, Radio, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import CreditCardPayment from './CreditCardPayment';
+import handleAPI from '@/apis/handleApi';
 
 interface Props {
 	onContinue: (val: any) => void;
@@ -25,6 +26,10 @@ export const methods = [
 		key: 'paypal',
 		title: 'Paypal',
 	},
+	{
+		key: 'vnpay',
+		title: 'VNPay',
+	}
 ];
 
 const PaymentMethod = (props: Props) => {
@@ -50,7 +55,7 @@ const PaymentMethod = (props: Props) => {
 	}, [methodSelected]);
 
 	const handlePayment = () => {
-		if (methodSelected === 'cod') {
+		if (methodSelected === 'cod' || methodSelected === 'vnpay') {
 			onContinue({ methodSelected });
 		} else {
 			// Thực hiện thanh toán
