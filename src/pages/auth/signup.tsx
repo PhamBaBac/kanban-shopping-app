@@ -2,15 +2,7 @@
 
 import handleAPI from "@/apis/handleApi";
 import { addAuth } from "@/redux/reducers/authReducer";
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  message,
-  Space,
-  Typography,
-} from "antd";
+import { Button, Checkbox, Form, Input, message, Typography } from "antd";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { BsArrowLeft } from "react-icons/bs";
@@ -33,80 +25,76 @@ const SignUp = () => {
 
   const [form] = Form.useForm();
   const dispatch = useDispatch();
-
   const router = useRouter();
 
-  const inpRef1 = useRef<any>(null);
-  const inpRef2 = useRef<any>(null);
-  const inpRef3 = useRef<any>(null);
-  const inpRef4 = useRef<any>(null);
-  const inpRef5 = useRef<any>(null);
-  const inpRef6 = useRef<any>(null);
+  const refs = useRef<Array<any>>([]);
 
   useEffect(() => {
     const time = setInterval(() => {
-      setTimes((t) => t - 1);
+      setTimes((t) => (t > 0 ? t - 1 : 0));
     }, 1000);
     return () => clearInterval(time);
   }, []);
-
   const handleSignUp = async (values: SignUp) => {
+    if (!isAgree) {
+      message.error("You must agree to Terms and Conditions");
+      return;
+    }
+
     const api = `/auth/register`;
     setIsLoading(true);
     const submitData = {
       ...values,
       role: "USER",
     };
-    console.log('submitData', submitData);
 
     try {
       const res: any = await handleAPI(api, submitData, "post");
-      caches;
       if (res) {
-        setSignValues(res.result);
-        await handleAPI(
-          "/auth/send-code-email",
-          { email: form.getFieldValue("email") },
-          "post"
-        );
+        setSignValues({ email: submitData.email });
+        form.resetFields();
+        message.success("Verification code sent to your email.");
       }
     } catch (error: any) {
-      message.error(`User is existing`);
+      message.error(`User already exists`);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChangeNumsCode = (val: string, index: number) => {
-    const items = [...numsOfCode];
-    items[index] = val;
-    setNumsOfCode(items);
+    const newValues = [...numsOfCode];
+    newValues[index] = val;
+    setNumsOfCode(newValues);
+
+    if (val && index < 5) refs.current[index + 1]?.focus();
+    if (!val && index > 0) refs.current[index - 1]?.focus();
   };
 
-
   const handleVerify = async () => {
-    if (numsOfCode.length >= 6) {
-      let code = numsOfCode.join("");
-
+    if (numsOfCode.length === 6 && numsOfCode.every((c) => c)) {
+      const code = numsOfCode.join("");
       try {
-        await handleAPI(
+        const res: any = await handleAPI(
           "/auth/verify-code-email",
           {
-            email: form.getFieldValue("email"),
+            email: signValues.email,
             code,
           },
           "post"
         );
 
-        dispatch(addAuth({ ...signValues, email: form.getFieldValue("email") }));
-        localStorage.setItem("authData", JSON.stringify({ ...signValues, email: form.getFieldValue("email") }));
-
+        dispatch(addAuth({ ...res.result, email: signValues.email }));
+        localStorage.setItem(
+          "authData",
+          JSON.stringify({ ...res.result, email: signValues.email })
+        );
         router.push("/");
       } catch (error) {
-        console.log(error);
+        message.error("Invalid verification code. Please try again.");
       }
     } else {
-      message.error("Invalid code");
+      message.error("Please enter all 6 digits");
     }
   };
 
@@ -119,8 +107,9 @@ const SignUp = () => {
         "post"
       );
       setTimes(300);
+      message.success("New verification code sent");
     } catch (error) {
-      console.log(error);
+      message.error("Failed to resend code");
     }
   };
 
@@ -137,239 +126,141 @@ const SignUp = () => {
             backgroundRepeat: "no-repeat",
           }}
         >
-          <div className="mt-5 ml-5" style={{ backgroundColor: "transparent" }}>
-            <img
-              src="/images/logo.png"
-              alt=""
-              style={{ backgroundColor: "transparent" }}
-            />
+          <div className="mt-5 ml-5">
+            <img src="/images/logo.png" alt="Logo" />
           </div>
         </div>
-        <div className="col-sm-12 col-md-6">
-          <div
-            className="container d-flex"
-            style={{ height: "100%", alignItems: "center" }}
-          >
-            <div className="col-sm-12 col-md-12 col-lg-8 offset-lg-2">
-              {signValues ? (
-                <>
-                  <Button
-                    onClick={() => setSignValues(undefined)}
-                    type="text"
-                    icon={<BsArrowLeft size={20} className="text-muted" />}
-                  >
-                    <Typography.Text>Back</Typography.Text>
-                  </Button>
+        <div className="col-sm-12 col-md-6 d-flex align-items-center">
+          <div className="col-12 col-md-12 col-lg-8 offset-lg-2">
+            {signValues ? (
+              <>
+                <Button
+                  onClick={() => setSignValues(undefined)}
+                  type="text"
+                  icon={<BsArrowLeft size={20} className="text-muted" />}
+                >
+                  <Typography.Text>Back</Typography.Text>
+                </Button>
 
-                  <div className="mt-4">
-                    <Typography.Title level={2} className="m-0">
-                      Enter OTP
-                    </Typography.Title>
-                    <Typography.Paragraph type="secondary">
-                      We have share a code of your registered email address
-                      robertfox@example.com
-                    </Typography.Paragraph>
-                  </div>
-                  <div className="mt-4">
-                    <div
-                      className="d-flex"
-                      style={{ justifyContent: "space-between" }}
-                    >
-                      <Input
-                        placeholder=""
-                        size="large"
-                        value={numsOfCode[0] || ""}
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        ref={inpRef1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 0);
-                          if (val.target.value) inpRef2.current?.focus();
-                        }}
-                      />
-                      <Input
-                        value={numsOfCode[1] || ""}
-                        ref={inpRef2}
-                        placeholder=""
-                        size="large"
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 1);
-                          if (val.target.value) inpRef3.current?.focus();
-                        }}
-                      />
-                      <Input
-                        value={numsOfCode[2] || ""}
-                        ref={inpRef3}
-                        placeholder=""
-                        size="large"
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 2);
-                          if (val.target.value) inpRef4.current?.focus();
-                        }}
-                      />
-                      <Input
-                        value={numsOfCode[3] || ""}
-                        ref={inpRef4}
-                        placeholder=""
-                        size="large"
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 3);
-                          if (val.target.value) inpRef5.current?.focus();
-                        }}
-                      />
-                      <Input
-                        value={numsOfCode[4] || ""}
-                        ref={inpRef5}
-                        placeholder=""
-                        size="large"
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 4);
-                          if (val.target.value) inpRef6.current?.focus();
-                        }}
-                      />
-                      <Input
-                        value={numsOfCode[5] || ""}
-                        ref={inpRef6}
-                        placeholder=""
-                        size="large"
-                        style={{
-                          fontSize: 32,
-                          fontWeight: "bold",
-                          width: "calc((100% - 90px) / 6)",
-                          textAlign: "center",
-                        }}
-                        maxLength={1}
-                        onChange={(val) => {
-                          handleChangeNumsCode(val.target.value, 5);
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button
-                      // disabled={numsOfCode.length < 6 || times < 0}
-                      loading={isLoading}
-                      type="primary"
+                <div className="mt-4">
+                  <Typography.Title level={2}>Enter OTP</Typography.Title>
+                  <Typography.Paragraph type="secondary">
+                    We have sent a code to your registered email:
+                    <b>{signValues.email}</b>
+                  </Typography.Paragraph>
+                </div>
+
+                <div className="mt-4 d-flex justify-content-between">
+                  {[0, 1, 2, 3, 4, 5].map((_, index) => (
+                    <Input
+                      key={index}
+                      maxLength={1}
+                      value={numsOfCode[index] || ""}
                       size="large"
-                      style={{ width: "100%" }}
-                      onClick={handleVerify}
-                    >
-                      Verify
-                    </Button>
-                    <div className="mt-2 text-center">
-                      {times < 0 ? (
-                        <Button type="link" onClick={handleResendCode}>
-                          Resend
-                        </Button>
-                      ) : (
-                        <Typography>Resend a new code: {times}s</Typography>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-4">
-                    <Typography.Title className="m-0">
-                      Create new account
-                    </Typography.Title>
-                    <Typography.Paragraph type="secondary">
-                      Please enter detail
-                    </Typography.Paragraph>
-                  </div>
-                  <Form
-                    disabled={isLoading}
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSignUp}
+                      style={{
+                        fontSize: 32,
+                        fontWeight: "bold",
+                        width: "calc((100% - 90px) / 6)",
+                        textAlign: "center",
+                      }}
+                      onChange={(e) =>
+                        handleChangeNumsCode(e.target.value, index)
+                      }
+                      ref={(el) => {
+                        refs.current[index] = el;
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    loading={isLoading}
+                    type="primary"
                     size="large"
+                    style={{ width: "100%" }}
+                    onClick={handleVerify}
                   >
-                    <Form.Item name={"firstName"} label="First Name">
-                      <Input placeholder="" allowClear />
-                    </Form.Item>
-                    <Form.Item name={"lastName"} label="Last Name">
-                      <Input placeholder="" allowClear />
-                    </Form.Item>
-                    <Form.Item
-                      name={"email"}
-                      label="Email"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter your email!",
-                        },
-                      ]}
-                    >
-                      <Input placeholder="" type="email-address" allowClear />
-                    </Form.Item>
-                    <Form.Item
-                      name={"password"}
-                      label="Password"
-                      rules={[
-                        {
-                          message: "Please enter your password!!",
-                          required: true,
-                        },
-                      ]}
-                    >
-                      <Input placeholder="" allowClear />
-                    </Form.Item>
-                  </Form>
-                  <div className="mt-4">
-                    <Checkbox
-                      onChange={(val) => setIsAgree(val.target.checked)}
-                      checked={isAgree}
-                    >
-                      I agree to Terms and Conditions
-                    </Checkbox>
+                    Verify
+                  </Button>
+                  <div className="mt-2 text-center">
+                    {times <= 0 ? (
+                      <Button type="link" onClick={handleResendCode}>
+                        Resend
+                      </Button>
+                    ) : (
+                      <Typography.Text type="secondary">
+                        Resend a new code in: {times}s
+                      </Typography.Text>
+                    )}
                   </div>
-                  <div className="mt-4">
-                    <Button
-                      loading={isLoading}
-                      type="primary"
-                      size="large"
-                      style={{ width: "100%" }}
-                      onClick={() => form.submit()}
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <Typography.Title>Create new account</Typography.Title>
+                <Typography.Paragraph type="secondary">
+                  Please enter your details
+                </Typography.Paragraph>
+
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSignUp}
+                  size="large"
+                  disabled={isLoading}
+                >
+                  <Form.Item name="firstName" label="First Name">
+                    <Input allowClear />
+                  </Form.Item>
+                  <Form.Item name="lastName" label="Last Name">
+                    <Input allowClear />
+                  </Form.Item>
+                  <Form.Item
+                    name="email"
+                    label="Email"
+                    rules={[
+                      { required: true, message: "Please enter your email!" },
+                    ]}
+                  >
+                    <Input type="email" allowClear />
+                  </Form.Item>
+                  <Form.Item
+                    name="password"
+                    label="Password"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter your password!",
+                      },
+                    ]}
+                  >
+                    <Input.Password allowClear />
+                  </Form.Item>
+                </Form>
+
+                <div className="mt-3">
+                  <Checkbox
+                    checked={isAgree}
+                    onChange={(e) => setIsAgree(e.target.checked)}
+                  >
+                    I agree to Terms and Conditions
+                  </Checkbox>
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    loading={isLoading}
+                    type="primary"
+                    size="large"
+                    style={{ width: "100%" }}
+                    onClick={() => form.submit()}
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

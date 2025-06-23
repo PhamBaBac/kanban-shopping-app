@@ -20,6 +20,8 @@ const Login = () => {
   const [emailMfa, setEmailMfa] = useState("");
   const [form] = Form.useForm();
   const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
+  const [isEmailVerificationMode, setIsEmailVerificationMode] = useState(false);
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
 
   const router = useRouter();
   const dispatch = useDispatch();
@@ -97,6 +99,56 @@ const Login = () => {
     } catch (error) {
       message.error("Mã xác thực không đúng.");
       router.push("/auth/login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendEmailCode = async () => {
+    console.log("Sending code to email:", emailMfa); // LOG chính ở đây
+
+    if (!emailMfa) {
+      message.error("Không tìm thấy email để gửi mã xác minh.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await handleAPI("/auth/send-code-email", { email: emailMfa }, "post");
+      message.success(`Đã gửi mã xác minh tới ${emailMfa}`);
+      setIsEmailVerificationMode(true);
+    } catch (error) {
+      message.error("Gửi mã xác minh thất bại. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyEmailCode = async () => {
+    if (emailVerificationCode.length !== 6) {
+      message.error("The verification code must be 6 digits.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res: any = await handleAPI(
+        "/auth/verify-code-email",
+        {
+          email: emailMfa,
+          code: emailVerificationCode,
+        },
+        "post"
+      );
+
+      dispatch(addAuth({ ...res.result, email: emailMfa }));
+      localStorage.setItem(
+        "authData",
+        JSON.stringify({ ...res.result, email: emailMfa })
+      );
+      message.success("Verification successful!");
+      router.push("/");
+    } catch (error) {
+      message.error("Invalid verification code.");
     } finally {
       setIsLoading(false);
     }
@@ -202,6 +254,44 @@ const Login = () => {
                   </Link>
                 </div>
               </>
+            ) : isEmailVerificationMode ? (
+              <>
+                <Button
+                  type="link"
+                  onClick={() => setIsEmailVerificationMode(false)}
+                  icon={<BsArrowLeft />}
+                >
+                  Back to OTP
+                </Button>
+                <Title level={3}>Check your email</Title>
+                <Paragraph>
+                  We've sent a 6-digit verification code to your email address:{" "}
+                  {emailMfa}.
+                </Paragraph>
+                <Form
+                  onFinish={handleVerifyEmailCode}
+                  layout="vertical"
+                  size="large"
+                >
+                  <Form.Item label="Verification Code">
+                    <Input
+                      value={emailVerificationCode}
+                      onChange={(e) => setEmailVerificationCode(e.target.value)}
+                      maxLength={6}
+                      autoFocus
+                    />
+                  </Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isLoading}
+                    block
+                    size="large"
+                  >
+                    Verify
+                  </Button>
+                </Form>
+              </>
             ) : (
               <>
                 <Button
@@ -214,7 +304,8 @@ const Login = () => {
 
                 <Title level={3}>Enter OTP</Title>
                 <Paragraph>
-                  We've sent a 6-digit verification code to your email.
+                  Please open your Authentication app to retrieve the 6-digit
+                  verification code
                 </Paragraph>
 
                 <div className="d-flex justify-content-between mb-3">
@@ -253,6 +344,16 @@ const Login = () => {
                 >
                   {isLoading ? "Đang xác thực..." : "Xác thực"}
                 </Button>
+                <Divider />
+                <div className="text-center">
+                  <Button
+                    type="link"
+                    onClick={handleSendEmailCode}
+                    loading={isLoading}
+                  >
+                    Can't use your authenticator? Verify by Email
+                  </Button>
+                </div>
               </>
             )}
           </div>
