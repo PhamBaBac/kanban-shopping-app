@@ -53,7 +53,7 @@ export interface AddressModel {
   address: string;
   createdBy: string;
   isDefault: boolean;
-  _id: string;
+  id: string;
   createdAt: string;
   updatedAt: string;
   __v: number;

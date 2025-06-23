@@ -44,9 +44,12 @@ const Routers = ({ Component, pageProps }: any) => {
       if (parsed?.userId && parsed.userId !== auth.userId) {
         dispatch(addAuth(parsed));
       }
-    } else if (!path.includes("/auth")) {
-      // Chỉ gọi Redis cart khi không ở trang auth và chưa đăng nhập
-      getRedisCart();
+    } else {
+      const cartId = localStorage.getItem("cartId");
+      if (cartId) {
+        // Only call Redis cart when not on auth page and not logged in
+        fetchCart(cartId);
+      }
     }
   };
 
@@ -85,6 +88,17 @@ const Routers = ({ Component, pageProps }: any) => {
       });
     } catch (err) {
       console.error("Failed to fetch Redis cart", err);
+    }
+  };
+
+  const fetchCart = async (newCartId: string) => {
+    try {
+      const response: any = await handleAPI(`/carts/${newCartId}`);
+      const result = response.result || [];
+      const flatResult = result.flat(); // Prevent nested arrays
+      dispatch(syncProducts(flatResult));
+    } catch (error) {
+      console.error("Error fetching cart:", error);
     }
   };
 

@@ -238,9 +238,9 @@ const HeaderComponent = () => {
                           disabled={cart.length === 0 || !auth.accessToken}
                         >
                           {!auth.accessToken
-                            ? "Vui lòng đăng nhập"
+                            ? "Please login to checkout"
                             : cart.length === 0
-                            ? "Giỏ hàng trống"
+                            ? "Your cart is empty"
                             : `Checkout (${cart.length} items)`}
                         </Button>
                       </div>

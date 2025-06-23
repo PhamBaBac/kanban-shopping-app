@@ -31,11 +31,6 @@ const Login = () => {
 
   const inputRefs = useRef<HTMLInputElement[]>([]);
 
-  useEffect(() => {
-    // Chỉ xử lý OAuth callback nếu có accessToken và đang ở trang oauth-callback
-    // Không xử lý ở trang login để tránh race condition
-  }, [searchParams]);
-
   const handleLogin = async (values: { email: string; password: string }) => {
     setIsLoading(true);
     try {
@@ -58,7 +53,7 @@ const Login = () => {
       localStorage.removeItem("sessionId");
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error) {
-      message.error("Đăng nhập thất bại, vui lòng kiểm tra email/password.");
+      message.error("Login failed, please check your email/password.");
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +73,7 @@ const Login = () => {
   const handleVerifyCode = async () => {
     const code = otpCode.join("");
     if (code.length !== 6) {
-      message.error("Mã OTP phải gồm 6 số.");
+      message.error("The OTP code must consist of 6 digits.");
       return;
     }
 
@@ -94,10 +89,10 @@ const Login = () => {
         "authData",
         JSON.stringify({ ...res.result, email: emailMfa })
       );
-      message.success("Xác thực thành công!");
+      message.success("Verification successful!");
       router.push("/");
     } catch (error) {
-      message.error("Mã xác thực không đúng.");
+      message.error("The verification code is incorrect.");
       router.push("/auth/login");
     } finally {
       setIsLoading(false);
@@ -105,20 +100,14 @@ const Login = () => {
   };
 
   const handleSendEmailCode = async () => {
-    console.log("Sending code to email:", emailMfa); // LOG chính ở đây
-
-    if (!emailMfa) {
-      message.error("Không tìm thấy email để gửi mã xác minh.");
-      return;
-    }
-
+    console.log("emailMfa", emailMfa);
     setIsLoading(true);
     try {
       await handleAPI("/auth/send-code-email", { email: emailMfa }, "post");
-      message.success(`Đã gửi mã xác minh tới ${emailMfa}`);
+      message.success(`A verification code has been sent to ${emailMfa}`);
       setIsEmailVerificationMode(true);
     } catch (error) {
-      message.error("Gửi mã xác minh thất bại. Vui lòng thử lại.");
+      message.error("Failed to send verification email. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +227,7 @@ const Login = () => {
                     block
                     size="large"
                   >
-                    {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                    {isLoading ? "Logging in..." : "Login"}
                   </Button>
                 </Form>
 
@@ -342,7 +331,7 @@ const Login = () => {
                   block
                   size="large"
                 >
-                  {isLoading ? "Đang xác thực..." : "Xác thực"}
+                  {isLoading ? "Verifying..." : "Verify"}
                 </Button>
                 <Divider />
                 <div className="text-center">

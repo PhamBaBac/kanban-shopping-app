@@ -13,7 +13,8 @@ export interface CartItemModel {
   title: string;
   productId: string | null;
   image: string;
-  id: string | null; // Có thể null nếu chưa login
+  slug: string;
+  id: string | null; // Can be null if not logged in
 }
 
 const initialState: CartItemModel[] = [];

@@ -26,14 +26,14 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
       setQrCodeUrl(response);
     } catch (error) {
       console.error("Error getting QR Code:", error);
-      message.error("Không thể lấy mã QR");
+      message.error("Could not fetch QR code.");
       handleClose();
     }
   };
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
-      return message.warning("Vui lòng nhập đúng mã gồm 6 số.");
+      return message.warning("Please enter a valid 6-digit code.");
     }
 
     try {
@@ -48,15 +48,15 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
         const updated = { ...res.result, email: auth.email };
         dispatch(addAuth(updated));
         localStorage.setItem("authData", JSON.stringify(updated));
-        message.success("Bật xác thực 2 yếu tố thành công!");
+        message.success("Two-factor authentication enabled successfully!");
         handleClose();
         if (onSuccess) onSuccess();
       } else {
-        message.error("Mã xác thực không chính xác.");
+        message.error("The verification code is incorrect.");
       }
     } catch (error) {
       console.error("Error verifying code:", error);
-      message.error("Xác thực thất bại.");
+      message.error("Verification failed.");
     } finally {
       setLoading(false);
     }
@@ -73,16 +73,17 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
 
   return (
     <Modal
-      title="Thiết lập xác thực 2 yếu tố"
+      title="Set up Two-Factor Authentication"
       open={qrModalVisible}
       footer={null}
       onCancel={handleClose}
       width={400}
     >
       <div style={{ textAlign: "center" }}>
-        <Title level={4}>Quét mã QR</Title>
+        <Title level={4}>Scan QR Code</Title>
         <Paragraph>
-          Dùng ứng dụng như Google Authenticator hoặc Authy để quét mã bên dưới:
+          Use an authenticator app like Google Authenticator or Authy to scan
+          the code below:
         </Paragraph>
 
         {qrCodeUrl && (
@@ -94,10 +95,10 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
           />
         )}
 
-        <Paragraph>Nhập mã 6 số từ ứng dụng để hoàn tất:</Paragraph>
+        <Paragraph>Enter the 6-digit code from your app to complete:</Paragraph>
 
         <Input
-          placeholder="Nhập mã 6 số"
+          placeholder="Enter 6-digit code"
           maxLength={6}
           value={verificationCode}
           onChange={(e) =>
@@ -120,7 +121,7 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
           loading={loading}
           disabled={verificationCode.length !== 6}
         >
-          Xác nhận
+          Verify
         </Button>
       </div>
     </Modal>

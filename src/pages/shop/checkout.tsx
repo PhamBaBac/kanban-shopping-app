@@ -66,17 +66,6 @@ const CheckoutPage = () => {
   const dispatch = useDispatch();
 
   const [subtotal, setSubtotal] = useState(0);
-  useEffect(() => {
-    // Bỏ qua bước address khi test
-    setPaymentDetail({
-      address: {
-        name: "Test User",
-        phoneNumber: "0123456789",
-        address: "123 Test Street, HCMC",
-      },
-    });
-    setCurrentStep(1); // Bắt đầu từ bước chọn phương thức thanh toán
-  }, []);
 
   useEffect(() => {
     const total = carts.reduce((a, b) => a + b.count * b.price, 0);
@@ -107,7 +96,7 @@ const CheckoutPage = () => {
       console.log("resCode", res);
 
       if (res.result === true) {
-        // Nếu được áp dụng, gọi API để lấy thông tin giảm
+        // If applicable, call the API to get discount information
         console.log("discountCode", discountCode);
         const detail: any = await handleAPI(`/promotions/code/${discountCode}`);
         console.log("detail", detail);
@@ -116,17 +105,17 @@ const CheckoutPage = () => {
           value: detail.result.numOfAvailable,
           type: detail.result.discountType, // 'percent' | 'amount'
         });
-        message.success("Áp dụng mã thành công!");
+        message.success("Code applied successfully!");
       } else {
-        message.warning("Mã không hợp lệ hoặc đã được sử dụng!");
+        message.warning("Invalid or already used code!");
         setDiscountValue(undefined);
       }
     } catch (error: any) {
-      // Nếu error có code 1022 thì show message từ backend
+      // If error has code 1022, show message from backend
       if (error?.code === 1022) {
-        message.error(error.message || "Mã đã hết lượt sử dụng");
+        message.error(error.message || "Code has been fully used");
       } else {
-        message.error("Mã đã hết lượt sử dụng");
+        message.error("Code has been fully used");
       }
       setDiscountValue(undefined);
     } finally {
@@ -136,15 +125,15 @@ const CheckoutPage = () => {
 
   const renderComponents = () => {
     switch (currentStep) {
-      //   case 0:
-      //     return (
-      //       <ShipingAddress
-      //         onSelectAddress={(val) => {
-      //           setPaymentDetail({ ...paymentDetail, address: val });
-      //           setCurrentStep(1);
-      //         }}
-      //       />
-      //     );
+      case 0:
+        return (
+          <ShipingAddress
+            onSelectAddress={(val) => {
+              setPaymentDetail({ ...paymentDetail, address: val });
+              setCurrentStep(1);
+            }}
+          />
+        );
       case 1:
         return (
           <PaymentMethod
@@ -236,7 +225,7 @@ const CheckoutPage = () => {
   const handlePaymentOrder = async () => {
     const method = paymentMethod?.methodSelected ?? "";
 
-    // Nếu là VNPay thì gọi API thanh toán và mở URL
+    // If it's VNPay, call the payment API and open the URL
     if (method === "vnpay") {
       try {
         const res: any = await handleAPI(
@@ -247,14 +236,14 @@ const CheckoutPage = () => {
 
         if (res?.result?.paymentUrl) {
           window.open(res.result.paymentUrl, "_blank");
-          return; // Không tiếp tục tạo order nữa
+          return; // Do not proceed with order creation
         } else {
-          message.error("Không thể tạo liên kết thanh toán VNPay.");
+          message.error("Could not create VNPay payment link.");
           return;
         }
       } catch (error) {
         console.error("VNPay error:", error);
-        message.error("Có lỗi xảy ra khi kết nối VNPay.");
+        message.error("An error occurred while connecting to VNPay.");
         return;
       }
     }
@@ -262,21 +251,18 @@ const CheckoutPage = () => {
     setIsLoading(true);
     try {
       console.log("method", method);
-      const res = await handleAPI(
-        `/bills/create?paymentType=${method}`,
-        {},
-        "post"
-      );
-      console.log("res", res);
-
-      dispatch(removeCarts());
-      Modal.confirm({
-        type: "success",
-        title: "Thành công",
-        content: "Cám ơn bạn đã đặt hàng, đơn hàng của bạn đang được xử lý",
-        onOk: () => router.push("/profile?key=orders"),
-        cancelText: "Back to home",
-        onCancel: () => router.push("/"),
+      const body = {
+        paymentType: method,
+        items: carts,
+      };
+      const res: any = await handleAPI("/orders", body);
+      Modal.success({
+        title: "Success",
+        content: "Thank you for your order, it is being processed",
+        onOk: () => {
+          router.push("/");
+          dispatch(removeCarts());
+        },
       });
     } catch (error) {
       console.log(error);
