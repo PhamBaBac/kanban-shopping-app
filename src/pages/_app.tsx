@@ -46,6 +46,14 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
           Tabs: {
             cardBg: "transparent",
           },
+          Switch: {
+            colorPrimary: "#34C759",
+            colorPrimaryHover: "#2DAF51",
+          },
+          Input: {
+            colorPrimary: "#34C759",
+            colorPrimaryHover: "#34C759",
+          },
         },
       }}
     >

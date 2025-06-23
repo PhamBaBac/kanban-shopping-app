@@ -232,8 +232,9 @@ const Login = () => {
                 </Form>
 
                 <div className="mt-4">
-                  <SocialLogin provider="google" />
-                  <Divider type="vertical" />
+                  <div className="mb-4">
+                    <SocialLogin provider="google" />
+                  </div>
                   <SocialLogin provider="github" />
                 </div>
                 <Divider />

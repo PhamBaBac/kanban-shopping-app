@@ -307,3 +307,19 @@ body[data-theme="dark"] .ant-affix .container-fluid {
   background-color: rgba(20, 20, 20, 0.95) !important;
   border-bottom: 1px solid #424242 !important;
 }
+
+[data-theme="dark"] .social-login-btn span {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="dark"] .social-login-btn:hover {
+  border-color: #34c759 !important;
+}
+
+[data-theme="dark"] .social-login-btn:hover span {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="dark"] .social-login-icon-github {
+  filter: invert(1);
+}

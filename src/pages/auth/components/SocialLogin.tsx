@@ -33,6 +33,7 @@ const SocialLogin = ({ provider }: Props) => {
         height={24}
         src="https://img.icons8.com/ios-filled/50/github.png"
         alt="github-logo"
+        className="social-login-icon-github"
       />
     );
   };
@@ -47,6 +48,7 @@ const SocialLogin = ({ provider }: Props) => {
       style={{ width: "100%" }}
       size="large"
       icon={getIcon()}
+      className="social-login-btn"
     >
       {getLabel()}
     </Button>
