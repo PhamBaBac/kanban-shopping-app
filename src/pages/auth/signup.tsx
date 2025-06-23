@@ -98,8 +98,8 @@ const SignUp = () => {
           "post"
         );
 
-        dispatch(addAuth(signValues));
-        localStorage.setItem("authData", JSON.stringify(signValues));
+        dispatch(addAuth({ ...signValues, email: form.getFieldValue("email") }));
+        localStorage.setItem("authData", JSON.stringify({ ...signValues, email: form.getFieldValue("email") }));
 
         router.push("/");
       } catch (error) {

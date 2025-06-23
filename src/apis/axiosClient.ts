@@ -4,7 +4,7 @@ import axios from "axios";
 import queryString from "query-string";
 import { localDataNames } from "../constants/appInfos";
 import { addAuth, removeAuth } from "../redux/reducers/authReducer";
-import store from "../redux/store";
+import { store } from "../redux/store";
 
 const baseURL = `http://localhost:8080/api/v1`;
 
@@ -16,7 +16,7 @@ const getAuthData = () => {
 
 const getAccessToken = () => {
   const authData = getAuthData();
-  return authData?.accesstoken || "";
+  return authData?.accessToken || ""; // ✅ dùng đúng key accessToken
 };
 
 let isRefreshing = false;
@@ -55,7 +55,7 @@ const refreshToken = async (): Promise<string | null> => {
     if (currentAuthData) {
       const updatedAuthData = {
         ...currentAuthData,
-        token: newToken,
+        accessToken: newToken, // ✅ fix: dùng accessToken chứ không phải token
       };
       localStorage.setItem(
         localDataNames.authData,

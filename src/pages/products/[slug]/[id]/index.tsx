@@ -10,6 +10,7 @@ import {
 import HeadComponent from "@/components/HeadComponent";
 import { appInfo } from "@/constants/appInfos";
 import { ProductModel, SubProductModel } from "@/models/Products";
+import { SupplierModel } from "@/models/SupplierModel";
 import { authSelector } from "@/redux/reducers/authReducer";
 import {
   addProduct,
@@ -47,12 +48,12 @@ const ProductDetail = ({ pageProps }: any) => {
     product,
   }: {
     product: ProductModel;
-  } = pageProps
+  } = pageProps;
   // const subProducts = product.subItems;
-
 
   // const relatedProducts = pageProps.data.itemCats.data;
   const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
+  const [supplier, setSupplier] = useState<SupplierModel | null>(null);
 
   const [detail, setdetail] = useState<ProductModel>(product);
   const [subProductSelected, setSubProductSelected] =
@@ -74,13 +75,30 @@ const ProductDetail = ({ pageProps }: any) => {
     handleGetSubProducts();
   }, [product.id]);
 
+  useEffect(() => {
+    if (product.supplierId) {
+      fetchSupplierInfo();
+    }
+  }, [product.supplierId]);
+
+  const fetchSupplierInfo = async () => {
+    try {
+      const res: any = await handleAPI(`/suppliers/${product.supplierId}`);
+      if (res && res.result) {
+        setSupplier(res.result);
+      }
+    } catch (error) {
+      console.log("Error fetching supplier:", error);
+    }
+  };
+
   const dispatch = useDispatch();
-   const handleGetSubProducts = async () => {
-     const res: any = await handleAPI(
-       `/subProducts/get-all-sub-product/${product.id}`
-     );
-     setSubProducts(res.result);
-   };
+  const handleGetSubProducts = async () => {
+    const res: any = await handleAPI(
+      `/subProducts/get-all-sub-product/${product.id}`
+    );
+    setSubProducts(res.result);
+  };
 
   useEffect(() => {
     if (subProducts.length > 0) {
@@ -114,133 +132,134 @@ const ProductDetail = ({ pageProps }: any) => {
     }
   }, [cart, subProductSelected]);
 
-const handleCart = async () => {
-  if (!subProductSelected) {
-    message.error("Please choose a product!");
-    return;
-  }
-
-  const isLoggedIn = auth.userId && auth.accessToken;
-  const sessionId = getOrCreateSessionId();
-  const createdBy = isLoggedIn ? auth.userId : sessionId;
-  const endpointPrefix = isLoggedIn ? "/carts" : "/redisCarts";
-
-  const item = subProductSelected;
-  const value = {
-    createdBy,
-    count,
-    subProductId: item.id,
-    size: item.size,
-    title: detail.title,
-    color: item.color,
-    price: item.discount ? item.discount : item.price,
-    qty: item.qty,
-    productId: product.id,
-    image: item.images[0] ?? "",
-  };
-
-  const index = cart.findIndex(
-    (element) => element.subProductId === value.subProductId
-  );
-
-  try {
-    if (index !== -1 && cart[index]) {
-      // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
-      await handleAPI(
-        `${endpointPrefix}/update?id=${
-          isLoggedIn ? cart[index].id : sessionId
-        }&count=${cart[index].count + count}`,
-        {},
-        "put"
-      );
-
-      dispatch(
-        changeCount({
-          id: isLoggedIn ? cart[index].id : null,
-          subProductId: cart[index].subProductId,
-          val: count,
-        })
-      );
-    } else {
-      // Thêm mới sản phẩm vào giỏ
-      const res: any = await handleAPI(
-        endpointPrefix + (isLoggedIn ? "/add" : ""),
-        value,
-        "post"
-      );
-
-      if (isLoggedIn) {
-        // Đảm bảo res.result có id
-        if (res?.result?.id) {
-          dispatch(addProduct({ ...value, id: res.result.id }));
-        } else {
-          message.warning("Add to cart but no ID returned!");
-        }
-      } else {
-        // Với Redis (user chưa login), fetch lại từ Redis sau khi thêm
-        const res: any = await handleAPI(`/redisCarts?sessionId=${sessionId}`);
-        if (res.result) {
-          const items = Object.values(res.result) as CartItemModel[];
-          items.forEach((item) => {
-            const exists = cart.some(
-              (c) => c.subProductId === item.subProductId
-            );
-            if (!exists) {
-              dispatch(addProduct(item));
-            }
-          });
-        }
-      }
+  const handleCart = async () => {
+    if (!subProductSelected) {
+      message.error("Please choose a product!");
+      return;
     }
 
-    setCount(1);
-  } catch (error) {
-    console.log("Add to cart failed:", error);
-    message.error("Add to cart failed!");
-  }
-};
+    const isLoggedIn = auth.userId && auth.accessToken;
+    const sessionId = getOrCreateSessionId();
+    const createdBy = isLoggedIn ? auth.userId : sessionId;
+    const endpointPrefix = isLoggedIn ? "/carts" : "/redisCarts";
 
- const renderButtonGroup = () => {
-   const item = cart.find(
-     (element) => element.subProductId === subProductSelected?.id
-   );
+    const item = subProductSelected;
+    const value = {
+      createdBy,
+      count,
+      subProductId: item.id,
+      size: item.size,
+      title: detail.title,
+      color: item.color,
+      price: item.discount ? item.discount : item.price,
+      qty: item.qty,
+      productId: product.id,
+      image: item.images[0] ?? "",
+    };
 
-   const availableQty = item
-     ? (subProductSelected?.qty ?? 0) - item.count
-     : (subProductSelected?.qty ?? 0);
+    const index = cart.findIndex(
+      (element) => element.subProductId === value.subProductId
+    );
 
-   return (
-     subProductSelected && (
-       <>
-         <div className="button-groups">
-           <Button
-             onClick={() => setCount(count + 1)}
-             disabled={count >= (availableQty ?? 0)}
-             type="text"
-             icon={<IoAddSharp size={22} />}
-           />
-           <Text>{count}</Text>
-           <Button
-             onClick={() => setCount(count - 1)}
-             disabled={count === 1}
-             type="text"
-             icon={<LuMinus size={22} />}
-           />
-         </div>
-         <Button
-           disabled={availableQty === 0}
-           onClick={handleCart}
-           size="large"
-           type="primary"
-           style={{ minWidth: 200 }}
-         >
-           Add to Cart
-         </Button>
-       </>
-     )
-   );
- };
+    try {
+      if (index !== -1 && cart[index]) {
+        // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
+        await handleAPI(
+          `${endpointPrefix}/update?id=${
+            isLoggedIn ? cart[index].id : sessionId
+          }&count=${cart[index].count + count}`,
+          {},
+          "put"
+        );
 
+        dispatch(
+          changeCount({
+            id: isLoggedIn ? cart[index].id : null,
+            subProductId: cart[index].subProductId,
+            val: count,
+          })
+        );
+      } else {
+        // Thêm mới sản phẩm vào giỏ
+        const res: any = await handleAPI(
+          endpointPrefix + (isLoggedIn ? "/add" : ""),
+          value,
+          "post"
+        );
+
+        if (isLoggedIn) {
+          // Đảm bảo res.result có id
+          if (res?.result?.id) {
+            dispatch(addProduct({ ...value, id: res.result.id }));
+          } else {
+            message.warning("Add to cart but no ID returned!");
+          }
+        } else {
+          // Với Redis (user chưa login), fetch lại từ Redis sau khi thêm
+          const res: any = await handleAPI(
+            `/redisCarts?sessionId=${sessionId}`
+          );
+          if (res.result) {
+            const items = Object.values(res.result) as CartItemModel[];
+            items.forEach((item) => {
+              const exists = cart.some(
+                (c) => c.subProductId === item.subProductId
+              );
+              if (!exists) {
+                dispatch(addProduct(item));
+              }
+            });
+          }
+        }
+      }
+
+      setCount(1);
+    } catch (error) {
+      console.log("Add to cart failed:", error);
+      message.error("Add to cart failed!");
+    }
+  };
+
+  const renderButtonGroup = () => {
+    const item = cart.find(
+      (element) => element.subProductId === subProductSelected?.id
+    );
+
+    const availableQty = item
+      ? (subProductSelected?.qty ?? 0) - item.count
+      : subProductSelected?.qty ?? 0;
+
+    return (
+      subProductSelected && (
+        <>
+          <div className="button-groups">
+            <Button
+              onClick={() => setCount(count + 1)}
+              disabled={count >= (availableQty ?? 0)}
+              type="text"
+              icon={<IoAddSharp size={22} />}
+            />
+            <Text>{count}</Text>
+            <Button
+              onClick={() => setCount(count - 1)}
+              disabled={count === 1}
+              type="text"
+              icon={<LuMinus size={22} />}
+            />
+          </div>
+          <Button
+            disabled={availableQty === 0}
+            onClick={handleCart}
+            size="large"
+            type="primary"
+            style={{ minWidth: 200 }}
+          >
+            Add to Cart
+          </Button>
+        </>
+      )
+    );
+  };
 
   const handleGetReviewData = async () => {
     // const api = `/reviews/get-start-count?id=${id}`;
@@ -273,7 +292,9 @@ const handleCart = async () => {
               },
               {
                 key: "title",
-                title: product.title,
+                title: product.categories
+                  .map((item: any) => item.title)
+                  .join(" / "),
               },
             ]}
           />
@@ -307,7 +328,7 @@ const handleCart = async () => {
               <div className="row">
                 <div className="col">
                   <Typography.Title className="m-0" level={2}>
-                    {detail.supplier}
+                    {supplier ? supplier.name : "Loading..."}
                   </Typography.Title>
                   <Typography.Title
                     className="mt-0"
@@ -381,17 +402,26 @@ const handleCart = async () => {
                   </Paragraph>
                   <Space>
                     {subProducts.length > 0 &&
-                      subProducts.map((item, index) => (
-                        <a
-                          key={`${item.color}-${index}`}
-                          onClick={() => setSubProductSelected(item)}
-                        >
-                          <div
-                            className="color-item"
-                            style={{ background: item.color }}
-                          />
-                        </a>
-                      ))}
+                      Array.from(
+                        new Set(subProducts.map((item) => item.color))
+                      ).map((color) => {
+                        const itemWithColor = subProducts.find(
+                          (item) => item.color === color
+                        );
+                        return (
+                          <a
+                            key={color}
+                            onClick={() =>
+                              setSubProductSelected(itemWithColor!)
+                            }
+                          >
+                            <div
+                              className="color-item"
+                              style={{ background: color }}
+                            />
+                          </a>
+                        );
+                      })}
                   </Space>
                 </div>
                 <div className="mt-3">
@@ -406,19 +436,26 @@ const handleCart = async () => {
                   </Paragraph>
                   <Space>
                     {subProducts.length > 0 &&
-                      subProducts.map((item) => (
-                        <Button
-                          key={item.size}
-                          type={
-                            subProductSelected.size === item.size
-                              ? "primary"
-                              : "default"
-                          }
-                          onClick={() => setSubProductSelected(item)}
-                        >
-                          {item.size}
-                        </Button>
-                      ))}
+                      Array.from(
+                        new Set(subProducts.map((item) => item.size))
+                      ).map((size) => {
+                        const itemWithSize = subProducts.find(
+                          (item) => item.size === size
+                        );
+                        return (
+                          <Button
+                            key={size}
+                            type={
+                              subProductSelected.size === size
+                                ? "primary"
+                                : "default"
+                            }
+                            onClick={() => setSubProductSelected(itemWithSize!)}
+                          >
+                            {size}
+                          </Button>
+                        );
+                      })}
                   </Space>
                 </div>
                 <div className="mt-5">
@@ -438,12 +475,12 @@ const handleCart = async () => {
                   label: "Description",
                   children: (
                     <>
-                      <p>
-                        Lorem ipsum dolor, sit amet consectetur adipisicing
-                        elit. Dolor temporibus esse nam est, velit quae tempora.
-                        Voluptatum laborum facere consequatur. Cum, et labore id
-                        aut nisi veniam. Et, dolor! Tempora?
-                      </p>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: detail.content || detail.description,
+                        }}
+                        style={{ textAlign: "justify", fontSize: "1rem" }}
+                      />
                     </>
                   ),
                 },
@@ -501,7 +538,6 @@ export const getStaticProps = async (context: any) => {
     return { props: { product: null } };
   }
 };
-
 
 export const getStaticPaths = async () => {
   return {

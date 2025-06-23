@@ -1,53 +1,62 @@
 /** @format */
 
-import { TransationSubProductModal } from '@/modals';
-import { authSelector, removeAuth } from '@/redux/reducers/authReducer';
-import { CartItemModel, cartSelector, removeCarts } from '@/redux/reducers/cartReducer';
-import { VND } from '@/utils/handleCurrency';
+import { TransationSubProductModal } from "@/modals";
+import { authSelector, removeAuth } from "@/redux/reducers/authReducer";
 import {
-	Affix,
-	Avatar,
-	Badge,
-	Button,
-	Card,
-	Divider,
-	Drawer,
-	Dropdown,
-	List,
-	Menu,
-	MenuProps,
-	Space,
-	Typography,
-} from 'antd';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
-import { AiOutlineTransaction } from 'react-icons/ai';
-import { BiCart, BiPowerOff } from 'react-icons/bi';
-import { GiHamburgerMenu } from 'react-icons/gi';
-import { IoHeartOutline, IoSearch } from 'react-icons/io5';
-import { useDispatch, useSelector } from 'react-redux';
-import ButtonRemoveCartItem from './ButtonRemoveCartItem';
-import CategoriesListCard from './CategoriesListCard';
-import { FaUser } from 'react-icons/fa';
-import handleAPI from '@/apis/handleApi';
+  CartItemModel,
+  cartSelector,
+  removeCarts,
+} from "@/redux/reducers/cartReducer";
+import { VND } from "@/utils/handleCurrency";
+import {
+  Affix,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Divider,
+  Drawer,
+  Dropdown,
+  List,
+  Menu,
+  MenuProps,
+  Space,
+  Typography,
+  theme,
+} from "antd";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { AiOutlineTransaction } from "react-icons/ai";
+import { BiCart, BiPowerOff } from "react-icons/bi";
+import { GiHamburgerMenu } from "react-icons/gi";
+import { IoHeartOutline, IoSearch } from "react-icons/io5";
+import { useDispatch, useSelector } from "react-redux";
+import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
+import CategoriesListCard from "./CategoriesListCard";
+import { FaUser } from "react-icons/fa";
+import handleAPI from "@/apis/handleApi";
 import axios from "axios";
 
+const { useToken } = theme;
+
 const HeaderComponent = () => {
-	const [isVisibleDrawer, setIsVisibleDrawer] = useState(false);
-	const [visibleModalTransationProduct, setVisibleModalTransationProduct] =
-		useState(false);
-	const [productSeleted, setProductSeleted] = useState<CartItemModel>();
-	const [isVisibleMenuDrawe, setIsVisibleMenuDrawe] = useState(false);
+  const [isVisibleDrawer, setIsVisibleDrawer] = useState(false);
+  const [visibleModalTransationProduct, setVisibleModalTransationProduct] =
+    useState(false);
+  const [productSeleted, setProductSeleted] = useState<CartItemModel>();
+  const [isVisibleMenuDrawe, setIsVisibleMenuDrawe] = useState(false);
 
-	const auth = useSelector(authSelector);
-	const dispatch = useDispatch();
-	
-	const router = useRouter();
+  const { token } = useToken();
+  const auth = useSelector(authSelector);
+  const dispatch = useDispatch();
 
-	console.log(auth);
-	const cart: CartItemModel[] = useSelector(cartSelector);
-	const items: MenuProps["items"] = [
+  const router = useRouter();
+
+  console.log(auth);
+  const cart: CartItemModel[] = useSelector(cartSelector);
+
+  const items: MenuProps["items"] = [
     {
       key: "profile",
       label: <Link href={`/profile`}>Profile</Link>,
@@ -67,16 +76,23 @@ const HeaderComponent = () => {
         });
 
         localStorage.clear();
-        router.push("/")
+        router.push("/");
         dispatch(removeAuth({}));
-		dispatch(removeCarts());
+        dispatch(removeCarts());
       },
     },
   ];
 
-	return (
-    <Affix offsetTop={0}>
-      <div className="container-fluid bg-white">
+  return (
+    <Affix offsetTop={0} style={{ zIndex: 9999 }}>
+      <div
+        className="container-fluid"
+        style={{
+          backgroundColor: token.colorBgContainer,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+          backdropFilter: "blur(8px)",
+        }}
+      >
         <div className="p-3">
           <div className="row">
             <div className="d-none d-sm-block d-md-none">
@@ -91,7 +107,7 @@ const HeaderComponent = () => {
             </div>
             <div className="col d-none d-md-block text-center">
               <Menu
-                style={{ border: "none" }}
+                style={{ border: "none", backgroundColor: "transparent" }}
                 mode="horizontal"
                 items={[
                   {
@@ -136,7 +152,13 @@ const HeaderComponent = () => {
                 <Button icon={<IoHeartOutline size={24} />} type="text" />
                 <Dropdown
                   dropdownRender={() => (
-                    <Card className="shadow" style={{ minWidth: 480 }}>
+                    <Card
+                      className="shadow"
+                      style={{
+                        minWidth: 480,
+                        backgroundColor: token.colorBgContainer,
+                      }}
+                    >
                       <Typography.Paragraph>
                         You have {cart.length} items in your cart
                       </Typography.Paragraph>
@@ -195,7 +217,6 @@ const HeaderComponent = () => {
                               }
                               description={`Size: ${item.size}`}
                             />
-                           
                           </List.Item>
                         )}
                       />
@@ -214,8 +235,13 @@ const HeaderComponent = () => {
                           type="primary"
                           size="large"
                           style={{ width: "100%" }}
+                          disabled={cart.length === 0 || !auth.accessToken}
                         >
-                          Checkout
+                          {!auth.accessToken
+                            ? "Vui lòng đăng nhập"
+                            : cart.length === 0
+                            ? "Giỏ hàng trống"
+                            : `Checkout (${cart.length} items)`}
                         </Button>
                       </div>
                     </Card>
@@ -234,7 +260,6 @@ const HeaderComponent = () => {
                   <Button
                     type="primary"
                     onClick={() => router.push("/auth/login")}
-                    href={`/auth/login`}
                   >
                     Login
                   </Button>

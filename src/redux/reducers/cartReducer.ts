@@ -100,4 +100,4 @@ export const {
   removeCarts,
 } = cartSlice.actions;
 
-export const cartSelector = (state: any) => state.cartReducer.data;
+export const cartSelector = (state: any) => state.cart.data;

@@ -1,15 +1,18 @@
 /** @format */
 
 import { authSelector } from "@/redux/reducers/authReducer";
-import { Tabs, TabsProps, Typography } from "antd";
+import { List, Select, Switch, Tabs, TabsProps, Typography } from "antd";
 import { TabsPosition } from "antd/es/tabs";
 import { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import ProsionalInfomation from "../../components/PersionalInfomations";
-import { FaShoppingCart } from "react-icons/fa";
+import { FaCog, FaLock, FaShoppingCart } from "react-icons/fa";
 import OrderItem from "@/components/OrderItem";
 import handleAPI from "@/apis/handleApi";
+import { SettingsContent, TwoFactorAuthSettings } from "@/components";
+import ChangePassword from "@/components/ChangePassword";
+
 
 const ProfilePage = () => {
   const [tabPosition, setTabPosition] = useState<TabsPosition>("left");
@@ -89,6 +92,18 @@ const ProfilePage = () => {
           ))}
         </div>
       ),
+    },
+    {
+      key: "change-password",
+      label: "Change Password",
+      icon: <FaLock size={14} className="text-muted" />,
+      children: <ChangePassword />,
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: <FaCog size={14} className="text-muted" />,
+      children: <SettingsContent />,
     },
   ];
 

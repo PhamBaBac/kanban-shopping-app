@@ -120,7 +120,6 @@ const TransationSubProductModal = ({
     }
   };
 
-
   return (
     <Modal
       onOk={handleChangeSubProduct}

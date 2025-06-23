@@ -44,12 +44,11 @@ const Routers = ({ Component, pageProps }: any) => {
       if (parsed?.userId && parsed.userId !== auth.userId) {
         dispatch(addAuth(parsed));
       }
-    } else {
-      // Người dùng chưa đăng nhập => gọi cart Redis
+    } else if (!path.includes("/auth")) {
+      // Chỉ gọi Redis cart khi không ở trang auth và chưa đăng nhập
       getRedisCart();
     }
   };
-
 
   const getDatabaseDatas = async () => {
     setIsLoading(true);
@@ -81,8 +80,7 @@ const Routers = ({ Component, pageProps }: any) => {
 
       flatResult.forEach((item: any) => {
         if (item && item.subProductId) {
-         dispatch(syncProducts(flatResult));
-
+          dispatch(syncProducts(flatResult));
         }
       });
     } catch (err) {
@@ -90,17 +88,26 @@ const Routers = ({ Component, pageProps }: any) => {
     }
   };
 
-
   return isLoading ? (
     <Spin />
-  ) : path.includes("/auth") ? (
-    <Layout className="bg-white">
+  ) : path.includes("/auth") || path.includes("/oauth-callback") ? (
+    <Layout>
       <Component pageProps={pageProps} />
     </Layout>
   ) : (
-    <Layout className="bg-white">
-      <HeaderComponent />
-      <Component pageProps={pageProps} />
+    <Layout>
+      <Layout.Header
+        style={{
+          padding: 0,
+          height: "auto",
+          lineHeight: "inherit",
+        }}
+      >
+        <HeaderComponent />
+      </Layout.Header>
+      <Layout.Content>
+        <Component pageProps={pageProps} />
+      </Layout.Content>
     </Layout>
   );
 };
