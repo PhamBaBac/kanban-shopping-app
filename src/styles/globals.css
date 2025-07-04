@@ -323,3 +323,7 @@ body[data-theme="dark"] .ant-affix .container-fluid {
 [data-theme="dark"] .social-login-icon-github {
   filter: invert(1);
 }
+/* Tắt màu nền khi chọn dòng trong bảng Ant Design */
+.ant-table-tbody > tr.ant-table-row-selected > td {
+  background: inherit !important;
+}

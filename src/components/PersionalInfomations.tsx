@@ -1,165 +1,216 @@
 /** @format */
 
-import handleAPI from '@/apis/handleApi';
-import { AddressModal } from '@/modals';
-import { addAuth, authSelector } from '@/redux/reducers/authReducer';
-import { uploadFile } from '@/utils/uploadFile';
-import { Button, Form, Input, Upload, UploadFile } from 'antd';
-import { useEffect, useState } from 'react';
-import { BiCamera, BiEdit } from 'react-icons/bi';
-import { FaLocationDot } from 'react-icons/fa6';
-import { useDispatch, useSelector } from 'react-redux';
+import handleAPI from "@/apis/handleApi";
+import { AddressModal } from "@/modals";
+import { addAuth, authSelector } from "@/redux/reducers/authReducer";
+import { uploadFile } from "@/utils/uploadFile";
+import { AddressModel } from "@/models/Products";
+import { Button, Form, Input, Upload, UploadFile } from "antd";
+import { useEffect, useState } from "react";
+import { BiCamera, BiEdit } from "react-icons/bi";
+import { FaLocationDot } from "react-icons/fa6";
+import { useDispatch, useSelector } from "react-redux";
 
 const PersionalInfomations = () => {
-	const [avatarList, setAvatarList] = useState<UploadFile[]>([]);
-	const [isVisibleModalAddress, setIsVisibleModalAddress] = useState(false);
-	const [isUpdating, setIsUpdating] = useState(false);
+  const auth = useSelector(authSelector);
 
-	const [form] = Form.useForm();
-	const auth = useSelector(authSelector);
-	const dispatch = useDispatch();
+  const [avatarList, setAvatarList] = useState<UploadFile[]>([]);
+  const [isVisibleModalAddress, setIsVisibleModalAddress] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [address, setAddress] = useState<AddressModel>();
+  const [phoneNumber, setPhoneNumber] = useState<string>();
 
-	useEffect(() => {
-		form.setFieldsValue(auth);
-	}, []);
+  const [form] = Form.useForm();
+  const dispatch = useDispatch();
 
-	const handleVaues = async (values: any) => {
-		const data: any = {};
+  useEffect(() => {
+    form.setFieldsValue(auth);
+    // Khởi tạo avatarList với avatar hiện tại nếu có
+    if (auth.avatar) {
+      setAvatarList([
+        {
+          uid: "-1",
+          name: "avatar",
+          status: "done",
+          url: auth.avatar,
+        } as UploadFile,
+      ]);
+    }
+    // Lấy địa chỉ từ API
+    getAddress();
+  }, [auth.avatar]);
+  const getAddress = async () => {
+    const api = `/addresses/all`;
+    try {
+      const res: any = await handleAPI(api, {}, "get");
+      if (res.result && res.result.length > 0) {
+		console.log("res.result", res.result);
+        const defaultAddress =
+          res.result.find((addr: AddressModel) => addr.isDefault) ||
+          res.result[0];
+        setAddress(defaultAddress);
+        // Cập nhật form với địa chỉ mặc định
+        form.setFieldValue("address", defaultAddress.address);
+		form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-		for (const i in values) {
-			data[i] = values[i] ?? '';
-		}
+  const handleVaues = async (values: any) => {
+    const data: any = {};
 
-		try {
-			if (avatarList.length > 0) {
-				delete data.photoUrl;
-				const file = avatarList[0];
-				const url = await uploadFile(file.originFileObj);
+    for (const i in values) {
+      data[i] = values[i] ?? "";
+    }
 
-				data.photoURL = url;
+    try {
+      if (avatarList.length > 0) {
+        delete data.photoUrl;
+        const file = avatarList[0];
+        const url = await uploadFile(file.originFileObj);
 
-				await updateProfile(data);
-			} else {
-				await updateProfile(data);
-			}
-		} catch (error) {
-			console.log(error);
-			setIsUpdating(false);
-		}
-	};
+        data.photoURL = url;
 
-	const updateProfile = async (data: any) => {
-		try {
-			const api = `/customers/update`;
+        await updateProfile(data);
+      } else {
+        await updateProfile(data);
+      }
+    } catch (error) {
+      console.log(error);
+      setIsUpdating(false);
+    }
+  };
 
-			const res = await handleAPI(api, {
-				url: api,
-				data: {
-					...data,
-					name: `${data.firstName} ${data.lastName}`,
-				},
-				method: 'put',
-			});
-			dispatch(addAuth({ ...auth, ...res.data.data }));
-		} catch (error) {
-			console.log(error);
-		} finally {
-			setIsUpdating(false);
-		}
-	};
+  const updateProfile = async (data: any) => {
+    try {
+      const api = `/customers/update`;
 
-	return (
-		<>
-			<Form
-				disabled={isUpdating}
-				layout='vertical'
-				onFinish={handleVaues}
-				size='large'
-				form={form}>
-				<div className='row d-flex'>
-					<div className='col'>
-						<Form.Item name={'photoUrl'}>
-							<Upload
-								onChange={(val) => {
-									const { fileList } = val;
-									setAvatarList(
-										fileList.map((item) => ({
-											...item,
-											url: item.originFileObj
-												? URL.createObjectURL(item.originFileObj)
-												: '',
-										}))
-									);
-								}}
-								fileList={avatarList}
-								listType='picture-circle'
-								accept='image/*'
-								style={{
-									width: 50,
-								}}>
-								{avatarList.length > 0 ? null : (
-									<BiCamera size={28} className='text-muted' />
-								)}
-							</Upload>
-						</Form.Item>
-					</div>
+      const res = await handleAPI(api, {
+        url: api,
+        data: {
+          ...data,
+          name: `${data.firstName} ${data.lastName}`,
+        },
+        method: "put",
+      });
 
-					<div className='col text-right'>
-						<Button
-							type='primary'
-							onClick={() => form.submit()}
-							icon={<BiEdit size={22} />}>
-							Save
-						</Button>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col'>
-						<Form.Item name={'firstName'} label='First name'>
-							<Input allowClear />
-						</Form.Item>
-					</div>
-					<div className='col'>
-						<Form.Item name={'lastName'} label='Last name'>
-							<Input allowClear />
-						</Form.Item>
-					</div>
-				</div>
-				<div className='row'>
-					<div className='col'>
-						<Form.Item name={'phoneNumber'} label='Phone number'>
-							<Input allowClear />
-						</Form.Item>
-					</div>
-					<div className='col'>
-						<Form.Item name={'email'} label='Email address'>
-							<Input allowClear />
-						</Form.Item>
-					</div>
-				</div>
-				<Form.Item name={'address'} label='Address'>
-					<Input
-						allowClear
-						suffix={
-							<FaLocationDot
-								onClick={() => setIsVisibleModalAddress(true)}
-								size={22}
-								className='text-danger m-0	'
-							/>
-						}
-					/>
-				</Form.Item>
-			</Form>
+      // Cập nhật avatar trong state nếu có avatar mới
+      const updatedAuth = { ...auth, ...res.data.data };
+      if (data.photoURL) {
+        updatedAuth.avatar = data.photoURL;
+      }
 
-			<AddressModal
-				onAddAddress={(val) => {
-					form.setFieldValue('address', val);
-				}}
-				visible={isVisibleModalAddress}
-				onClose={() => setIsVisibleModalAddress(false)}
-			/>
-		</>
-	);
+      dispatch(addAuth(updatedAuth));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <>
+      <Form
+        disabled={isUpdating}
+        layout="vertical"
+        onFinish={handleVaues}
+        size="large"
+        form={form}
+      >
+        <div className="row d-flex">
+          <div className="col">
+            <Form.Item name={"photoUrl"}>
+              <Upload
+                onChange={(val) => {
+                  const { fileList } = val;
+                  setAvatarList(
+                    fileList.map((item) => ({
+                      ...item,
+                      url: item.originFileObj
+                        ? URL.createObjectURL(item.originFileObj)
+                        : item.url || "",
+                    }))
+                  );
+                }}
+                fileList={avatarList}
+                listType="picture-circle"
+                accept="image/*"
+                maxCount={1}
+                style={{
+                  width: 50,
+                }}
+              >
+                {avatarList.length === 0 && (
+                  <BiCamera size={28} className="text-muted" />
+                )}
+              </Upload>
+            </Form.Item>
+          </div>
+
+          <div className="col text-right">
+            <Button
+              type="primary"
+              onClick={() => form.submit()}
+              icon={<BiEdit size={22} />}
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <Form.Item name={"firstName"} label="First name">
+              <Input allowClear />
+            </Form.Item>
+          </div>
+          <div className="col">
+            <Form.Item name={"lastName"} label="Last name">
+              <Input allowClear />
+            </Form.Item>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <Form.Item name={"phoneNumber"} label="Phone number">
+              <Input allowClear />
+            </Form.Item>
+          </div>
+          <div className="col">
+            <Form.Item name={"email"} label="Email address">
+              <Input allowClear />
+            </Form.Item>
+          </div>
+        </div>
+        <Form.Item name={"address"} label="Address">
+          <Input
+            allowClear
+            placeholder={address?.address || "Enter your address"}
+            suffix={
+              <FaLocationDot
+                onClick={() => setIsVisibleModalAddress(true)}
+                size={22}
+                className="text-danger m-0 cursor-pointer"
+                title="Select from saved addresses"
+              />
+            }
+          />
+        </Form.Item>
+
+      </Form>
+
+      <AddressModal
+        onAddAddress={(val) => {
+          form.setFieldValue("address", val);
+          // Cập nhật lại danh sách địa chỉ sau khi thêm mới
+          getAddress();
+        }}
+        visible={isVisibleModalAddress}
+        onClose={() => setIsVisibleModalAddress(false)}
+      />
+    </>
+  );
 };
 
 export default PersionalInfomations;

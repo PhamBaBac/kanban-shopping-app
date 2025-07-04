@@ -44,12 +44,20 @@ const Login = () => {
         setEmailMfa(values.email);
         return;
       }
+      const resMe: any = await handleAPI("/users/me");
 
-      dispatch(addAuth({ ...res.result, email: values.email }));
-      localStorage.setItem(
-        "authData",
-        JSON.stringify({ ...res.result, email: values.email })
-      );
+      const user = {
+        accessToken: res.result.accessToken,
+        userId: resMe.result.id,
+        mfaEnabled: resMe.result.mfaEnabled,
+        email: resMe.result.email,
+        firstName: resMe.result.firstname,
+        lastName: resMe.result.lastname,
+        avatar: resMe.result.avatarUrl,
+      };
+
+      dispatch(addAuth(user));
+      localStorage.setItem("authData", JSON.stringify(user));
       localStorage.removeItem("sessionId");
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error) {
@@ -219,7 +227,7 @@ const Login = () => {
                   <div className="text-right">
                     <Link href="/auth/forgot-password">Forgot Password?</Link>
                   </div>
-
+                  <div className="mb-4"></div>
                   <Button
                     type="primary"
                     htmlType="submit"

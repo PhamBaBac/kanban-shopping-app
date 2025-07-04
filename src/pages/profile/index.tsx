@@ -13,41 +13,13 @@ import handleAPI from "@/apis/handleApi";
 import { SettingsContent, TwoFactorAuthSettings } from "@/components";
 import ChangePassword from "@/components/ChangePassword";
 
+import { useRouter } from "next/router";
 
 const ProfilePage = () => {
+  const router = useRouter();
   const [tabPosition, setTabPosition] = useState<TabsPosition>("left");
-  const [orders, setOrders] = useState([]);
-
-  const auth = useSelector(authSelector);
-  // 	const orders = [
-  //     {
-  //       image:
-  //         "https://firebasestorage.googleapis.com/v0/b/todolistapp-clone.appspot.com/o/images%2Fiphone16.jpeg?alt=media&token=f5dbc63b-41e2-4c3c-8de7-4576fe93be6d",
-  //       title: "Girls Pink Moana Printed Dress",
-  //       size: "S",
-  //       qty: 1,
-  //       price: 80,
-  //       status: "COMPLETED",
-  //     },
-  //     {
-  //       image:
-  //         "https://firebasestorage.googleapis.com/v0/b/todolistapp-clone.appspot.com/o/images%2Fiphone16.jpeg?alt=media&token=f5dbc63b-41e2-4c3c-8de7-4576fe93be6d",
-  //       title: "Women Textured Handheld Bag",
-  //       size: "Regular",
-  //       qty: 1,
-  //       price: 80,
-  //       status: "PENDING",
-  //     },
-  //     {
-  //       image:
-  //         "https://firebasestorage.googleapis.com/v0/b/todolistapp-clone.appspot.com/o/images%2Fiphone16.jpeg?alt=media&token=f5dbc63b-41e2-4c3c-8de7-4576fe93be6d",
-  //       title: "Tailored Cotton Casual Shirt",
-  //       size: "M",
-  //       qty: 1,
-  //       price: 40,
-  //       status: "PENDING",
-  //     },
-  //   ];
+  const [orders, setOrders] = useState<any[]>([]);
+  const defaultTab = router.query.tab?.toString() || "edit"; // <-- đọc query tab
 
   useEffect(() => {
     getOrders();
@@ -62,8 +34,51 @@ const ProfilePage = () => {
   }, []);
 
   const getOrders = async () => {
-    const response: any = await handleAPI("/bills/listBills");
-    setOrders(response.result);
+    const response: any = await handleAPI("/orders/listOrders");
+
+    // Group orders by orderId
+    const orderMap = new Map();
+
+    response.result.forEach((item: any) => {
+      const orderId = item.orderId;
+
+      if (orderMap.has(orderId)) {
+        // If order already exists, add this item to the existing order
+        const existingOrder = orderMap.get(orderId);
+        existingOrder.items.push({
+          image: item.image,
+          title: item.title,
+          size: item.size,
+          qty: item.qty,
+          price: item.price,
+          totalPrice: item.totalPrice,
+          orderStatus: item.orderStatus,
+        });
+        existingOrder.totalAmount += item.totalPrice;
+      } else {
+        // Create new order
+        orderMap.set(orderId, {
+          orderId: orderId,
+          items: [
+            {
+              image: item.image,
+              title: item.title,
+              size: item.size,
+              qty: item.qty,
+              price: item.price,
+              totalPrice: item.totalPrice,
+              orderStatus: item.orderStatus,
+            },
+          ],
+          totalAmount: item.totalPrice,
+          orderStatus: item.orderStatus,
+        });
+      }
+    });
+
+    const groupedOrders = Array.from(orderMap.values());
+    console.log("Grouped orders:", groupedOrders);
+    setOrders(groupedOrders);
   };
 
   const profileTabs: TabsProps["items"] = [
@@ -78,17 +93,9 @@ const ProfilePage = () => {
       label: "Orders",
       icon: <FaShoppingCart size={14} className="text-muted" />,
       children: (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {orders.map((order: any, idx: number) => (
-            <OrderItem
-              key={idx}
-              image={order?.image}
-              title={order?.title}
-              size={order?.size}
-              qty={order?.qty}
-              price={order?.totalPrice}
-              status={order?.status as any}
-            />
+            <OrderItem key={order.orderId || idx} order={order} />
           ))}
         </div>
       ),
@@ -113,7 +120,11 @@ const ProfilePage = () => {
         My Profile
       </Typography.Title>
       <div className="mt-4">
-        <Tabs items={profileTabs} tabPosition={tabPosition} />
+        <Tabs
+          items={profileTabs}
+          tabPosition={tabPosition}
+          defaultActiveKey={defaultTab}
+        />
       </div>
     </div>
   );

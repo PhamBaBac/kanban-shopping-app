@@ -17,12 +17,13 @@ interface Props {
   promotions: PromotionModel[];
   categories: CategoyModel[];
   bestSellers: ProductModel[];
+  recommendations: ProductModel[];
 }
 
 const HomePage = (props: Props) => {
   // const { promotions, categories, bestSellers } = props;
-  const { promotions, categories, bestSellers } = props;
-  console.log("promotions", promotions);
+  const { promotions, categories, bestSellers, recommendations } = props;
+  console.log("recommendations", recommendations);
 
   const [numOfColumn, setNumOfColumn] = useState<number>();
   const [catsArrays, setCatsArrays] = useState<
@@ -144,6 +145,7 @@ const HomePage = (props: Props) => {
         </div>
       </div>
       <div className="container">
+       
         <Section>
           <TabbarComponent
             title="Shop by Categories"
@@ -217,6 +219,16 @@ const HomePage = (props: Props) => {
               ))}
           </Carousel>
         </Section>
+
+        {/* <Section>
+          <TabbarComponent title="Our Recommendations" />
+          <div className="row">
+            {recommendations &&
+              recommendations.map((item) => (
+                <ProductItem item={item} key={item.id} />
+              ))}
+          </div>
+        </Section> */}
         <Section>
           <TabbarComponent title="Our Bestseller" />
           <div className="row">

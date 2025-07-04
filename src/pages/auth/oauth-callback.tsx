@@ -5,6 +5,7 @@ import { addAuth } from "@/redux/reducers/authReducer";
 import handleAPI from "@/apis/handleApi";
 import { message, Spin, Typography, Button, Form, Input } from "antd";
 import { BsArrowLeft } from "react-icons/bs";
+import { getOrCreateSessionId } from "@/utils/session";
 
 const { Title, Paragraph } = Typography;
 
@@ -32,20 +33,23 @@ const OAuthCallbackPage = () => {
     }
 
     const fetchUser = async () => {
+      const sessionId = getOrCreateSessionId();
       try {
         setIsLoading(true);
         const res: any = await handleAPI("/users/me", undefined, "get", {
           Authorization: `Bearer ${accessToken}`,
         });
-        console.log("resMe", res);
-
+      
         const user = {
           accessToken,
           userId: res.result.id,
           mfaEnabled: res.result.mfaEnabled,
           email: res.result.email,
+          firstName: res.result.firstname,
+          lastName: res.result.lastname,
+          avatar: res.result.avatarUrl,
         };
-
+       
         // Nếu MFA được bật, hiển thị màn hình xác thực TFA
         if (res.result.mfaEnabled) {
           setIsMfaEnabled(true);
@@ -57,10 +61,17 @@ const OAuthCallbackPage = () => {
 
         // Nếu không có MFA, đăng nhập trực tiếp
         dispatch(addAuth(user));
+          await handleAPI(
+            `/redisCarts/syncToDatabase?userId=${res.result.id}`,
+            undefined,
+            "put",
+            {
+              "X-Session-Id": sessionId,
+            }
+          );
         localStorage.setItem("authData", JSON.stringify(user));
         localStorage.removeItem("sessionId");
 
-        message.success("Login successful!");
         router.replace("/");
       } catch (error) {
         console.error("OAuth callback error:", error);

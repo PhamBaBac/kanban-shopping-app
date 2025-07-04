@@ -15,6 +15,7 @@ export interface CartItemModel {
   image: string;
   slug: string;
   id: string | null; // Can be null if not logged in
+  addressId?: string; // Optional address ID for checkout
 }
 
 const initialState: CartItemModel[] = [];

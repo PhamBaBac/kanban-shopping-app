@@ -38,7 +38,7 @@ const CarouselImages = (props: Props) => {
         <div key={`image${index}`}>
           <Space key={`groups${index}`}>
             {groups.map((item) => (
-              <a key={item._id} onClick={() => onClick(item)}>
+              <a key={item.id} onClick={() => onClick(item)}>
                 <img
                   src={item.imgURL}
                   style={{ width: 100, height: 120, objectFit: "cover" }}

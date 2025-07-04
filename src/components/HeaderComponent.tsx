@@ -215,7 +215,39 @@ const HeaderComponent = () => {
                                   </Typography.Paragraph>
                                 </>
                               }
-                              description={`Size: ${item.size}`}
+                              description={
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "12px",
+                                  }}
+                                >
+                                  <Typography.Text>
+                                    Size: {item.size}
+                                  </Typography.Text>
+                                  <Divider type="vertical" />
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "8px",
+                                    }}
+                                  >
+                                    <Typography.Text>Color:</Typography.Text>
+                                    <div
+                                      style={{
+                                        width: 20,
+                                        height: 20,
+                                        backgroundColor: item.color,
+                                        border: "1px solid #d9d9d9",
+                                        borderRadius: 4,
+                                        display: "inline-block",
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              }
                             />
                           </List.Item>
                         )}
@@ -254,7 +286,7 @@ const HeaderComponent = () => {
                 <Divider type="vertical" />
                 {auth.accessToken && auth.userId ? (
                   <Dropdown overlayStyle={{ minWidth: 320 }} menu={{ items }}>
-                    <Avatar src={auth.photoURL} />
+                    <Avatar src={auth.avatar} />
                   </Dropdown>
                 ) : (
                   <Button

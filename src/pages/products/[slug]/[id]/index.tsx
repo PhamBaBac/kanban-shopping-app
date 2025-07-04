@@ -214,9 +214,21 @@ const ProductDetail = ({ pageProps }: any) => {
       }
 
       setCount(1);
-    } catch (error) {
+    } catch (error: any) {
       console.log("Add to cart failed:", error);
-      message.error("Add to cart failed!");
+
+      // Handle specific error codes from backend
+      if (error?.code === 1021) {
+        message.error(
+          "This item is out of stock. Please try a different quantity or product."
+        );
+      } else if (error?.code === 1012) {
+        message.error("Product not found.");
+      } else if (error?.message) {
+        message.error(error.message);
+      } else {
+        message.error("Add to cart failed!");
+      }
     }
   };
 
@@ -319,7 +331,9 @@ const ProductDetail = ({ pageProps }: any) => {
                 )}
               </div>
               <CarouselImages
-                items={subProducts}
+                items={subProducts.filter(
+                  (item) => item.size === subProductSelected.size
+                )}
                 onClick={(val) => setSubProductSelected(val)}
               />
             </div>
@@ -411,9 +425,18 @@ const ProductDetail = ({ pageProps }: any) => {
                         return (
                           <a
                             key={color}
-                            onClick={() =>
-                              setSubProductSelected(itemWithColor!)
-                            }
+                            onClick={() => {
+                              // Tìm subProduct cùng màu và cùng size với subProduct đang chọn
+                              const sameSizeItem = subProducts.find(
+                                (item) =>
+                                  item.color === color &&
+                                  item.size === subProductSelected.size
+                              );
+                              // Nếu có cùng size thì chọn, không thì chọn item đầu tiên của màu đó
+                              setSubProductSelected(
+                                sameSizeItem || itemWithColor!
+                              );
+                            }}
                           >
                             <div
                               className="color-item"
@@ -450,7 +473,18 @@ const ProductDetail = ({ pageProps }: any) => {
                                 ? "primary"
                                 : "default"
                             }
-                            onClick={() => setSubProductSelected(itemWithSize!)}
+                            onClick={() => {
+                              // Tìm subProduct cùng size và cùng màu với subProduct đang chọn
+                              const sameColorItem = subProducts.find(
+                                (item) =>
+                                  item.size === size &&
+                                  item.color === subProductSelected.color
+                              );
+                              // Nếu có cùng màu thì chọn, không thì chọn item đầu tiên của size đó
+                              setSubProductSelected(
+                                sameColorItem || itemWithSize!
+                              );
+                            }}
                           >
                             {size}
                           </Button>

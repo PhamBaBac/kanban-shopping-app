@@ -37,6 +37,11 @@ const Routers = ({ Component, pageProps }: any) => {
     }
   }, [auth.accessToken, path]);
 
+  //getRedisCart
+  useEffect(() => {
+    getRedisCart();
+  }, []);
+
   const getData = () => {
     const res = localStorage.getItem(localDataNames.authData);
     if (res) {

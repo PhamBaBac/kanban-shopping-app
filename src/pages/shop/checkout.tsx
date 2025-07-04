@@ -59,6 +59,7 @@ const CheckoutPage = () => {
     methodSelected: string;
   }>();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<CartItemModel[]>([]);
 
   const carts: CartItemModel[] = useSelector(cartSelector);
   const user = useSelector(authSelector);
@@ -68,10 +69,10 @@ const CheckoutPage = () => {
   const [subtotal, setSubtotal] = useState(0);
 
   useEffect(() => {
-    const total = carts.reduce((a, b) => a + b.count * b.price, 0);
+    const total = selectedItems.reduce((a, b) => a + b.count * b.price, 0);
     setSubtotal(total);
 
-    if (discountValue && carts.length > 0) {
+    if (discountValue && selectedItems.length > 0) {
       setGrandTotal(
         discountValue.type === "percent"
           ? Math.ceil(total - total * (discountValue.value / 100))
@@ -80,7 +81,7 @@ const CheckoutPage = () => {
     } else {
       setGrandTotal(total);
     }
-  }, [discountValue, carts]);
+  }, [discountValue, selectedItems]);
 
   const handleCheckDiscountCode = async () => {
     setIsCheckingCode(true);
@@ -127,12 +128,21 @@ const CheckoutPage = () => {
     switch (currentStep) {
       case 0:
         return (
-          <ShipingAddress
-            onSelectAddress={(val) => {
-              setPaymentDetail({ ...paymentDetail, address: val });
-              setCurrentStep(1);
-            }}
-          />
+          <>
+            <Button
+              type="default"
+              onClick={() => setCurrentStep(undefined)}
+              style={{ marginBottom: 16 }}
+            >
+              Back
+            </Button>
+            <ShipingAddress
+              onSelectAddress={(val) => {
+                setPaymentDetail({ ...paymentDetail, address: val });
+                setCurrentStep(1);
+              }}
+            />
+          </>
         );
       case 1:
         return (
@@ -156,7 +166,7 @@ const CheckoutPage = () => {
                 )}
               </Title>
               <List
-                dataSource={carts}
+                dataSource={selectedItems}
                 renderItem={(item) => (
                   <List.Item key={item.id}>
                     <List.Item.Meta
@@ -218,19 +228,22 @@ const CheckoutPage = () => {
           </>
         );
       default:
-        return <ListCart />;
+        return <ListCart onSelectItems={setSelectedItems} />;
     }
   };
 
   const handlePaymentOrder = async () => {
     const method = paymentMethod?.methodSelected ?? "";
-
+    const body = {
+      addressId: paymentDetail?.address?.id,
+      items: selectedItems,
+    };
     // If it's VNPay, call the payment API and open the URL
     if (method === "vnpay") {
       try {
         const res: any = await handleAPI(
           `/payment/create?amount=${grandTotal}`,
-          {},
+          body,
           "post"
         );
 
@@ -251,21 +264,46 @@ const CheckoutPage = () => {
     setIsLoading(true);
     try {
       console.log("method", method);
-      const body = {
-        paymentType: method,
-        items: carts,
-      };
-      const res: any = await handleAPI("/orders", body);
+      await handleAPI(`/orders/create?paymentType=${method}`, body, "post");
       Modal.success({
         title: "Success",
         content: "Thank you for your order, it is being processed",
         onOk: () => {
-          router.push("/");
+          router.push("/profile?tab=orders");
           dispatch(removeCarts());
         },
+        onCancel: () => {
+          router.push("/shop");
+        },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+
+      // Handle specific error codes from backend
+      if (error?.code === 1021) {
+        message.error(
+          "Some items in your cart are out of stock. Please check your cart and try again."
+        );
+        // Optionally refresh cart data or redirect to cart page
+        router.push("/shop");
+      } else if (error?.code === 1031) {
+        message.error(
+          "Shipping address not found. Please select a valid address."
+        );
+        setCurrentStep(0); // Go back to address selection
+      } else if (error?.code === 1022) {
+        message.error("Promotion code has already been used.");
+      } else if (error?.code === 1023) {
+        message.error("Promotion is out of stock.");
+      } else if (error?.code === 1024) {
+        message.error("Promotion has expired.");
+      } else if (error?.message) {
+        message.error(error.message);
+      } else {
+        message.error(
+          "An error occurred while processing your order. Please try again."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -281,36 +319,34 @@ const CheckoutPage = () => {
               <Steps
                 current={currentStep}
                 labelPlacement="vertical"
-                onChange={(val) => setCurrentStep(val)}
+                onChange={(val) => {
+                  if (val <= (currentStep ?? 0)) {
+                    setCurrentStep(val);
+                  }
+                }}
                 items={[
                   {
                     title: "Address",
                     icon: (
-                      <Button
-                        icon={<HiHome size={18} />}
-                        type={currentStep === 0 ? "primary" : `text`}
-                        onClick={() => setCurrentStep(0)}
-                      />
+                      <span>
+                        <HiHome size={18} />
+                      </span>
                     ),
                   },
                   {
                     title: "Payment Method",
                     icon: (
-                      <Button
-                        icon={<BiCreditCard size={20} />}
-                        type={currentStep === 1 ? "primary" : `text`}
-                        onClick={() => setCurrentStep(1)}
-                      />
+                      <span>
+                        <BiCreditCard size={20} />
+                      </span>
                     ),
                   },
                   {
                     title: "Reviews",
                     icon: (
-                      <Button
-                        icon={<FaStar size={18} />}
-                        type={currentStep === 2 ? "primary" : `text`}
-                        onClick={undefined}
-                      />
+                      <span>
+                        <FaStar size={18} />
+                      </span>
                     ),
                   },
                 ]}
@@ -324,7 +360,7 @@ const CheckoutPage = () => {
               title="Subtotal"
               extra={
                 <Typography.Title level={3} className="m-0">
-                  {VND.format(carts.reduce((a, b) => a + b.count * b.price, 0))}
+                  {VND.format(subtotal)}
                 </Typography.Title>
               }
             >
@@ -375,20 +411,26 @@ const CheckoutPage = () => {
                 </Space>
               </div>
               <div className="mt-3">
-                <Button
-                  disabled={
-                    currentStep !== undefined &&
-                    (!paymentMethod || !paymentDetail)
-                  }
-                  type="primary"
-                  onClick={() =>
-                    !currentStep ? setCurrentStep(0) : handlePaymentOrder()
-                  }
-                  size="large"
-                  style={{ width: "100%" }}
-                >
-                  Process to Checkout
-                </Button>
+                {currentStep === undefined && selectedItems.length > 0 && (
+                  <Button
+                    type="primary"
+                    onClick={() => setCurrentStep(0)}
+                    size="large"
+                    style={{ width: "100%", marginTop: 16 }}
+                  >
+                    Continue
+                  </Button>
+                )}
+                {selectedItems.length > 0 && currentStep === 2 && (
+                  <Button
+                    type="primary"
+                    onClick={handlePaymentOrder}
+                    size="large"
+                    style={{ width: "100%" }}
+                  >
+                    Process to Checkout
+                  </Button>
+                )}
               </div>
             </Card>
           </div>

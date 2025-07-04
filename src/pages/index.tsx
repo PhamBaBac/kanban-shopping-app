@@ -1,94 +1,110 @@
 /** @format */
 
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import HomePage from './HomePage';
-import { appInfo } from '@/constants/appInfos';
-import { PromotionModel } from '@/models/PromotionModel';
-import { CategoyModel, ProductModel } from '@/models/Products';
-import handleAPI from '@/apis/handleApi';
-import { Empty, Skeleton } from 'antd';
+import React, { useEffect, useState } from "react";
+import HomePage from "./HomePage";
+import { appInfo } from "@/constants/appInfos";
+import { PromotionModel } from "@/models/PromotionModel";
+import { CategoyModel, ProductModel } from "@/models/Products";
+import handleAPI from "@/apis/handleApi";
+import { Skeleton } from "antd";
 
-const Home = (data: any) => {
-	const pageProps = data.pageProps;
+const Home = () => {
+  const [promotions, setPromotions] = useState<PromotionModel[]>([]);
+  const [categories, setCategories] = useState<CategoyModel[]>([]);
+  const [bestSellers, setBestSellers] = useState<ProductModel[]>([]);
+  const [recommendations, setRecommendations] = useState<ProductModel[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-	const [promotions, setPromotions] = useState<PromotionModel[]>([]);
-	const [categories, setCategories] = useState<CategoyModel[]>([]);
-	const [bestSellers, setBestSellers] = useState<ProductModel[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-	useEffect(() => {
-		getDatas();
-	}, []);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [promRes, catRes, bestSellerRes, idRes]: any = await Promise.all([
+        handleAPI("/promotions"),
+        handleAPI("/categories/all"),
+        handleAPI("/products/bestSellers"),
+        // handleAPI("/ai/recommendations"),
+      ]);
 
-	const getDatas = async () => {
-		setIsLoading(true);
-		try {
-			await getPromotions();
-			await getCategories();
-			await getProducts();
-		} catch (error) {
-			console.log(error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+      setPromotions(promRes?.result || []);
+      setCategories(catRes?.result || []);
+      setBestSellers(bestSellerRes?.result || []);
 
-	const getPromotions = async () => {
-		const res: any = await handleAPI("/promotions");
+      const ids: string[] = idRes?.result || [];
+      // const recRes: any = await handleAPI(
+      //   "/products/listProductRecommendations",
+      //   ids,
+      //   "post"
+      // );
+      // if (ids.length > 0) {
+      //   setRecommendations(recRes?.result || []);
+      // }
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu trang chủ:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-		res && res.result && setPromotions(res.result);
-	};
-
-	const getCategories = async () => {
-		const res: any = await handleAPI(`/categories/all` );
-		res && res.result && setCategories(res.result);
-	};
-
-	const getProducts = async () => {
-		const res: any = await handleAPI(`/products/page?page=1&pageSize=10`);
-		console.log(res);
-		res && res.result.data && setBestSellers(res.result.data);
-	};
-
-	return isLoading ? (
-		<Skeleton />
-	) : (
-		<HomePage
-			promotions={promotions}
-			categories={categories}
-			bestSellers={bestSellers}
-		/>
-	);
+  return isLoading ? (
+    <Skeleton />
+  ) : (
+    <HomePage
+      promotions={promotions}
+      categories={categories}
+      bestSellers={bestSellers}
+      recommendations={recommendations}
+    />
+  );
 };
 
 export default Home;
 
 export const getStaticProps = async () => {
-	try {
-		const res = await fetch(`${appInfo.baseUrl}/promotions`);
-		const resultPromotions = await res.json();
+  try {
+    const [promRes, catRes, bestSellerRes] = await Promise.all([
+      fetch(`${appInfo.baseUrl}/promotions`).then((res) => res.json()),
+      fetch(`${appInfo.baseUrl}/categories/all`).then((res) => res.json()),
+      fetch(`${appInfo.baseUrl}/products/bestSellers`).then((res) =>
+        res.json()
+      ),
+      // fetch(`${appInfo.baseUrl}/ai/recommendations`).then((res) => res.json()),
+    ]);
 
-		const resCats = await fetch(`${appInfo.baseUrl}/categories/all`);
-		const resultCats = await resCats.json();
+    // const ids: string[] = idRes?.result || [];
 
-		const resBestSeller = await fetch(
-			`${appInfo.baseUrl}/products/page?page=1&pageSize=10`
-		);
-		const resultsSeller = await resBestSeller.json();
+    let recRes = { result: [] };
+    // if (ids.length > 0) {
+    //   const recResponse = await fetch(
+    //     `${appInfo.baseUrl}/products/listProductRecommendations`,
+    //     {
+    //       method: "POST",
+    //       body: JSON.stringify(ids),
+    //       headers: { "Content-Type": "application/json" },
+    //     }
+    //   );
+    //   recRes = await recResponse.json();
+    // }
 
-		return {
+    return {
       props: {
-        promotions: resultPromotions.result,
-        categories: resultCats.result,
-        bestSellers: resultsSeller.result.data,
+        promotions: promRes.result || [],
+        categories: catRes.result || [],
+        bestSellers: bestSellerRes.result || [],
+        listProductRecommendations: recRes.result || [],
       },
     };
-	} catch (error) {
-		return {
-			props: {
-				data: [],
-			},
-		};
-	}
+  } catch (err) {
+    return {
+      props: {
+        promotions: [],
+        categories: [],
+        bestSellers: [],
+        listProductRecommendations: [],
+      },
+    };
+  }
 };

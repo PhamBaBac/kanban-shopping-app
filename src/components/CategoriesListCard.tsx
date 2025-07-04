@@ -36,8 +36,6 @@ const CategoriesListCard = (props: Props) => {
     setWidth(window.innerWidth);
   }, []);
 
-  const isShowCategories = ["may-tinh--laptop", "dien-thoai--phu-kien"];
-
   useEffect(() => {
     getCategories();
   }, []);
@@ -61,7 +59,7 @@ const CategoriesListCard = (props: Props) => {
     const values: CategoyModel[] = [];
     items.forEach((item) => {
       const vals = datas.filter((element) => element.parentId === item.id);
-      if (vals.length > 0 && isShowCategories.includes(item.slug)) {
+      if (vals.length > 0) {
         values.push({ ...item, children: vals });
       }
     });
