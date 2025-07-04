@@ -74,27 +74,18 @@ export const getStaticProps = async () => {
       // fetch(`${appInfo.baseUrl}/ai/recommendations`).then((res) => res.json()),
     ]);
 
-    // const ids: string[] = idRes?.result || [];
-
     let recRes = { result: [] };
-    // if (ids.length > 0) {
-    //   const recResponse = await fetch(
-    //     `${appInfo.baseUrl}/products/listProductRecommendations`,
-    //     {
-    //       method: "POST",
-    //       body: JSON.stringify(ids),
-    //       headers: { "Content-Type": "application/json" },
-    //     }
-    //   );
-    //   recRes = await recResponse.json();
-    // }
 
     return {
       props: {
-        promotions: promRes.result || [],
-        categories: catRes.result || [],
-        bestSellers: bestSellerRes.result || [],
-        listProductRecommendations: recRes.result || [],
+        promotions: Array.isArray(promRes.result) ? promRes.result : [],
+        categories: Array.isArray(catRes.result) ? catRes.result : [],
+        bestSellers: Array.isArray(bestSellerRes.result)
+          ? bestSellerRes.result
+          : [],
+        listProductRecommendations: Array.isArray(recRes.result)
+          ? recRes.result
+          : [],
       },
     };
   } catch (err) {

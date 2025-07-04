@@ -1,6 +1,7 @@
 /** @format */
 
-import AddressModal from './AddressModal';
-import TransationSubProductModal from './TransationSubProductModal';
+import AddressModal from "./AddressModal";
+import TransationSubProductModal from "./TransationSubProductModal";
+import OrderDetailModal from "./OrderDetailModal";
 
-export { TransationSubProductModal, AddressModal };
+export { TransationSubProductModal, AddressModal, OrderDetailModal };

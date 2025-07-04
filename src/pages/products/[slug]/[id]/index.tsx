@@ -563,13 +563,16 @@ export const getStaticProps = async (context: any) => {
       `${appInfo.baseUrl}/products/${context.params.slug}/${context.params.id}`
     );
     const result = await res.json();
+    if (!result.result) {
+      return { notFound: true };
+    }
     return {
       props: {
         product: result.result,
       },
     };
   } catch (error) {
-    return { props: { product: null } };
+    return { notFound: true };
   }
 };
 

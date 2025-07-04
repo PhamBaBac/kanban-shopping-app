@@ -11,9 +11,19 @@ import {
   Avatar,
   Card,
   Divider,
+  message,
 } from "antd";
 import { VND } from "@/utils/handleCurrency";
-import { DownOutlined, UpOutlined, EyeOutlined } from "@ant-design/icons";
+import {
+  DownOutlined,
+  UpOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
+import handleAPI from "@/apis/handleApi";
+import { useRouter } from "next/router";
+import { OrderDetailModal } from "@/modals";
 
 interface OrderItemProps {
   order: {
@@ -30,149 +40,276 @@ interface OrderItemProps {
     totalAmount: number;
     orderStatus: string;
   };
+  onOrderDeleted?: (orderId: string) => void;
+  onOrderStatusChanged?: (orderId: string, newStatus: string) => void;
 }
 
-const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
+const OrderItem: React.FC<OrderItemProps> = ({
+  order,
+  onOrderDeleted,
+  onOrderStatusChanged,
+}) => {
+  const router = useRouter();
+  const [orderDetailVisible, setOrderDetailVisible] = useState(false);
+  const [orderDetail, setOrderDetail] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const getOrderStatusColor = (status: string) => {
     if (!status) return "default";
-
-    switch (status.toLowerCase()) {
-      case "delivered":
+    switch (status.toUpperCase()) {
+      case "COMPLETED":
         return "success";
-      case "shipping":
+      case "PROCESSING":
         return "processing";
-      case "confirmed":
+      case "PENDING":
         return "warning";
-      case "pending":
-        return "default";
-      case "cancelled":
+      case "CANCELLED":
         return "error";
+      case "REFUNDED":
+        return "default";
       default:
         return "default";
     }
   };
 
+  const getOrderStatusText = (status: string) => {
+    if (!status) return "";
+    return status.charAt(0) + status.slice(1).toLowerCase();
+  };
+
+  const getOrderStatusDescription = (status: string) => {
+    if (!status) return "";
+    switch (status.toUpperCase()) {
+      case "PENDING":
+        return "Waiting for confirmation";
+      case "PROCESSING":
+        return "Order is being processed";
+      case "COMPLETED":
+        return "Order completed";
+      case "CANCELLED":
+        return "Order cancelled";
+      case "REFUNDED":
+        return "Order refunded";
+      default:
+        return "";
+    }
+  };
+
+  const updateOrderStatus = async () => {
+    try {
+      setCancelLoading(true);
+      await handleAPI(`/orders/${order.orderId}/cancel`, {}, "patch");
+      message.success("Order status updated successfully");
+      // Gọi callback để thông báo cho component cha
+      onOrderStatusChanged?.(order.orderId, "CANCELLED");
+    } catch (error) {
+      message.error("Failed to update order status");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleViewOrderDetails = async () => {
+    try {
+      setLoading(true);
+      const response: any = await handleAPI(
+        `/orders/${order.orderId}`,
+        {},
+        "get"
+      );
+      if (response?.result) {
+        setOrderDetail(response.result);
+        setOrderDetailVisible(true);
+      }
+    } catch (error) {
+      message.error("Failed to fetch order details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseOrderDetail = () => {
+    setOrderDetailVisible(false);
+    setOrderDetail(null);
+  };
+
+  const handleDeleteOrder = async () => {
+    try {
+      setDeleteLoading(true);
+      await handleAPI(`/orders/${order.orderId}`, {}, "delete");
+      message.success("Order deleted successfully");
+      // Gọi callback để thông báo cho component cha
+      onOrderDeleted?.(order.orderId);
+    } catch (error) {
+      message.error("Failed to delete order");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
-    <Card style={{ marginBottom: "16px" }} bodyStyle={{ padding: "16px" }}>
-      {/* Order Summary */}
-      <Row
-        justify="space-between"
-        align="middle"
-        style={{ marginBottom: "12px" }}
-      >
-        <Col>
-          <Space direction="vertical" size="small">
-            <Typography.Text strong>
-              Order #{order.orderId.slice(0, 8)}...
-            </Typography.Text>
-            <Typography.Text type="secondary">
-              {order.items.length} product{order.items.length > 1 ? "s" : ""}
-            </Typography.Text>
-          </Space>
-        </Col>
-        <Col>
-          <Space size="middle">
-            <Tag color={getOrderStatusColor(order.orderStatus)}>
-              {order.orderStatus || "PENDING"}
-            </Tag>
+    <>
+      <Card style={{ marginBottom: "16px" }} bodyStyle={{ padding: "16px" }}>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: "12px" }}
+        ></Row>
+        {order.items.length === 1 ? (
+          // Nếu chỉ có 1 sản phẩm, hiển thị luôn
+          <div
+            style={{
+              background: "#fafafa",
+            }}
+          >
+            <Row gutter={[12, 12]} align="middle">
+              <Col>
+                <Avatar src={order.items[0].image} size={80} shape="square" />
+              </Col>
+              <Col flex="auto">
+                <Space direction="vertical" size="small">
+                  <Typography.Text
+                    strong
+                    style={{
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: 400,
+                    }}
+                  >
+                    {order.items[0].title}
+                  </Typography.Text>
+                  <Typography.Text type="secondary">
+                    Size: {order.items[0].size}
+                  </Typography.Text>
+                  <Typography.Text type="secondary">
+                    Qty: {order.items[0].qty}
+                  </Typography.Text>
+                </Space>
+              </Col>
+              <Col style={{ marginRight: "10px" }}>
+                <Typography.Text strong>
+                  {VND.format(order.items[0].totalPrice)}
+                </Typography.Text>
+              </Col>
+            </Row>
+          </div>
+        ) : (
+          <>
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              {order.items.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: "12px",
+                    background: "#fafafa",
+                  }}
+                >
+                  <Row gutter={[12, 12]} align="middle">
+                    <Col>
+                      <Avatar src={item.image} size={80} shape="square" />
+                    </Col>
+                    <Col flex="auto">
+                      <Space direction="vertical" size="small">
+                        <Typography.Text
+                          strong
+                          style={{
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: 400,
+                          }}
+                        >
+                          {item.title}
+                        </Typography.Text>
+                        <Typography.Text type="secondary">
+                          Size: {item.size}
+                        </Typography.Text>
+                        <Typography.Text type="secondary">
+                          Qty: {item.qty}
+                        </Typography.Text>
+                      </Space>
+                    </Col>
+                    <Col>
+                      <Typography.Text strong>
+                        {VND.format(item.totalPrice)}
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                </div>
+              ))}
+            </Space>
+          </>
+        )}
+
+        <Row justify="space-between" style={{ marginTop: "12px" }}>
+          <Col>
+            <Space size="middle">
+              <Tag color={getOrderStatusColor(order.orderStatus)}>
+                {getOrderStatusText(order.orderStatus) || "PENDING"}
+              </Tag>
+              <Typography.Text type="secondary">
+                {getOrderStatusDescription(order.orderStatus)}
+              </Typography.Text>
+            </Space>
+          </Col>
+          <Space>
             <Button
-              type="text"
+              type="default"
               size="small"
-              icon={isExpanded ? <UpOutlined /> : <DownOutlined />}
-              onClick={() => setIsExpanded(!isExpanded)}
+              icon={<EyeOutlined />}
+              onClick={handleViewOrderDetails}
+              loading={loading}
             >
-              {isExpanded ? "Hide" : "View"}
+              View Details
             </Button>
-          </Space>
-        </Col>
-      </Row>
 
-      {/* Total Amount */}
-      <Row
-        justify="space-between"
-        align="middle"
-        style={{ marginBottom: "12px" }}
-      >
-        <Col>
-          <Typography.Text type="secondary">Total:</Typography.Text>
-        </Col>
-        <Col>
-          <Typography.Text strong style={{ fontSize: 16 }}>
-            {VND.format(order.totalAmount)}
-          </Typography.Text>
-        </Col>
-      </Row>
+            {order.orderStatus?.toLowerCase() === "delivered" && (
+              <Button type="primary" size="small">
+                Write Review
+              </Button>
+            )}
 
-      {/* Products List - Collapsible */}
-      {isExpanded && (
-        <>
-          <Divider style={{ margin: "12px 0" }} />
-          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-            {order.items.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  padding: "12px",
-                  border: "1px solid #f0f0f0",
-                  borderRadius: "6px",
-                  background: "#fafafa",
-                }}
+            {order.orderStatus?.toLowerCase() === "pending" && (
+              <Button
+                type="primary"
+                danger
+                size="small"
+                onClick={() => updateOrderStatus()}
+                icon={<CloseOutlined />}
+                loading={cancelLoading}
               >
-                <Row gutter={[12, 12]} align="middle">
-                  <Col>
-                    <Avatar src={item.image} size={50} shape="square" />
-                  </Col>
-                  <Col flex="auto">
-                    <Space direction="vertical" size="small">
-                      <Typography.Text
-                        strong
-                        style={{
-                          display: "block",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          maxWidth: 300,
-                        }}
-                      >
-                        {item.title}
-                      </Typography.Text>
-                      <Typography.Text type="secondary">
-                        Size: {item.size} | Qty: {item.qty}
-                      </Typography.Text>
-                    </Space>
-                  </Col>
-                  <Col>
-                    <Typography.Text strong>
-                      {VND.format(item.totalPrice)}
-                    </Typography.Text>
-                  </Col>
-                </Row>
-              </div>
-            ))}
-          </Space>
-        </>
-      )}
+                Cancel Order
+              </Button>
+            )}
 
-      {/* Action Buttons */}
-      <Row justify="end" style={{ marginTop: "12px" }}>
-        <Space>
-          <Button type="default" size="small" icon={<EyeOutlined />}>
-            View Details
-          </Button>
-          {order.orderStatus?.toLowerCase() === "delivered" ? (
-            <Button type="primary" size="small">
-              Write Review
-            </Button>
-          ) : order.orderStatus?.toLowerCase() === "pending" ? (
-            <Button type="primary" danger size="small">
-              Cancel Order
-            </Button>
-          ) : null}
-        </Space>
-      </Row>
-    </Card>
+            {(order.orderStatus?.toLowerCase() === "cancelled" ||
+              order.orderStatus?.toLowerCase() === "refunded" ||
+              order.orderStatus?.toLowerCase() === "completed") && (
+              <Button
+                type="primary"
+                danger
+                size="small"
+                onClick={() => handleDeleteOrder()}
+                icon={<DeleteOutlined />}
+                loading={deleteLoading}
+              >
+                Delete Order
+              </Button>
+            )}
+          </Space>
+        </Row>
+      </Card>
+
+      <OrderDetailModal
+        visible={orderDetailVisible}
+        onClose={handleCloseOrderDetail}
+        orderDetail={orderDetail}
+      />
+    </>
   );
 };
 

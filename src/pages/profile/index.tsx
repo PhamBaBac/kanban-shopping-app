@@ -81,6 +81,31 @@ const ProfilePage = () => {
     setOrders(groupedOrders);
   };
 
+  // Callback khi order bị xóa
+  const handleOrderDeleted = (orderId: string) => {
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.orderId !== orderId)
+    );
+  };
+
+  // Callback khi trạng thái order thay đổi
+  const handleOrderStatusChanged = (orderId: string, newStatus: string) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.orderId === orderId
+          ? {
+              ...order,
+              orderStatus: newStatus,
+              items: order.items.map((item: any) => ({
+                ...item,
+                orderStatus: newStatus,
+              })),
+            }
+          : order
+      )
+    );
+  };
+
   const profileTabs: TabsProps["items"] = [
     {
       key: "edit",
@@ -95,7 +120,12 @@ const ProfilePage = () => {
       children: (
         <div className="space-y-4">
           {orders.map((order: any, idx: number) => (
-            <OrderItem key={order.orderId || idx} order={order} />
+            <OrderItem
+              key={order.orderId || idx}
+              order={order}
+              onOrderDeleted={handleOrderDeleted}
+              onOrderStatusChanged={handleOrderStatusChanged}
+            />
           ))}
         </div>
       ),

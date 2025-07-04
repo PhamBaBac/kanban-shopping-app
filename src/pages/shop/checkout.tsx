@@ -248,7 +248,8 @@ const CheckoutPage = () => {
         );
 
         if (res?.result?.paymentUrl) {
-          window.open(res.result.paymentUrl, "_blank");
+          window.location.href = res.result.paymentUrl;
+          dispatch(removeCarts());
           return; // Do not proceed with order creation
         } else {
           message.error("Could not create VNPay payment link.");
@@ -264,18 +265,21 @@ const CheckoutPage = () => {
     setIsLoading(true);
     try {
       console.log("method", method);
-      await handleAPI(`/orders/create?paymentType=${method}`, body, "post");
-      Modal.success({
-        title: "Success",
-        content: "Thank you for your order, it is being processed",
+      const orderResult: any = await handleAPI(
+        `/orders/create?paymentType=${method}`,
+        body,
+        "post"
+      );
+      //nhan Ok vao order con nhan cancel vae home
+      Modal.confirm({
+        title: "Order created successfully",
+        content: "Do you want to go to the order page?",
         onOk: () => {
-          router.push("/profile?tab=orders");
-          dispatch(removeCarts());
-        },
-        onCancel: () => {
-          router.push("/shop");
+          router.push(`/profile?tab=orders`);
         },
       });
+
+      dispatch(removeCarts());
     } catch (error: any) {
       console.log(error);
 
