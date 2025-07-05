@@ -20,11 +20,16 @@ import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { BsArrowDown, BsFilterLeft } from "react-icons/bs";
 import { FaElementor } from "react-icons/fa";
+import ProductList from "@/components/ProductList";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const { Sider, Content } = Layout;
 
-const ShopPage = () => {
-  const [filterValues, setFilterValues] = useState<FilterValues>({});
+const ShopPageContent = () => {
+  const filterValues = useSelector(
+    (state: RootState) => state.filter.filterValues
+  );
   const [api, setApi] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<ProductModel[]>([]);
@@ -37,13 +42,9 @@ const ShopPage = () => {
 
   useEffect(() => {
     if (catId) {
-      const currentCategories = filterValues.catIds || [];
-      if (!currentCategories.includes(catId)) {
-        setFilterValues((prev) => ({
-          ...prev,
-          catIds: [...currentCategories, catId],
-        }));
-      }
+      // Đã chuyển sang Redux, không dùng setFilterValues ở đây nữa
+      // Nếu muốn filter theo catId, hãy dispatch setFilterValues trong FilterPanel hoặc tại đây nếu thực sự cần
+      // Có thể bỏ toàn bộ useEffect này nếu không cần tự động filter theo catId
     }
   }, [catId]);
 
@@ -98,10 +99,6 @@ const ShopPage = () => {
     }
   };
 
-  const FilterSidebar = () => (
-    <FilterPanel onFilter={setFilterValues} values={filterValues} />
-  );
-
   return (
     <div className="container">
       <div className="mt-4 mb-3">
@@ -123,10 +120,10 @@ const ShopPage = () => {
           className="d-none d-lg-block"
           style={{ background: "transparent", paddingRight: 20 }}
         >
-          <FilterSidebar />
+          <FilterPanel />
         </Sider>
 
-        <Content style={{ padding: "0 24px", minHeight: 280 }}>
+        <Content style={{ padding: "0 24px", minHeight: 850 }}>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <Button
               className="d-lg-none"
@@ -146,11 +143,7 @@ const ShopPage = () => {
             <Skeleton active />
           ) : products.length > 0 ? (
             <>
-              <div className="row">
-                {products.map((item: ProductModel) => (
-                  <ProductItem item={item} key={item.id} />
-                ))}
-              </div>
+              <ProductList products={products} />
               <div className="mt-4 mb-4" style={{ textAlign: "right" }}>
                 <Pagination
                   current={page}
@@ -174,10 +167,10 @@ const ShopPage = () => {
         open={drawerVisible}
         className="d-lg-none"
       >
-        <FilterSidebar />
+        <FilterPanel />
       </Drawer>
     </div>
   );
 };
 
-export default ShopPage;
+export default ShopPageContent;

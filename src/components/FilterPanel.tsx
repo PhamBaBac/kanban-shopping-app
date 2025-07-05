@@ -15,6 +15,9 @@ import {
   theme,
 } from "antd";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setFilterValues } from "@/redux/reducers/filterSlice";
+import { RootState } from "@/redux/store";
 
 const { Title } = Typography;
 const { useToken } = theme;
@@ -26,12 +29,11 @@ export interface FilterValues {
   sizes?: string[];
 }
 
-interface Props {
-  values?: FilterValues;
-  onFilter: (vals: FilterValues) => void;
-}
-
-const FilterPanel = ({ onFilter, values }: Props) => {
+const FilterPanel = () => {
+  const dispatch = useDispatch();
+  const filterValues = useSelector(
+    (state: RootState) => state.filter.filterValues
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoyModel[]>([]);
   const [filterData, setFilterData] = useState<{
@@ -91,10 +93,10 @@ const FilterPanel = ({ onFilter, values }: Props) => {
   };
 
   useEffect(() => {
-    if (values) {
-      form.setFieldsValue(values);
+    if (filterValues) {
+      form.setFieldsValue(filterValues);
     }
-  }, [values, form]);
+  }, [filterValues, form]);
 
   const handleToggle = (key: string) => {
     setExpandedKeys((prev) =>
@@ -155,9 +157,9 @@ const FilterPanel = ({ onFilter, values }: Props) => {
     >
       <Form
         form={form}
-        onValuesChange={(_, allValues) => onFilter(allValues)}
+        onValuesChange={(_, allValues) => dispatch(setFilterValues(allValues))}
         layout="vertical"
-        initialValues={values}
+        initialValues={filterValues}
       >
         <Collapse defaultActiveKey={["1"]} ghost expandIconPosition="end">
           <Collapse.Panel
