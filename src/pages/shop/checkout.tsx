@@ -94,13 +94,10 @@ const CheckoutPage = () => {
         },
         "post"
       );
-      console.log("resCode", res);
 
       if (res.result === true) {
         // If applicable, call the API to get discount information
-        console.log("discountCode", discountCode);
         const detail: any = await handleAPI(`/promotions/code/${discountCode}`);
-        console.log("detail", detail);
 
         setDiscountValue({
           value: detail.result.numOfAvailable,
@@ -264,7 +261,6 @@ const CheckoutPage = () => {
 
     setIsLoading(true);
     try {
-      console.log("method", method);
       const orderResult: any = await handleAPI(
         `/orders/create?paymentType=${method}`,
         body,

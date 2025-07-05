@@ -24,6 +24,7 @@ import {
 import handleAPI from "@/apis/handleApi";
 import { useRouter } from "next/router";
 import { OrderDetailModal } from "@/modals";
+import Reviews from "./Reviews";
 
 interface OrderItemProps {
   order: {
@@ -36,18 +37,22 @@ interface OrderItemProps {
       price: number;
       totalPrice: number;
       orderStatus: string;
+      subProductId: string;
+      isReviewed?: boolean;
     }>;
     totalAmount: number;
     orderStatus: string;
   };
   onOrderDeleted?: (orderId: string) => void;
   onOrderStatusChanged?: (orderId: string, newStatus: string) => void;
+  onReviewSubmitted?:  () => void;
 }
 
 const OrderItem: React.FC<OrderItemProps> = ({
   order,
   onOrderDeleted,
   onOrderStatusChanged,
+  onReviewSubmitted,
 }) => {
   const router = useRouter();
   const [orderDetailVisible, setOrderDetailVisible] = useState(false);
@@ -55,6 +60,11 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [openReviewProductId, setOpenReviewProductId] = useState<string | null>(
+    null
+  );
+
   const getOrderStatusColor = (status: string) => {
     if (!status) return "default";
     switch (status.toUpperCase()) {
@@ -157,13 +167,23 @@ const OrderItem: React.FC<OrderItemProps> = ({
           style={{ marginBottom: "12px" }}
         ></Row>
         {order.items.length === 1 ? (
-          // Nếu chỉ có 1 sản phẩm, hiển thị luôn
           <div
             style={{
               background: "#fafafa",
+              paddingLeft: "12px",
+              paddingTop: "12px",
+              paddingBottom: "12px",
             }}
           >
-            <Row gutter={[12, 12]} align="middle">
+            <Row
+              gutter={[12, 12]}
+              align="top"
+              style={{
+                minHeight: "100px",
+                display: "flex",
+                alignItems: "flex-start",
+              }}
+            >
               <Col>
                 <Avatar src={order.items[0].image} size={80} shape="square" />
               </Col>
@@ -189,58 +209,171 @@ const OrderItem: React.FC<OrderItemProps> = ({
                   </Typography.Text>
                 </Space>
               </Col>
-              <Col style={{ marginRight: "10px" }}>
-                <Typography.Text strong>
-                  {VND.format(order.items[0].totalPrice)}
-                </Typography.Text>
+              <Col style={{ textAlign: "right", marginRight: "10px" }}>
+                <div style={{ marginTop: "12px" }}>
+                  <Typography.Text strong>
+                    {VND.format(order.items[0].totalPrice)}
+                  </Typography.Text>
+                  <div
+                    style={{
+                      minHeight: "36px",
+                      marginTop: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {order.orderStatus?.toLowerCase() === "completed" &&
+                      !order.items[0].isReviewed && (
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={() =>
+                            setOpenReviewProductId(
+                              openReviewProductId ===
+                                order.items[0].subProductId
+                                ? null
+                                : order.items[0].subProductId
+                            )
+                          }
+                        >
+                          {openReviewProductId === order.items[0].subProductId
+                            ? "Hide Review"
+                            : "Write Review"}
+                        </Button>
+                      )}
+                    {order.orderStatus?.toLowerCase() === "completed" &&
+                      order.items[0].isReviewed && (
+                        <span style={{ color: "green", fontSize: "12px" }}>
+                          Bạn đã đánh giá sản phẩm này
+                        </span>
+                      )}
+                  </div>
+                </div>
               </Col>
             </Row>
+            {order.orderStatus?.toLowerCase() === "completed" &&
+              openReviewProductId === order.items[0].subProductId &&
+              !order.items[0].isReviewed && (
+                <div style={{ marginTop: 16 }}>
+                  <Reviews
+                    subProductId={order.items[0].subProductId}
+                    orderId={order.orderId}
+                    isReviewed={order.items[0].isReviewed}
+                  />
+                </div>
+              )}
           </div>
         ) : (
           <>
             <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-              {order.items.map((item, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: "12px",
-                    background: "#fafafa",
-                  }}
-                >
-                  <Row gutter={[12, 12]} align="middle">
-                    <Col>
-                      <Avatar src={item.image} size={80} shape="square" />
-                    </Col>
-                    <Col flex="auto">
-                      <Space direction="vertical" size="small">
-                        <Typography.Text
-                          strong
-                          style={{
-                            display: "block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            maxWidth: 400,
-                          }}
-                        >
-                          {item.title}
-                        </Typography.Text>
-                        <Typography.Text type="secondary">
-                          Size: {item.size}
-                        </Typography.Text>
-                        <Typography.Text type="secondary">
-                          Qty: {item.qty}
-                        </Typography.Text>
-                      </Space>
-                    </Col>
-                    <Col>
-                      <Typography.Text strong>
-                        {VND.format(item.totalPrice)}
-                      </Typography.Text>
-                    </Col>
-                  </Row>
-                </div>
-              ))}
+              {order.items.map((item, index) => {
+                const isLast = index === order.items.length - 1;
+                console.log("item", item);
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      padding: "12px",
+                      paddingTop: "12px",
+                      background: "#fafafa",
+                      marginBottom: isLast ? 0 : 8,
+                    }}
+                  >
+                    <Row
+                      gutter={[12, 12]}
+                      align="top"
+                      style={{
+                        minHeight: "100px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Col>
+                        <Avatar src={item.image} size={80} shape="square" />
+                      </Col>
+                      <Col flex="auto">
+                        <Space direction="vertical" size="small">
+                          <Typography.Text
+                            strong
+                            style={{
+                              display: "block",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              maxWidth: 400,
+                            }}
+                          >
+                            {item.title}
+                          </Typography.Text>
+                          <Typography.Text type="secondary">
+                            Size: {item.size}
+                          </Typography.Text>
+                          <Typography.Text type="secondary">
+                            Qty: {item.qty}
+                          </Typography.Text>
+                        </Space>
+                      </Col>
+                      <Col style={{ textAlign: "right", marginRight: "10px" }}>
+                        <div style={{ marginTop: "12px" }}>
+                          <Typography.Text strong>
+                            {VND.format(item.totalPrice)}
+                          </Typography.Text>
+                          <div
+                            style={{
+                              minHeight: "36px",
+                              marginTop: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            {order.orderStatus?.toLowerCase() === "completed" &&
+                              !item.isReviewed && (
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  onClick={() =>
+                                    setOpenReviewProductId(
+                                      openReviewProductId === item.subProductId
+                                        ? null
+                                        : item.subProductId
+                                    )
+                                  }
+                                >
+                                  {openReviewProductId === item.subProductId
+                                    ? "Hide Review"
+                                    : "Write Review"}
+                                </Button>
+                              )}
+                            {order.orderStatus?.toLowerCase() === "completed" &&
+                              item.isReviewed && (
+                                <span
+                                  style={{ color: "green", fontSize: "12px" }}
+                                >
+                                  Bạn đã đánh giá sản phẩm này
+                                </span>
+                              )}
+                          </div>
+                        </div>
+                      </Col>
+                    </Row>
+                    {order.orderStatus?.toLowerCase() === "completed" &&
+                      openReviewProductId === item.subProductId &&
+                      !item.isReviewed && (
+                        <div style={{ marginTop: 16 }}>
+                          <Reviews
+                            subProductId={item.subProductId}
+                            orderId={order.orderId}
+                            isReviewed={item.isReviewed}
+                            onReviewed={async () => {
+                              setOpenReviewProductId(null);
+                              await onReviewSubmitted?.();
+                            }}
+                          />
+                        </div>
+                      )}
+                  </div>
+                );
+              })}
             </Space>
           </>
         )}
@@ -266,12 +399,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
             >
               View Details
             </Button>
-
-            {order.orderStatus?.toLowerCase() === "delivered" && (
-              <Button type="primary" size="small">
-                Write Review
-              </Button>
-            )}
 
             {order.orderStatus?.toLowerCase() === "pending" && (
               <Button

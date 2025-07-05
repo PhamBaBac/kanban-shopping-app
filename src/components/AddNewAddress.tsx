@@ -34,7 +34,6 @@ const AddNewAddress = (props: Props) => {
     districts: [],
     wards: [],
   });
-  console.log("locationData", locationData);
   const [locationValues, setLocationValues] = useState<any>({
     ward: "",
     district: "",
@@ -131,7 +130,6 @@ const AddNewAddress = (props: Props) => {
 
       const val: any = {};
       val[url] = formattedData;
-      console.log("val", val);
 
       setLocationData({ ...locationData, ...val });
     } catch (error) {
@@ -213,7 +211,6 @@ const AddNewAddress = (props: Props) => {
     } else {
       setIsLoading(true);
       try {
-        console.log("datas", datas);
         const res: any = await handleAPI(
           `/addresses/${values ? `update-address?id=${values.id}` : "create"}`,
           datas,

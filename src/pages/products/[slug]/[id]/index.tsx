@@ -1,12 +1,7 @@
 /** @format */
 
 import handleAPI from "@/apis/handleApi";
-import {
-  CarouselImages,
-  ProductItem,
-  Reviews,
-  TabbarComponent,
-} from "@/components";
+import { CarouselImages, TabbarComponent } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
 import { appInfo } from "@/constants/appInfos";
 import { ProductModel, SubProductModel } from "@/models/Products";
@@ -17,11 +12,11 @@ import {
   CartItemModel,
   cartSelector,
   changeCount,
-  syncProducts,
 } from "@/redux/reducers/cartReducer";
 import { VND } from "@/utils/handleCurrency";
 import { getOrCreateSessionId } from "@/utils/session";
 import {
+  Avatar,
   Breadcrumb,
   Button,
   Empty,
@@ -33,7 +28,6 @@ import {
   Typography,
 } from "antd";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { IoAddSharp, IoHeartOutline } from "react-icons/io5";
@@ -44,17 +38,9 @@ import { useDispatch, useSelector } from "react-redux";
 const { Text, Paragraph, Title } = Typography;
 
 const ProductDetail = ({ pageProps }: any) => {
-  const {
-    product,
-  }: {
-    product: ProductModel;
-  } = pageProps;
-  // const subProducts = product.subItems;
-
-  // const relatedProducts = pageProps.data.itemCats.data;
+  const { product }: { product: ProductModel } = pageProps;
   const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
   const [supplier, setSupplier] = useState<SupplierModel | null>(null);
-
   const [detail, setdetail] = useState<ProductModel>(product);
   const [subProductSelected, setSubProductSelected] =
     useState<SubProductModel>();
@@ -62,15 +48,13 @@ const ProductDetail = ({ pageProps }: any) => {
   const [instockQuantity, setInstockQuantity] = useState(
     subProductSelected?.qty
   );
-  const [reviewDatas, setReviewDatas] = useState<{
-    count: number;
-    total: number;
-  }>();
+  const [reviews, setReviews] = useState<any[]>([]);
 
   const auth = useSelector(authSelector);
-  const params = useParams();
-
   const cart: CartItemModel[] = useSelector(cartSelector);
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
     handleGetSubProducts();
   }, [product.id]);
@@ -84,20 +68,36 @@ const ProductDetail = ({ pageProps }: any) => {
   const fetchSupplierInfo = async () => {
     try {
       const res: any = await handleAPI(`/suppliers/${product.supplierId}`);
-      if (res && res.result) {
-        setSupplier(res.result);
-      }
+      if (res?.result) setSupplier(res.result);
     } catch (error) {
-      console.log("Error fetching supplier:", error);
+      console.error("Error fetching supplier:", error);
     }
   };
 
-  const dispatch = useDispatch();
+  const fetchAllReviews = async (subProductIds: string[]) => {
+    try {
+      const res: any = await handleAPI(
+        `/reviewProducts/subProducts?subProductIds=${subProductIds.join(",")}`,
+        {},
+        "get"
+      );
+      setReviews(res.result || []);
+    } catch (error) {
+      console.error("Error fetching all reviews:", error);
+      setReviews([]);
+    }
+  };
+
   const handleGetSubProducts = async () => {
     const res: any = await handleAPI(
       `/subProducts/get-all-sub-product/${product.id}`
     );
     setSubProducts(res.result);
+
+    const subProductIds = res.result.map((item: SubProductModel) => item.id);
+    if (subProductIds.length > 0) {
+      await fetchAllReviews(subProductIds);
+    }
   };
 
   useEffect(() => {
@@ -115,19 +115,12 @@ const ProductDetail = ({ pageProps }: any) => {
   }, [subProductSelected]);
 
   useEffect(() => {
-    handleGetReviewData();
-  }, [product.id]);
-
-  useEffect(() => {
-    const item = cart.find(
-      (element) => element.subProductId === subProductSelected?.id
-    );
+    const item = cart.find((el) => el.subProductId === subProductSelected?.id);
     if (subProductSelected) {
       if (item) {
-        const qty = subProductSelected?.qty - item.count;
-        setInstockQuantity(qty);
+        setInstockQuantity(subProductSelected.qty - item.count);
       } else {
-        setInstockQuantity(subProductSelected?.qty);
+        setInstockQuantity(subProductSelected.qty);
       }
     }
   }, [cart, subProductSelected]);
@@ -140,30 +133,27 @@ const ProductDetail = ({ pageProps }: any) => {
 
     const isLoggedIn = auth.userId && auth.accessToken;
     const sessionId = getOrCreateSessionId();
-    const createdBy = isLoggedIn ? auth.userId : sessionId;
     const endpointPrefix = isLoggedIn ? "/carts" : "/redisCarts";
 
-    const item = subProductSelected;
     const value = {
-      createdBy,
+      createdBy: isLoggedIn ? auth.userId : sessionId,
       count,
-      subProductId: item.id,
-      size: item.size,
+      subProductId: subProductSelected.id,
+      size: subProductSelected.size,
       title: detail.title,
-      color: item.color,
-      price: item.discount ? item.discount : item.price,
-      qty: item.qty,
+      color: subProductSelected.color,
+      price: subProductSelected.discount ?? subProductSelected.price,
+      qty: subProductSelected.qty,
       productId: product.id,
-      image: item.images[0] ?? "",
+      image: subProductSelected.images[0] ?? "",
     };
 
     const index = cart.findIndex(
-      (element) => element.subProductId === value.subProductId
+      (el) => el.subProductId === value.subProductId
     );
 
     try {
       if (index !== -1 && cart[index]) {
-        // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
         await handleAPI(
           `${endpointPrefix}/update?id=${
             isLoggedIn ? cart[index].id : sessionId
@@ -180,7 +170,6 @@ const ProductDetail = ({ pageProps }: any) => {
           })
         );
       } else {
-        // Thêm mới sản phẩm vào giỏ
         const res: any = await handleAPI(
           endpointPrefix + (isLoggedIn ? "/add" : ""),
           value,
@@ -188,14 +177,10 @@ const ProductDetail = ({ pageProps }: any) => {
         );
 
         if (isLoggedIn) {
-          // Đảm bảo res.result có id
-          if (res?.result?.id) {
+          if (res?.result?.id)
             dispatch(addProduct({ ...value, id: res.result.id }));
-          } else {
-            message.warning("Add to cart but no ID returned!");
-          }
+          else message.warning("Add to cart but no ID returned!");
         } else {
-          // Với Redis (user chưa login), fetch lại từ Redis sau khi thêm
           const res: any = await handleAPI(
             `/redisCarts?sessionId=${sessionId}`
           );
@@ -205,38 +190,21 @@ const ProductDetail = ({ pageProps }: any) => {
               const exists = cart.some(
                 (c) => c.subProductId === item.subProductId
               );
-              if (!exists) {
-                dispatch(addProduct(item));
-              }
+              if (!exists) dispatch(addProduct(item));
             });
           }
         }
       }
-
       setCount(1);
     } catch (error: any) {
-      console.log("Add to cart failed:", error);
-
-      // Handle specific error codes from backend
-      if (error?.code === 1021) {
-        message.error(
-          "This item is out of stock. Please try a different quantity or product."
-        );
-      } else if (error?.code === 1012) {
-        message.error("Product not found.");
-      } else if (error?.message) {
-        message.error(error.message);
-      } else {
-        message.error("Add to cart failed!");
-      }
+      if (error?.code === 1021) message.error("This item is out of stock.");
+      else if (error?.code === 1012) message.error("Product not found.");
+      else message.error(error?.message || "Add to cart failed!");
     }
   };
 
   const renderButtonGroup = () => {
-    const item = cart.find(
-      (element) => element.subProductId === subProductSelected?.id
-    );
-
+    const item = cart.find((el) => el.subProductId === subProductSelected?.id);
     const availableQty = item
       ? (subProductSelected?.qty ?? 0) - item.count
       : subProductSelected?.qty ?? 0;
@@ -273,15 +241,9 @@ const ProductDetail = ({ pageProps }: any) => {
     );
   };
 
-  const handleGetReviewData = async () => {
-    // const api = `/reviews/get-start-count?id=${id}`;
-    // try {
-    //   const res: any = await handleAPI({ url: api });
-    //   setReviewDatas(res.data.data);
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  };
+  const averageRate = reviews.length
+    ? reviews.reduce((sum, r) => sum + (r.star || 0), 0) / reviews.length
+    : 0;
 
   return subProductSelected ? (
     <div>
@@ -294,19 +256,11 @@ const ProductDetail = ({ pageProps }: any) => {
         <div className="container">
           <Breadcrumb
             items={[
-              {
-                key: "home",
-                title: <Link href={"/"}>Home</Link>,
-              },
-              {
-                key: "shop",
-                title: <Link href={"/shop"}>Shop</Link>,
-              },
+              { key: "home", title: <Link href={"/"}>Home</Link> },
+              { key: "shop", title: <Link href={"/shop"}>Shop</Link> },
               {
                 key: "title",
-                title: product.categories
-                  .map((item: any) => item.title)
-                  .join(" / "),
+                title: product.categories.map((item) => item.title).join(" / "),
               },
             ]}
           />
@@ -315,17 +269,15 @@ const ProductDetail = ({ pageProps }: any) => {
             <div className="col-sm-12 col-md-6">
               <div className="bg-light text-center p-4">
                 {!subProductSelected.imgURL &&
-                subProductSelected.images.length == 0 ? (
+                subProductSelected.images.length === 0 ? (
                   <PiCableCar size={48} className="text-muted" />
                 ) : (
                   <img
                     style={{ width: "80%" }}
                     src={
-                      subProductSelected.imgURL
-                        ? subProductSelected.imgURL
-                        : subProductSelected.images.length > 0
-                        ? subProductSelected.images[0]
-                        : ""
+                      subProductSelected.imgURL ||
+                      subProductSelected.images[0] ||
+                      ""
                     }
                   />
                 )}
@@ -334,7 +286,7 @@ const ProductDetail = ({ pageProps }: any) => {
                 items={subProducts.filter(
                   (item) => item.size === subProductSelected.size
                 )}
-                onClick={(val) => setSubProductSelected(val)}
+                onClick={setSubProductSelected}
               />
             </div>
 
@@ -356,30 +308,19 @@ const ProductDetail = ({ pageProps }: any) => {
                   <Tag color={subProductSelected.qty > 0 ? "success" : "error"}>
                     {subProductSelected.qty > 0
                       ? `In Stock (${instockQuantity})`
-                      : "out Stock"}
+                      : "Out of Stock"}
                   </Tag>
                 </div>
               </div>
-              {reviewDatas && (
-                <Space>
-                  <Rate
-                    disabled
-                    allowHalf
-                    defaultValue={reviewDatas.count}
-                    count={5}
-                  />
-                  <Text type="secondary">({reviewDatas?.count})</Text>
-                  <Text type="secondary">({reviewDatas.total}) reviews</Text>
-                </Space>
-              )}
+
+              <Space className="mt-2">
+                <Rate disabled allowHalf value={averageRate} count={5} />
+                <Text type="secondary">({reviews.length}) reviews</Text>
+              </Space>
 
               <div className="mt-3">
                 <Space>
-                  <Title
-                    className="mt-0 "
-                    style={{ fontWeight: 400, textDecoration: "" }}
-                    level={3}
-                  >
+                  <Title className="mt-0" style={{ fontWeight: 400 }} level={3}>
                     {VND.format(
                       subProductSelected.discount ?? subProductSelected.price
                     )}
@@ -387,7 +328,7 @@ const ProductDetail = ({ pageProps }: any) => {
                   {subProductSelected.discount && (
                     <Title
                       type="secondary"
-                      className="mt-0 "
+                      className="mt-0"
                       style={{
                         fontWeight: 300,
                         textDecoration: "line-through",
@@ -398,11 +339,12 @@ const ProductDetail = ({ pageProps }: any) => {
                     </Title>
                   )}
                 </Space>
-                <div className="mt-3">
-                  <Paragraph style={{ textAlign: "justify", fontSize: "1rem" }}>
-                    {detail.description}
-                  </Paragraph>
-                </div>
+                <Paragraph
+                  className="mt-3"
+                  style={{ textAlign: "justify", fontSize: "1rem" }}
+                >
+                  {detail.description}
+                </Paragraph>
 
                 <div className="mt-3">
                   <Paragraph
@@ -426,13 +368,11 @@ const ProductDetail = ({ pageProps }: any) => {
                           <a
                             key={color}
                             onClick={() => {
-                              // Tìm subProduct cùng màu và cùng size với subProduct đang chọn
                               const sameSizeItem = subProducts.find(
                                 (item) =>
                                   item.color === color &&
                                   item.size === subProductSelected.size
                               );
-                              // Nếu có cùng size thì chọn, không thì chọn item đầu tiên của màu đó
                               setSubProductSelected(
                                 sameSizeItem || itemWithColor!
                               );
@@ -447,6 +387,7 @@ const ProductDetail = ({ pageProps }: any) => {
                       })}
                   </Space>
                 </div>
+
                 <div className="mt-3">
                   <Paragraph
                     style={{
@@ -474,13 +415,11 @@ const ProductDetail = ({ pageProps }: any) => {
                                 : "default"
                             }
                             onClick={() => {
-                              // Tìm subProduct cùng size và cùng màu với subProduct đang chọn
                               const sameColorItem = subProducts.find(
                                 (item) =>
                                   item.size === size &&
                                   item.color === subProductSelected.color
                               );
-                              // Nếu có cùng màu thì chọn, không thì chọn item đầu tiên của size đó
                               setSubProductSelected(
                                 sameColorItem || itemWithSize!
                               );
@@ -492,15 +431,17 @@ const ProductDetail = ({ pageProps }: any) => {
                       })}
                   </Space>
                 </div>
+
                 <div className="mt-5">
                   <Space>
-                    {renderButtonGroup()}
+                    {renderButtonGroup()}{" "}
                     <Button size="large" icon={<IoHeartOutline size={22} />} />
                   </Space>
                 </div>
               </div>
             </div>
           </div>
+
           <div className="mt-4">
             <Tabs
               items={[
@@ -508,53 +449,111 @@ const ProductDetail = ({ pageProps }: any) => {
                   key: "1",
                   label: "Description",
                   children: (
-                    <>
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: detail.content || detail.description,
-                        }}
-                        style={{ textAlign: "justify", fontSize: "1rem" }}
-                      />
-                    </>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: detail.content || detail.description,
+                      }}
+                      style={{ textAlign: "justify", fontSize: "1rem" }}
+                    />
                   ),
                 },
                 {
                   key: "2",
-                  label: "Additional Infomations",
-                  children: (
-                    <>
-                      <p>Additional Infomations</p>
-                    </>
-                  ),
-                },
-                {
-                  key: "3",
                   label: "Reviews",
-                  children: product.id ? (
-                    <Reviews productId={product.id as string} />
-                  ) : (
-                    <Empty />
+                  children: (
+                    <div>
+                      {reviews.length === 0 ? (
+                        <div>Chưa có đánh giá nào cho sản phẩm này.</div>
+                      ) : (
+                        reviews.map((review) => (
+                          <div
+                            key={review.id}
+                            style={{
+                              marginBottom: 16,
+                              display: "flex",
+                              alignItems: "flex-start",
+                            }}
+                          >
+                            <Avatar
+                              src={review.userAvatar}
+                              size={48}
+                              style={{ marginRight: 16 }}
+                            />
+                            <div>
+                              <div style={{ fontWeight: "bold" }}>
+                                {review.userFirstname} {review.userLastname}
+                              </div>
+                              <Rate
+                                disabled
+                                value={review.star}
+                                style={{ fontSize: 18 }}
+                              />
+                              <div style={{ marginTop: 4, fontSize: 13 }}>
+                                <span>
+                                  Size: <b>{review.size}</b>
+                                </span>
+                                <span style={{ marginLeft: 12 }}>
+                                  Color:
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      width: 12,
+                                      height: 12,
+                                      background: review.color,
+                                      border: "1px solid #ccc",
+                                      marginLeft: 4,
+                                      verticalAlign: "middle",
+                                      borderRadius: 3,
+                                    }}
+                                  />
+                                </span>
+                              </div>
+                              <div style={{ margin: "4px 0" }}>
+                                {review.comment}
+                              </div>
+                              <div style={{ fontSize: 12, color: "#888" }}>
+                                {new Date(review.createdAt).toLocaleDateString(
+                                  "vi-VN"
+                                )}
+                              </div>
+
+                              {review.images &&
+                                Array.isArray(review.images) &&
+                                review.images.length > 0 && (
+                                  <div style={{ marginTop: 8 }}>
+                                    {review.images.map((img: any, idx: any) => (
+                                      <img
+                                        key={idx}
+                                        src={img}
+                                        alt="review-img"
+                                        style={{
+                                          width: 60,
+                                          marginRight: 8,
+                                          borderRadius: 4,
+                                          border: "1px solid #eee",
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   ),
                 },
               ]}
             />
           </div>
+
           <div className="mt-4">
             <TabbarComponent title="Related products" />
-            {/* <div className="row">
-              {relatedProducts.length > 0 &&
-                relatedProducts.map((item: ProductModel) => (
-                  <ProductItem item={item} key={item.id} />
-                  // </div>
-                ))}
-            </div> */}
           </div>
         </div>
       </div>
     </div>
-  ) : (
-    <></>
-  );
+  ) : null;
 };
 
 export const getStaticProps = async (context: any) => {
@@ -563,24 +562,13 @@ export const getStaticProps = async (context: any) => {
       `${appInfo.baseUrl}/products/${context.params.slug}/${context.params.id}`
     );
     const result = await res.json();
-    if (!result.result) {
-      return { notFound: true };
-    }
-    return {
-      props: {
-        product: result.result,
-      },
-    };
+    if (!result.result) return { notFound: true };
+    return { props: { product: result.result } };
   } catch (error) {
     return { notFound: true };
   }
 };
 
-export const getStaticPaths = async () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
-};
+export const getStaticPaths = async () => ({ paths: [], fallback: "blocking" });
 
 export default ProductDetail;

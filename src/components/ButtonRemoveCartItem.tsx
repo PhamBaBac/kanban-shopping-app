@@ -20,7 +20,6 @@ const ButtonRemoveCartItem = (props: Props) => {
     if (!auth.accessToken || !auth.userId) {
       try {
         const sessionId = localStorage.getItem("sessionId");
-        console.log("sessionId", sessionId); // hoặc nơi bạn lưu sessionId
         const res = await handleAPI(
           `/redisCarts/remove?sessionId=${sessionId}&cartId=${item.subProductId}`,
           null,

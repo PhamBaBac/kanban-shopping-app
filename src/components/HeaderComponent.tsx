@@ -53,7 +53,6 @@ const HeaderComponent = () => {
 
   const router = useRouter();
 
-  console.log(auth);
   const cart: CartItemModel[] = useSelector(cartSelector);
 
   const items: MenuProps["items"] = [

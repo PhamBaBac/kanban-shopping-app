@@ -126,7 +126,6 @@ const OAuthCallbackPage = () => {
   };
 
   const handleSendEmailCode = async () => {
-    console.log("Sending code to email:", emailMfa);
 
     if (!emailMfa) {
       message.error(

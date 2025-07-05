@@ -44,14 +44,13 @@ const PersionalInfomations = () => {
     try {
       const res: any = await handleAPI(api, {}, "get");
       if (res.result && res.result.length > 0) {
-		console.log("res.result", res.result);
         const defaultAddress =
           res.result.find((addr: AddressModel) => addr.isDefault) ||
           res.result[0];
         setAddress(defaultAddress);
         // Cập nhật form với địa chỉ mặc định
         form.setFieldValue("address", defaultAddress.address);
-		form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
+        form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
       }
     } catch (error) {
       console.log(error);
@@ -197,7 +196,6 @@ const PersionalInfomations = () => {
             }
           />
         </Form.Item>
-
       </Form>
 
       <AddressModal

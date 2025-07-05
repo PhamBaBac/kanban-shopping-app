@@ -36,14 +36,12 @@ const ProfilePage = () => {
   const getOrders = async () => {
     const response: any = await handleAPI("/orders/listOrders");
 
-    // Group orders by orderId
     const orderMap = new Map();
 
     response.result.forEach((item: any) => {
       const orderId = item.orderId;
 
       if (orderMap.has(orderId)) {
-        // If order already exists, add this item to the existing order
         const existingOrder = orderMap.get(orderId);
         existingOrder.items.push({
           image: item.image,
@@ -53,10 +51,11 @@ const ProfilePage = () => {
           price: item.price,
           totalPrice: item.totalPrice,
           orderStatus: item.orderStatus,
+          subProductId: item.subProductId, 
+          isReviewed: item.isReviewed, 
         });
         existingOrder.totalAmount += item.totalPrice;
       } else {
-        // Create new order
         orderMap.set(orderId, {
           orderId: orderId,
           items: [
@@ -68,6 +67,8 @@ const ProfilePage = () => {
               price: item.price,
               totalPrice: item.totalPrice,
               orderStatus: item.orderStatus,
+              subProductId: item.subProductId,
+              isReviewed: item.isReviewed,
             },
           ],
           totalAmount: item.totalPrice,
@@ -77,9 +78,9 @@ const ProfilePage = () => {
     });
 
     const groupedOrders = Array.from(orderMap.values());
-    console.log("Grouped orders:", groupedOrders);
     setOrders(groupedOrders);
   };
+
 
   // Callback khi order bị xóa
   const handleOrderDeleted = (orderId: string) => {
@@ -125,6 +126,7 @@ const ProfilePage = () => {
               order={order}
               onOrderDeleted={handleOrderDeleted}
               onOrderStatusChanged={handleOrderStatusChanged}
+              onReviewSubmitted={getOrders} 
             />
           ))}
         </div>

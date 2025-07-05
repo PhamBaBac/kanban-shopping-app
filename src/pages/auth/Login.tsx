@@ -108,7 +108,6 @@ const Login = () => {
   };
 
   const handleSendEmailCode = async () => {
-    console.log("emailMfa", emailMfa);
     setIsLoading(true);
     try {
       await handleAPI("/auth/send-code-email", { email: emailMfa }, "post");

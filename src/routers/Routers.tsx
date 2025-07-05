@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Layout, Spin } from "antd";
 import { useRouter } from "next/router";
 import { getOrCreateSessionId } from "@/utils/session";
+import FooterComponent from "@/components/FooterComponent";
 
 const Routers = ({ Component, pageProps }: any) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -127,6 +128,9 @@ const Routers = ({ Component, pageProps }: any) => {
       <Layout.Content>
         <Component pageProps={pageProps} />
       </Layout.Content>
+      <Layout.Footer style={{ padding: 0, background: "transparent" }}>
+        <FooterComponent />
+      </Layout.Footer>
     </Layout>
   );
 };

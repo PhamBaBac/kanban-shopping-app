@@ -39,7 +39,6 @@ const ChangePassword = () => {
   const dispatch = useDispatch();
 const router = useRouter();
   const onFinish = async (values: ChangePasswordForm) => {
-    console.log("Form submitted with values:", values);
 
     if (values.newPassword !== values.confirmPassword) {
       message.error("Mật khẩu mới và xác nhận mật khẩu không khớp!");

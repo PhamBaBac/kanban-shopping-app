@@ -82,7 +82,6 @@ const ShopPage = () => {
     setIsLoading(true);
     try {
       const res: any = await handleAPI(api, undefined, "get");
-      console.log("resa", res);
       if (res.result && Array.isArray(res.result.data)) {
         setProducts(res.result.data);
         setTotalItems(res.result.totalElements || 0);
@@ -152,7 +151,7 @@ const ShopPage = () => {
                   <ProductItem item={item} key={item.id} />
                 ))}
               </div>
-              <div className="mt-4" style={{ textAlign: "right" }}>
+              <div className="mt-4 mb-4" style={{ textAlign: "right" }}>
                 <Pagination
                   current={page}
                   total={totalItems}
