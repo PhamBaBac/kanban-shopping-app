@@ -1,19 +1,18 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
-import { AddressModal } from "@/modals";
-import { addAuth, authSelector } from "@/redux/reducers/authReducer";
-import { uploadFile } from "@/utils/uploadFile";
-import { AddressModel } from "@/models/Products";
-import { Button, Form, Input, Upload, UploadFile } from "antd";
-import { useEffect, useState } from "react";
+import { Form, Input, Button, Upload, UploadFile } from "antd";
 import { BiCamera, BiEdit } from "react-icons/bi";
 import { FaLocationDot } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
+import { addAuth, authSelector } from "@/redux/reducers/authReducer";
+import { uploadFile } from "@/utils/uploadFile";
+import { AddressModel } from "@/models/Products";
+import AddressModal from "./AddNewAddress";
+import { addressService, userService } from "@/services";
+import { useEffect, useState } from "react";
 
 const PersionalInfomations = () => {
   const auth = useSelector(authSelector);
-
   const [avatarList, setAvatarList] = useState<UploadFile[]>([]);
   const [isVisibleModalAddress, setIsVisibleModalAddress] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -39,14 +38,13 @@ const PersionalInfomations = () => {
     // Lấy địa chỉ từ API
     getAddress();
   }, [auth.avatar]);
+
   const getAddress = async () => {
-    const api = `/addresses/all`;
     try {
-      const res: any = await handleAPI(api, {}, "get");
-      if (res.result && res.result.length > 0) {
+      const res = await addressService.getAddresses();
+      if (res && res.length > 0) {
         const defaultAddress =
-          res.result.find((addr: AddressModel) => addr.isDefault) ||
-          res.result[0];
+          res.find((addr: AddressModel) => addr.isDefault) || res[0];
         setAddress(defaultAddress);
         // Cập nhật form với địa chỉ mặc định
         form.setFieldValue("address", defaultAddress.address);
@@ -84,19 +82,13 @@ const PersionalInfomations = () => {
 
   const updateProfile = async (data: any) => {
     try {
-      const api = `/customers/update`;
-
-      const res = await handleAPI(api, {
-        url: api,
-        data: {
-          ...data,
-          name: `${data.firstName} ${data.lastName}`,
-        },
-        method: "put",
+      const res = await userService.updateProfile({
+        ...data,
+        name: `${data.firstName} ${data.lastName}`,
       });
 
       // Cập nhật avatar trong state nếu có avatar mới
-      const updatedAuth = { ...auth, ...res.data.data };
+      const updatedAuth = { ...auth, ...res };
       if (data.photoURL) {
         updatedAuth.avatar = data.photoURL;
       }

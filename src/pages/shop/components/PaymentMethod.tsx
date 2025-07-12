@@ -3,7 +3,6 @@
 import { Button, List, Modal, Radio, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import CreditCardPayment from "./CreditCardPayment";
-import handleAPI from "@/apis/handleApi";
 
 interface Props {
   onContinue: (val: any) => void;

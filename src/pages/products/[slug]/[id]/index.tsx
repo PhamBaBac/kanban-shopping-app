@@ -1,210 +1,56 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { CarouselImages, TabbarComponent } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
 import { appInfo } from "@/constants/appInfos";
-import { ProductModel, SubProductModel } from "@/models/Products";
-import { SupplierModel } from "@/models/SupplierModel";
-import { authSelector } from "@/redux/reducers/authReducer";
-import {
-  addProduct,
-  CartItemModel,
-  cartSelector,
-  changeCount,
-} from "@/redux/reducers/cartReducer";
+import { ProductModel } from "@/models/Products";
+import { cartSelector } from "@/redux/reducers/cartReducer";
 import { VND } from "@/utils/handleCurrency";
-import { getOrCreateSessionId } from "@/utils/session";
+import { useProductDetail, useCart } from "@/hooks";
+import { productService } from "@/services";
 import {
   Avatar,
   Breadcrumb,
   Button,
-  Empty,
-  message,
   Rate,
   Space,
   Tabs,
   Tag,
   Typography,
+  Spin,
 } from "antd";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import { IoAddSharp, IoHeartOutline } from "react-icons/io5";
 import { LuMinus } from "react-icons/lu";
 import { PiCableCar } from "react-icons/pi";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 const { Text, Paragraph, Title } = Typography;
 
 const ProductDetail = ({ pageProps }: any) => {
   const { product }: { product: ProductModel } = pageProps;
-  const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
-  const [supplier, setSupplier] = useState<SupplierModel | null>(null);
-  const [detail, setdetail] = useState<ProductModel>(product);
-  const [subProductSelected, setSubProductSelected] =
-    useState<SubProductModel>();
-  const [count, setCount] = useState(1);
-  const [instockQuantity, setInstockQuantity] = useState(
-    subProductSelected?.stock
-  );
-  const [reviews, setReviews] = useState<any[]>([]);
+  const cart = useSelector(cartSelector);
 
-  const auth = useSelector(authSelector);
-  const cart: CartItemModel[] = useSelector(cartSelector);
+  // Custom hooks for data management
+  const {
+    subProducts,
+    supplier,
+    reviews,
+    subProductSelected,
+    setSubProductSelected,
+    loading,
+    error,
+  } = useProductDetail({ product });
 
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    handleGetSubProducts();
-  }, [product.id]);
-
-  useEffect(() => {
-    if (product.supplierId) {
-      fetchSupplierInfo();
-    }
-  }, [product.supplierId]);
-
-  const fetchSupplierInfo = async () => {
-    try {
-      const res: any = await handleAPI(`/suppliers/${product.supplierId}`);
-      if (res?.result) setSupplier(res.result);
-    } catch (error) {
-      console.error("Error fetching supplier:", error);
-    }
-  };
-
-  const fetchAllReviews = async (subProductIds: string[]) => {
-    try {
-      const res: any = await handleAPI(
-        `/reviewProducts/subProducts?subProductIds=${subProductIds.join(",")}`,
-        {},
-        "get"
-      );
-      setReviews(res.result || []);
-    } catch (error) {
-      console.error("Error fetching all reviews:", error);
-      setReviews([]);
-    }
-  };
-
-  const handleGetSubProducts = async () => {
-    const res: any = await handleAPI(
-      `/subProducts/get-all-sub-product/${product.id}`
-    );
-    setSubProducts(res.result);
-
-    const subProductIds = res.result.map((item: SubProductModel) => item.id);
-    if (subProductIds.length > 0) {
-      await fetchAllReviews(subProductIds);
-    }
-  };
-
-  useEffect(() => {
-    if (subProducts.length > 0) {
-      setSubProductSelected({
-        ...subProducts[0],
-        imgURL:
-          subProducts[0].images.length > 0 ? subProducts[0].images[0] : "",
-      });
-    }
-  }, [subProducts]);
-
-  useEffect(() => {
-    setCount(1);
-  }, [subProductSelected]);
-
-  useEffect(() => {
-    const item = cart.find((el) => el.subProductId === subProductSelected?.id);
-    if (subProductSelected) {
-      if (item) {
-        setInstockQuantity(subProductSelected.stock - item.count);
-      } else {
-        setInstockQuantity(subProductSelected.stock);
-      }
-    }
-  }, [cart, subProductSelected]);
-
-  const handleCart = async () => {
-    if (!subProductSelected) {
-      message.error("Please choose a product!");
-      return;
-    }
-
-    const isLoggedIn = auth.userId && auth.accessToken;
-    const sessionId = getOrCreateSessionId();
-    const endpointPrefix = isLoggedIn ? "/carts" : "/redisCarts";
-
-    const value = {
-      createdBy: isLoggedIn ? auth.userId : sessionId,
-      count,
-      subProductId: subProductSelected.id,
-      size: subProductSelected.size,
-      title: detail.title,
-      color: subProductSelected.color,
-      price: subProductSelected.discount ?? subProductSelected.price,
-      qty: subProductSelected.stock,
-      productId: product.id,
-      image: subProductSelected.images[0] ?? "",
-    };
-
-    const index = cart.findIndex(
-      (el) => el.subProductId === value.subProductId
-    );
-
-    try {
-      if (index !== -1 && cart[index]) {
-        await handleAPI(
-          `${endpointPrefix}/update?id=${
-            isLoggedIn ? cart[index].id : sessionId
-          }&count=${cart[index].count + count}`,
-          {},
-          "put"
-        );
-
-        dispatch(
-          changeCount({
-            id: isLoggedIn ? cart[index].id : null,
-            subProductId: cart[index].subProductId,
-            val: count,
-          })
-        );
-      } else {
-        const res: any = await handleAPI(
-          endpointPrefix + (isLoggedIn ? "/add" : ""),
-          value,
-          "post"
-        );
-
-        if (isLoggedIn) {
-          if (res?.result?.id)
-            dispatch(addProduct({ ...value, id: res.result.id }));
-          else message.warning("Add to cart but no ID returned!");
-        } else {
-          const res: any = await handleAPI(
-            `/redisCarts?sessionId=${sessionId}`
-          );
-          if (res.result) {
-            const items = Object.values(res.result) as CartItemModel[];
-            items.forEach((item) => {
-              const exists = cart.some(
-                (c) => c.subProductId === item.subProductId
-              );
-              if (!exists) dispatch(addProduct(item));
-            });
-          }
-        }
-      }
-      setCount(1);
-    } catch (error: any) {
-      if (error?.code === 1021) message.error("This item is out of stock.");
-      else if (error?.code === 1012) message.error("Product not found.");
-      else message.error(error?.message || "Add to cart failed!");
-    }
-  };
+  const { count, setCount, instockQuantity, handleCart } = useCart({
+    subProductSelected,
+    product,
+  });
 
   const renderButtonGroup = () => {
-    const item = cart.find((el) => el.subProductId === subProductSelected?.id);
+    const item = cart.find(
+      (el: any) => el.subProductId === subProductSelected?.id
+    );
     const availableQty = item
       ? (subProductSelected?.stock ?? 0) - item.count
       : subProductSelected?.stock ?? 0;
@@ -245,12 +91,32 @@ const ProductDetail = ({ pageProps }: any) => {
     ? reviews.reduce((sum, r) => sum + (r.star || 0), 0) / reviews.length
     : 0;
 
+  if (loading) {
+    return (
+      <div className="container-fluid mt-3 mb-5">
+        <div className="container text-center">
+          <div>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-fluid mt-3 mb-5">
+        <div className="container text-center">
+          <div>Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
   return subProductSelected ? (
     <div>
       <HeadComponent
-        title={detail.title}
-        description={detail.description}
-        url={`${appInfo.baseUrl}/public/products/${detail.slug}/${detail.id}`}
+        title={product.title}
+        description={product.description}
+        url={`${appInfo.baseUrl}/public/products/${product.slug}/${product.id}`}
       />
       <div className="container-fluid mt-3 mb-5">
         <div className="container">
@@ -301,11 +167,13 @@ const ProductDetail = ({ pageProps }: any) => {
                     style={{ fontWeight: 300 }}
                     level={4}
                   >
-                    {detail.title}
+                    {product.title}
                   </Typography.Title>
                 </div>
                 <div>
-                  <Tag color={subProductSelected.stock > 0 ? "success" : "error"}>
+                  <Tag
+                    color={subProductSelected.stock > 0 ? "success" : "error"}
+                  >
                     {subProductSelected.stock > 0
                       ? `In Stock (${instockQuantity})`
                       : "Out of Stock"}
@@ -343,7 +211,7 @@ const ProductDetail = ({ pageProps }: any) => {
                   className="mt-3"
                   style={{ textAlign: "justify", fontSize: "1rem" }}
                 >
-                  {detail.description}
+                  {product.description}
                 </Paragraph>
 
                 <div className="mt-3">
@@ -451,7 +319,7 @@ const ProductDetail = ({ pageProps }: any) => {
                   children: (
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: detail.content || detail.description,
+                        __html: product.content || product.description,
                       }}
                       style={{ textAlign: "justify", fontSize: "1rem" }}
                     />
@@ -558,13 +426,31 @@ const ProductDetail = ({ pageProps }: any) => {
 
 export const getStaticProps = async (context: any) => {
   try {
-    const res = await fetch(
-      `${appInfo.baseUrl}/public/products/${context.params.slug}/${context.params.id}`
+    console.log("getStaticProps called with params:", context.params);
+
+    if (!context.params?.slug || !context.params?.id) {
+      console.log("Missing slug or id params");
+      return { notFound: true };
+    }
+
+    const product = await productService.getProductDetail(
+      context.params.slug,
+      context.params.id
     );
-    const result = await res.json();
-    if (!result.result) return { notFound: true };
-    return { props: { product: result.result } };
+
+    console.log("Product fetched:", product);
+
+    if (!product || !product.id) {
+      console.log("Product not found or invalid");
+      return { notFound: true };
+    }
+
+    return {
+      props: { product },
+      revalidate: 60, // Revalidate every 60 seconds
+    };
   } catch (error) {
+    console.error("Error in getStaticProps:", error);
     return { notFound: true };
   }
 };

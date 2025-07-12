@@ -1,6 +1,5 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { SubProductModel } from "@/models/Products";
 import { authSelector } from "@/redux/reducers/authReducer";
 import {
@@ -12,6 +11,8 @@ import {
 import { Button, message, Modal, Space, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { productService } from "@/services/productService";
+import { cartService } from "@/services/cartService";
 
 interface Props {
   visible: boolean;
@@ -37,10 +38,8 @@ const TransationSubProductModal = ({
 
   const getProductDetail = async () => {
     try {
-      const res: any = await handleAPI(
-        `/subProducts/get-all-sub-product/${productSelected.productId}`
-      );
-      const updated = res.result.map((sub: any) => ({
+      const result = await productService.getSubProductsByProductId(productSelected.productId);
+      const updated = result.map((sub: any) => ({
         ...sub,
         productId: productSelected.productId,
       }));
@@ -77,11 +76,7 @@ const TransationSubProductModal = ({
 
     try {
       if (auth.userId) {
-        await handleAPI(
-          `/carts/updateFull?id=${productSelected.id}`,
-          updatedItem,
-          "put"
-        );
+        await cartService.updateCartItem(productSelected.id!, updatedItem);
 
         dispatch(
           removeProduct({
@@ -98,10 +93,10 @@ const TransationSubProductModal = ({
           return;
         }
 
-        await handleAPI(
-          `/redisCarts/updateFull?sessionId=${sessionId}&currentSubProductId=${productSelected.subProductId}`,
-          updatedItem,
-          "put"
+        await cartService.updateRedisCartItem(
+          sessionId,
+          productSelected.subProductId,
+          updatedItem
         );
 
         // Không có id khi lưu Redis nên chỉ dùng subProductId làm key

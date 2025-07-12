@@ -1,13 +1,15 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
-import HeadComponent from "@/components/HeadComponent";
-import {
-  CartItemModel,
-  cartSelector,
-  removeCarts,
-} from "@/redux/reducers/cartReducer";
+import { paymentService, orderService } from "@/services";
+import { promotionService } from "@/services";
+import { CartItemModel, removeCarts } from "@/redux/reducers/cartReducer";
+import { DateTime } from "@/utils/dateTime";
 import { VND } from "@/utils/handleCurrency";
+import { useRouter } from "next/router";
+import { useDispatch } from "react-redux";
+import { BiEdit, BiCreditCard } from "react-icons/bi";
+import { FaStar } from "react-icons/fa6";
+import { HiHome } from "react-icons/hi";
 import {
   Avatar,
   Button,
@@ -17,52 +19,31 @@ import {
   List,
   message,
   Modal,
-  Result,
   Space,
   Steps,
   Typography,
 } from "antd";
-import { useEffect, useState } from "react";
-import { BiCreditCard, BiEdit } from "react-icons/bi";
-import { FaStar } from "react-icons/fa6";
-import { HiHome } from "react-icons/hi";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
 import ListCart from "./components/ListCart";
 import PaymentMethod, { methods } from "./components/PaymentMethod";
 import ShipingAddress from "./components/ShipingAddress";
 
-import { Section } from "@/components";
-import { AddressModel } from "@/models/Products";
-import { DateTime } from "@/utils/dateTime";
-import { authSelector } from "@/redux/reducers/authReducer";
-import { useRouter } from "next/router";
-
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 const CheckoutPage = () => {
-  const [discountCode, setDiscountCode] = useState("");
-  const [discountValue, setDiscountValue] = useState<{
-    value: number;
-    type: string;
-  }>();
-  console.log("discountValue", discountValue);
-  //grandTotal =gia trong cart - discountValue
-  const [grandTotal, setGrandTotal] = useState(0);
-  const [isCheckingCode, setIsCheckingCode] = useState(false);
-  const [currentStep, setCurrentStep] = useState<number>();
-  const [paymentDetail, setPaymentDetail] = useState<any>();
-  const [paymentMethod, setPaymentMethod] = useState<{
-    methodSelected: string;
-  }>();
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<CartItemModel[]>([]);
+  const [currentStep, setCurrentStep] = useState<number | undefined>(0);
+  const [paymentDetail, setPaymentDetail] = useState<any>({});
+  const [paymentMethod, setPaymentMethod] = useState<any>();
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountValue, setDiscountValue] = useState<any>();
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [subtotal, setSubtotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(0);
 
-  const carts: CartItemModel[] = useSelector(cartSelector);
-  const user = useSelector(authSelector);
   const router = useRouter();
   const dispatch = useDispatch();
-
-  const [subtotal, setSubtotal] = useState(0);
 
   useEffect(() => {
     const total = selectedItems.reduce((a, b) => a + b.count * b.price, 0);
@@ -79,135 +60,26 @@ const CheckoutPage = () => {
     }
   }, [discountValue, selectedItems]);
 
-const handleCheckDiscountCode = async () => {
-  setIsCheckingCode(true);
-  try {
-    const res: any = await handleAPI(`/promotions/check/${discountCode}`);
-    if (res.result) {
-      const detail: any = await handleAPI(`/promotions/code/${discountCode}`);
-      setDiscountValue({
-        value: detail.result.value,
-        type: detail.result.type,
-      });
-      message.success("Code is valid!");
-    } else {
-      message.warning("Invalid, expired, or out of stock code!");
+  const handleCheckDiscountCode = async () => {
+    setIsCheckingCode(true);
+    try {
+      const res = await promotionService.checkPromotionCode(discountCode);
+      if (res) {
+        const detail = await promotionService.getPromotionByCode(discountCode);
+        setDiscountValue({
+          value: detail.value,
+          type: detail.type,
+        });
+        message.success("Code is valid!");
+      } else {
+        message.warning("Invalid, expired, or out of stock code!");
+        setDiscountValue(undefined);
+      }
+    } catch (error) {
+      message.error("Could not check code. Please try again.");
       setDiscountValue(undefined);
-    }
-  } catch (error) {
-    message.error("Could not check code. Please try again.");
-    setDiscountValue(undefined);
-  } finally {
-    setIsCheckingCode(false);
-  }
-};
-
-
-  const renderComponents = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <>
-            <Button
-              type="default"
-              onClick={() => setCurrentStep(undefined)}
-              style={{ marginBottom: 16 }}
-            >
-              Back
-            </Button>
-            <ShipingAddress
-              onSelectAddress={(val) => {
-                setPaymentDetail({ ...paymentDetail, address: val });
-                setCurrentStep(1);
-              }}
-            />
-          </>
-        );
-      case 1:
-        return (
-          <PaymentMethod
-            onContinue={(val) => {
-              setPaymentMethod(val);
-              setCurrentStep(2);
-            }}
-          />
-        );
-      case 2:
-        return (
-          <>
-            <Section>
-              <Title level={4}>
-                Estimated delivery:{" "}
-                {DateTime.getShortDateEng(
-                  new Date(
-                    new Date().getTime() + 3 * 24 * 60 * 60 * 1000
-                  ).toISOString()
-                )}
-              </Title>
-              <List
-                dataSource={selectedItems}
-                renderItem={(item) => (
-                  <List.Item key={item.id}>
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar src={item.image} shape="square" size={72} />
-                      }
-                      title={
-                        <Title level={4} className="mb-1">
-                          {item.title}
-                        </Title>
-                      }
-                      description={
-                        <>
-                          <Paragraph type="secondary" className="m-0">
-                            ${VND.format(item.price)}
-                          </Paragraph>
-                          <Paragraph type="secondary" className="m-0">
-                            size: {item.size}
-                          </Paragraph>
-                        </>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Section>
-            <Section>
-              <Title level={4}>Shipping address</Title>
-              <List
-                dataSource={[paymentDetail]}
-                renderItem={(item) => (
-                  <List.Item
-                    extra={
-                      <Button
-                        onClick={() => setCurrentStep(0)}
-                        icon={<BiEdit size={20} />}
-                        className="text-muted"
-                        type="text"
-                      />
-                    }
-                  >
-                    <List.Item.Meta
-                      title={`${item.address.name} ${item.address.phoneNumber}`}
-                      description={item.address.address}
-                    />
-                  </List.Item>
-                )}
-              />
-            </Section>
-            <Section>
-              <Title level={4}>Paymen method</Title>
-              <Paragraph>
-                {paymentMethod &&
-                  methods.find(
-                    (element) => element.key === paymentMethod.methodSelected
-                  )?.title}
-              </Paragraph>
-            </Section>
-          </>
-        );
-      default:
-        return <ListCart onSelectItems={setSelectedItems} />;
+    } finally {
+      setIsCheckingCode(false);
     }
   };
 
@@ -222,14 +94,10 @@ const handleCheckDiscountCode = async () => {
     };
     if (method === "vnpay") {
       try {
-        const res: any = await handleAPI(
-          `/payment/create`,
-          body,
-          "post"
-        );
+        const res = await paymentService.createPayment(body);
 
-        if (res?.result?.paymentUrl) {
-          window.location.href = res.result.paymentUrl;
+        if (res?.paymentUrl) {
+          window.location.href = res.paymentUrl;
           dispatch(removeCarts());
           return; // Do not proceed with order creation
         } else {
@@ -245,11 +113,10 @@ const handleCheckDiscountCode = async () => {
 
     setIsLoading(true);
     try {
-      const orderResult: any = await handleAPI(
-        `/orders/create?paymentType=${method}`,
-        body,
-        "post"
-      );
+      const orderResult = await orderService.createOrder({
+        ...body,
+        paymentType: method,
+      });
       //nhan Ok vao order con nhan cancel vae home
       Modal.confirm({
         title: "Order created successfully",
@@ -293,27 +160,144 @@ const handleCheckDiscountCode = async () => {
     }
   };
 
+  const renderComponents = () => {
+    switch (currentStep) {
+      case 0:
+        return <ListCart onSelectItems={setSelectedItems} />;
+      case 1:
+        return (
+          <>
+            <Button
+              type="default"
+              onClick={() => setCurrentStep(0)}
+              style={{ marginBottom: 16 }}
+            >
+              Back
+            </Button>
+            <ShipingAddress
+              onSelectAddress={(val) => {
+                setPaymentDetail({ ...paymentDetail, address: val });
+                setCurrentStep(2);
+              }}
+            />
+          </>
+        );
+      case 2:
+        return (
+          <PaymentMethod
+            onContinue={(val) => {
+              setPaymentMethod(val);
+              setCurrentStep(3);
+            }}
+          />
+        );
+      case 3:
+        return (
+          <>
+            <div>
+              <Title level={4}>
+                Estimated delivery:{" "}
+                {DateTime.getShortDateEng(
+                  new Date(
+                    new Date().getTime() + 3 * 24 * 60 * 60 * 1000
+                  ).toISOString()
+                )}
+              </Title>
+              <List
+                dataSource={selectedItems}
+                renderItem={(item) => (
+                  <List.Item key={item.id}>
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar src={item.image} shape="square" size={72} />
+                      }
+                      title={
+                        <Title level={4} className="mb-1">
+                          {item.title}
+                        </Title>
+                      }
+                      description={
+                        <>
+                          <Paragraph type="secondary" className="m-0">
+                            ${VND.format(item.price)}
+                          </Paragraph>
+                          <Paragraph type="secondary" className="m-0">
+                            size: {item.size}
+                          </Paragraph>
+                        </>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            </div>
+            <div>
+              <Title level={4}>Shipping address</Title>
+              <List
+                dataSource={[paymentDetail]}
+                renderItem={(item) => (
+                  <List.Item
+                    extra={
+                      <Button
+                        onClick={() => setCurrentStep(1)}
+                        icon={<BiEdit size={20} />}
+                        className="text-muted"
+                        type="text"
+                      />
+                    }
+                  >
+                    <List.Item.Meta
+                      title={`${item.address.name} ${item.address.phoneNumber}`}
+                      description={item.address.address}
+                    />
+                  </List.Item>
+                )}
+              />
+            </div>
+            <div>
+              <Title level={4}>Paymen method</Title>
+              <Paragraph>
+                {paymentMethod &&
+                  methods.find(
+                    (element) => element.key === paymentMethod.methodSelected
+                  )?.title}
+              </Paragraph>
+            </div>
+          </>
+        );
+      default:
+        return <ListCart onSelectItems={setSelectedItems} />;
+    }
+  };
+
   return (
     <div className="container-fluid">
       <div className="container mt-4">
-        <HeadComponent title="Checkout" />
         <div className="row">
           <div className="col-sm-12 col-md-8">
             <div className="mb-4">
               <Steps
                 current={currentStep}
                 labelPlacement="vertical"
-                onChange={(val) => {
+                onChange={(val: number) => {
                   if (val <= (currentStep ?? 0)) {
                     setCurrentStep(val);
                   }
                 }}
                 items={[
                   {
-                    title: "Address",
+                    title: "Cart",
                     icon: (
                       <span>
                         <HiHome size={18} />
+                      </span>
+                    ),
+                  },
+                  {
+                    title: "Address",
+                    icon: (
+                      <span>
+                        <BiEdit size={20} />
                       </span>
                     ),
                   },
@@ -326,7 +310,7 @@ const handleCheckDiscountCode = async () => {
                     ),
                   },
                   {
-                    title: "Reviews",
+                    title: "Review",
                     icon: (
                       <span>
                         <FaStar size={18} />
@@ -396,17 +380,17 @@ const handleCheckDiscountCode = async () => {
                 </Space>
               </div>
               <div className="mt-3">
-                {currentStep === undefined && selectedItems.length > 0 && (
+                {currentStep === 0 && selectedItems.length > 0 && (
                   <Button
                     type="primary"
-                    onClick={() => setCurrentStep(0)}
+                    onClick={() => setCurrentStep(1)}
                     size="large"
                     style={{ width: "100%", marginTop: 16 }}
                   >
                     Continue
                   </Button>
                 )}
-                {selectedItems.length > 0 && currentStep === 2 && (
+                {selectedItems.length > 0 && currentStep === 3 && (
                   <Button
                     type="primary"
                     onClick={handlePaymentOrder}

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Image, Typography, message, Input, Button } from "antd";
-import handleAPI from "@/apis/handleApi";
 import { useDispatch, useSelector } from "react-redux";
 import { addAuth, authSelector } from "@/redux/reducers/authReducer";
+import { userService, authService } from "@/services";
 
 const { Title, Paragraph } = Typography;
 
@@ -22,7 +22,7 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
 
   const getQRCode = async () => {
     try {
-      const response: any = await handleAPI("/users/secretImageUri");
+      const response = await userService.getSecretImageUri();
       setQrCodeUrl(response);
     } catch (error) {
       console.error("Error getting QR Code:", error);
@@ -38,14 +38,10 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
 
     try {
       setLoading(true);
-      const res: any = await handleAPI(
-        "/auth/verify",
-        { email: auth.email, code: verificationCode },
-        "post"
-      );
+      const res = await userService.enable2FA("", verificationCode);
 
-      if (res.result) {
-        const updated = { ...res.result, email: auth.email };
+      if (res) {
+        const updated = { ...res, email: auth.email };
         dispatch(addAuth(updated));
         localStorage.setItem("authData", JSON.stringify(updated));
         message.success("Two-factor authentication enabled successfully!");

@@ -1,86 +1,41 @@
-import { Button, Form, Input, message, Typography } from "antd";
+import { Button, Form, Input, Typography } from "antd";
 import Link from "next/link";
-import { useRef, useState } from "react";
-import handleAPI from "@/apis/handleApi";
-import { useRouter } from "next/router";
+import { useRef } from "react";
+import { useForgotPassword } from "@/hooks";
 
 const { Title, Paragraph } = Typography;
 
 const ForgotPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<
-    "enter-email" | "verify-code" | "reset-password"
-  >("enter-email");
-  const [email, setEmail] = useState("");
-  const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<HTMLInputElement[]>([]);
-  const router = useRouter();
+
+  const {
+    isLoading,
+    step,
+    email,
+    otpCode,
+    sendCode,
+    verifyCode,
+    resetPassword,
+    handleOtpChange,
+  } = useForgotPassword();
 
   const handleSendCode = async (values: { email: string }) => {
-    setIsLoading(true);
-    try {
-      await handleAPI("/auth/send-code-email", { email: values.email }, "post");
-      message.success(`A verification code has been sent to ${values.email}.`);
-      setEmail(values.email);
-      setStep("verify-code");
-    } catch (error) {
-      message.error(
-        "Failed to send verification code. Please check the email and try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    await sendCode(values);
   };
 
   const handleVerifyCode = async () => {
-    const code = otpCode.join("");
-    if (code.length !== 6) {
-      message.error("The OTP code must consist of 6 digits.");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await handleAPI("/auth/verify-code-email", { email, code }, "post");
-      message.success(
-        "Email verified successfully. You can now reset your password."
-      );
-      setStep("reset-password");
-    } catch (error) {
-      message.error("Invalid verification code.");
-    } finally {
-      setIsLoading(false);
-    }
+    await verifyCode();
   };
 
-  const handleOtpChange = (val: string, index: number) => {
-    const newOtp = [...otpCode];
-    newOtp[index] = val;
-    setOtpCode(newOtp);
-
+  const onOtpChange = (val: string, index: number) => {
+    handleOtpChange(val, index);
     if (val && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleResetPassword = async (values: any) => {
-    if (values.password !== values.confirmPassword) {
-      message.error("Passwords do not match!");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await handleAPI("/users/reset-password",
-        { email, newPassword: values.password },
-        "put"
-      );
-      console.log("Password reset for:", email);
-      message.success("Your password has been reset successfully!");
-      router.push("/auth/login");
-    } catch (error) {
-      message.error("An error occurred while resetting the password.");
-    } finally {
-      setIsLoading(false);
-    }
+    await resetPassword(values);
   };
 
   const renderEnterEmailStep = () => (
@@ -136,7 +91,7 @@ const ForgotPassword = () => {
                 ref={(el) => {
                   if (el) inputRefs.current[i] = el.input!;
                 }}
-                onChange={(e) => handleOtpChange(e.target.value, i)}
+                onChange={(e) => onOtpChange(e.target.value, i)}
                 autoFocus={i === 0}
                 style={{
                   width: 45,

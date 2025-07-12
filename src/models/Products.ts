@@ -51,6 +51,9 @@ export interface AddressModel {
   name: string;
   phoneNumber: string;
   address: string;
+  province: string;
+  district: string;
+  ward: string;
   createdBy: string;
   isDefault: boolean;
   id: string;

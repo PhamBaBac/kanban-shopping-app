@@ -1,11 +1,11 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { authSelector } from "@/redux/reducers/authReducer";
 import { CartItemModel, removeProduct } from "@/redux/reducers/cartReducer";
 import { Button, Modal, message } from "antd";
 import { IoTrash } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
+import { cartService } from "@/services";
 
 interface Props {
   item: CartItemModel;
@@ -20,11 +20,7 @@ const ButtonRemoveCartItem = (props: Props) => {
     if (!auth.accessToken || !auth.userId) {
       try {
         const sessionId = localStorage.getItem("sessionId");
-        const res = await handleAPI(
-          `/redisCarts/remove?sessionId=${sessionId}&cartId=${item.subProductId}`,
-          null,
-          "delete"
-        );
+        const res = await cartService.removeFromRedisCart(sessionId!, item.subProductId);
         dispatch(removeProduct(item));
       } catch (error: any) {
         console.error("Lỗi khi xóa cart Redis:", error);
@@ -38,7 +34,7 @@ const ButtonRemoveCartItem = (props: Props) => {
       }
     } else {
       try {
-        await handleAPI(`/carts/remove?id=${item.id}`, null, "delete");
+        await cartService.removeFromCart(item.id);
         dispatch(removeProduct(item));
       } catch (error: any) {
         console.error("Lỗi khi xóa cart DB:", error);

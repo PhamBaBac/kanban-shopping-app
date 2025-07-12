@@ -1,198 +1,229 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
-import { SelectModel } from "@/models/FormModel";
+import { addressService } from "@/services";
 import { AddressModel } from "@/models/Products";
 import { authSelector } from "@/redux/reducers/authReducer";
-import { replaceName } from "@/utils/replaceName";
-import { Button, Checkbox, Form, Input, Select, Typography, Spin } from "antd";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { Button, Checkbox, Form, Input, Select, Spin, Typography } from "antd";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
-const OPENAPILOCATION = `https://open.oapi.vn/location`;
+import { replaceName } from "@/utils/replaceName";
 
 interface Props {
+  visible?: boolean;
+  onAddAddress?: (val: AddressModel) => void;
   onAddnew?: (val: AddressModel) => void;
   values?: AddressModel;
   onSelectAddress?: (val: string) => void;
+  onClose?: (val: string) => void;
 }
 
 const AddNewAddress = (props: Props) => {
   const { onAddnew, values, onSelectAddress } = props;
-
+  const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
   const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
   const [isLoadingWards, setIsLoadingWards] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
+  const [locationValues, setLocationValues] = useState({
+    ward: "",
+    district: "",
+    province: "",
+  });
   const [locationData, setLocationData] = useState<{
-    provinces: SelectModel[];
-    districts: SelectModel[];
-    wards: SelectModel[];
+    provinces: any[];
+    districts: any[];
+    wards: any[];
   }>({
     provinces: [],
     districts: [],
     wards: [],
   });
-  const [locationValues, setLocationValues] = useState<any>({
-    ward: "",
-    district: "",
-    province: "",
-  });
-  const [isDefault, setIsDefault] = useState(false);
 
-  const [form] = Form.useForm();
   const auth = useSelector(authSelector);
 
   useEffect(() => {
-    getProvinces(`provinces`);
+    getProvinces();
   }, []);
 
   useEffect(() => {
     if (values) {
-      form.setFieldsValue(values);
-      setIsDefault(values?.isDefault ?? false);
-      const vals = values.address.split(",");
-
-      handleFormatForms(vals);
-
-      vals.splice(vals.length - 3);
-      form.setFieldValue("houseNo", vals.toString());
+      form.setFieldsValue({
+        name: values.name,
+        phoneNumber: values.phoneNumber,
+        houseNo: values.address,
+        province: values.province,
+        district: values.district,
+        ward: values.ward,
+      });
+      setLocationValues({
+        ward: values.ward,
+        district: values.district,
+        province: values.province,
+      });
+      setIsDefault(values.isDefault);
     }
-  }, [values]);
+  }, [values, form]);
 
   const handleFormatForms = async (vals: string[]) => {
-    try {
-      const provinceVal = vals[vals.length - 1];
-
-      const provinceSelect = locationData.provinces.find(
-        (element) => element.label === provinceVal.trim()
+    const items: any[] = [];
+    for (const i in vals) {
+      // Tìm trong provinces
+      let item = locationData.provinces.find(
+        (element) => element.value === vals[i]
       );
 
-      if (provinceSelect) {
-        form.setFieldValue("province", provinceSelect.value);
-        setLocationValues({
-          ...locationValues,
-          province: provinceSelect.value,
-        });
-        await getProvinces(`districts`, provinceSelect.value);
+      // Nếu không tìm thấy trong provinces, tìm trong districts
+      if (!item) {
+        item = locationData.districts.find(
+          (element) => element.value === vals[i]
+        );
       }
 
-      const districtVal = vals[vals.length - 2];
-      const districtSelect = locationData.districts.find(
-        (element) => element.label === districtVal.trim()
-      );
-
-      if (districtSelect) {
-        setLocationValues({
-          ...locationValues,
-          district: districtSelect.value,
-        });
-
-        form.setFieldValue("district", districtSelect.value);
-        await getProvinces(`wards`, districtSelect.value);
+      // Nếu không tìm thấy trong districts, tìm trong wards
+      if (!item) {
+        item = locationData.wards.find((element) => element.value === vals[i]);
       }
 
-      const wardVal = vals[vals.length - 3];
-
-      const wardSelect = locationData.wards.find(
-        (element) => element.label === wardVal.trim()
-      );
-
-      if (wardSelect) {
-        setLocationValues({ ...locationValues, ward: wardSelect.value });
-        form.setFieldValue("ward", wardSelect.value);
+      if (item) {
+        items.push(item);
       }
-    } catch (error) {
-      console.log(error);
     }
+    return items;
   };
 
-  const getProvinces = async (url: string, id?: string) => {
-    const api = `${OPENAPILOCATION}/${url}${
-      id ? `/${id}` : ""
-    }?page=0&size=1000`;
-
-    // Set loading state based on type
-    if (url === "provinces") setIsLoadingProvinces(true);
-    else if (url === "districts") setIsLoadingDistricts(true);
-    else if (url === "wards") setIsLoadingWards(true);
-
+  const getProvinces = async () => {
+    setIsLoadingProvinces(true);
     try {
-      const res: any = await axios(api);
-
-      // Handle the new API response structure
-      const data = res.data?.data || res.data || res;
-      const formattedData = data.map((item: any) => ({
-        label: item.name,
-        value: item.id,
+      const result = await addressService.getProvinces();
+      setLocationData((prev) => ({
+        ...prev,
+        provinces: result,
       }));
-
-      const val: any = {};
-      val[url] = formattedData;
-
-      setLocationData({ ...locationData, ...val });
     } catch (error) {
-      console.log(error);
+      console.error("Failed to fetch provinces:", error);
     } finally {
-      // Clear loading state
-      if (url === "provinces") setIsLoadingProvinces(false);
-      else if (url === "districts") setIsLoadingDistricts(false);
-      else if (url === "wards") setIsLoadingWards(false);
+      setIsLoadingProvinces(false);
     }
   };
 
   const handleProvinceChange = async (val: string) => {
-    // Reset district and ward when province changes
-    form.setFieldsValue({ district: undefined, ward: undefined });
+    console.log("Selected province value:", val);
+
+    // Tìm province object để lấy thông tin chi tiết
+    const selectedProvince = locationData.provinces.find(
+      (p) => p.value === val
+    );
+    console.log("Selected province object:", selectedProvince);
+
     setLocationValues({
       ...locationValues,
       province: val,
       district: "",
       ward: "",
     });
+
+    // Reset form fields
+    form.setFieldsValue({
+      district: undefined,
+      ward: undefined,
+    });
+
     setLocationData((prev) => ({
       ...prev,
       districts: [],
       wards: [],
     }));
 
-    await getProvinces(`districts`, val);
+    setIsLoadingDistricts(true);
+    try {
+      const result = await addressService.getDistricts(val);
+      console.log("Districts result:", result);
+      setLocationData((prev) => ({
+        ...prev,
+        districts: result,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch districts:", error);
+    } finally {
+      setIsLoadingDistricts(false);
+    }
   };
 
   const handleDistrictChange = async (val: string) => {
-    // Reset ward when district changes
-    form.setFieldValue("ward", undefined);
-    setLocationValues({
-      ...locationValues,
-      district: val,
-      ward: "",
+    console.log("Selected district value:", val);
+
+    setLocationValues({ ...locationValues, district: val, ward: "" });
+
+    // Reset ward form field
+    form.setFieldsValue({
+      ward: undefined,
     });
+
     setLocationData((prev) => ({
       ...prev,
       wards: [],
     }));
 
-    await getProvinces(`wards`, val);
+    setIsLoadingWards(true);
+    try {
+      const result = await addressService.getWards(val);
+      console.log("Wards result:", result);
+      setLocationData((prev) => ({
+        ...prev,
+        wards: result,
+      }));
+    } catch (error) {
+      console.error("Failed to fetch wards:", error);
+    } finally {
+      setIsLoadingWards(false);
+    }
   };
 
   const handleAddNewAddress = async (datas: any) => {
-    let address = datas.houseNo ? `${datas.houseNo}` : "";
+    console.log("Form data received:", datas);
+    console.log("Location values:", locationValues);
 
-    const items: any = { ...locationData };
+    const items = await handleFormatForms([
+      datas.province,
+      datas.district,
+      datas.ward,
+    ]);
 
-    for (const i in locationValues) {
-      const seletecs: SelectModel[] = items[`${i}s`];
-      const item = seletecs.find(
-        (element) => element.value === locationValues[i]
+    let address = datas.houseNo;
+    // Add province, district, ward to address
+    if (datas.province) {
+      const provinceItem = items.find(
+        (element) => element.value === datas.province
       );
-
-      if (item) {
-        address += `, ${item.label}`;
+      if (provinceItem) {
+        address += `, ${provinceItem.label}`;
       }
     }
+    if (datas.district) {
+      const districtItem = items.find(
+        (element) => element.value === datas.district
+      );
+      if (districtItem) {
+        address += `, ${districtItem.label}`;
+      }
+    }
+    if (datas.ward) {
+      const wardItem = items.find((element) => element.value === datas.ward);
+      if (wardItem) {
+        address += `, ${wardItem.label}`;
+      }
+    }
+
     delete datas.houseNo;
     datas["address"] = address;
+
+    // Thêm thông tin location vào datas để lưu xuống database
+    datas["province"] = datas.province;
+    datas["district"] = datas.district;
+    datas["ward"] = datas.ward;
+
+    console.log("Final data to save:", datas);
 
     for (const i in datas) {
       datas[i] = datas[i] || datas[i] === false ? datas[i] : "";
@@ -200,24 +231,21 @@ const AddNewAddress = (props: Props) => {
 
     datas["isDefault"] = isDefault;
     datas["createdBy"] = auth.userId;
+
     if (onSelectAddress) {
       let val = datas["address"];
-
-      for (const i in locationValues) {
-        val += items[i] ? items[i].val : "";
-      }
-
       onSelectAddress(val);
     } else {
       setIsLoading(true);
       try {
-        const res: any = await handleAPI(
-          `/addresses/${values ? `update-address?id=${values.id}` : "create"}`,
-          datas,
-          values ? "put" : "post"
-        );
+        let result;
+        if (values) {
+          result = await addressService.updateAddress(values.id!, datas);
+        } else {
+          result = await addressService.createAddress(datas);
+        }
 
-        onAddnew && onAddnew(res.result);
+        onAddnew && onAddnew(result);
         form.resetFields();
         setLocationValues({ ward: "", district: "", province: "" });
         setLocationData((prev) => ({

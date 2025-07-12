@@ -1,23 +1,23 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
-import { AddNewAddress } from "@/components";
 import { AddressModel } from "@/models/Products";
+import { addressService } from "@/services";
 import {
   Button,
   Card,
   Divider,
   List,
+  message,
   Modal,
   Space,
   Spin,
   Typography,
-  message,
 } from "antd";
 import React, { useEffect, useState } from "react";
 import { BiEdit } from "react-icons/bi";
 import { IoCheckmarkCircle, IoCheckmarkCircleOutline } from "react-icons/io5";
 import { TbTrash } from "react-icons/tb";
+import AddNewAddress from "@/components/AddNewAddress";
 
 interface Props {
   onSelectAddress: (val: AddressModel) => void;
@@ -43,11 +43,10 @@ const ShipingAddress = (props: Props) => {
   }, [address]);
 
   const getAddress = async () => {
-    const api = `/addresses/all`;
     setIsloading(true);
     try {
-      const res: any = await handleAPI(api, {}, "get");
-      setAddress(res.result);
+      const res = await addressService.getAddresses();
+      setAddress(res);
     } catch (error) {
       console.log(error);
     } finally {
@@ -56,9 +55,8 @@ const ShipingAddress = (props: Props) => {
   };
 
   const handleRemoveAddress = async (item: AddressModel) => {
-    const api = `/carts/remove-address?id=${item.id}`;
     try {
-      await handleAPI(`/carts/remove-address?id=${item.id}`, {}, "delete");
+      await addressService.deleteAddress(item.id);
 
       const items = [...address];
       const index = items.findIndex((element) => element.id === item.id);
@@ -69,13 +67,7 @@ const ShipingAddress = (props: Props) => {
       if (item.isDefault && items.length > 0) {
         const val = items[0];
 
-        await handleAPI(
-          `/carts/update-address?id=${val.id}`,
-          {
-            isDefault: true,
-          },
-          "put"
-        );
+        await addressService.setDefaultAddress(val.id);
 
         items[0].isDefault = true;
       }

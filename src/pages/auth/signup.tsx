@@ -1,12 +1,9 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
-import { addAuth } from "@/redux/reducers/authReducer";
-import { Button, Checkbox, Form, Input, message, Typography } from "antd";
-import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { Button, Checkbox, Form, Input, Typography } from "antd";
+import { useRef } from "react";
 import { BsArrowLeft } from "react-icons/bs";
-import { useDispatch } from "react-redux";
+import { useSignup } from "@/hooks";
 
 interface SignUp {
   firstName: string;
@@ -17,104 +14,39 @@ interface SignUp {
 }
 
 const SignUp = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAgree, setIsAgree] = useState(true);
-  const [signValues, setSignValues] = useState<any>();
-  const [numsOfCode, setNumsOfCode] = useState<string[]>([]);
-  const [times, setTimes] = useState(160);
-
   const [form] = Form.useForm();
-  const dispatch = useDispatch();
-  const router = useRouter();
-
   const refs = useRef<Array<any>>([]);
 
-  useEffect(() => {
-    const time = setInterval(() => {
-      setTimes((t) => (t > 0 ? t - 1 : 0));
-    }, 1000);
-    return () => clearInterval(time);
-  }, []);
+  const {
+    isLoading,
+    isAgree,
+    signValues,
+    numsOfCode,
+    times,
+    signup,
+    verify,
+    resendCode,
+    changeNumsCode,
+    setIsAgree,
+    setSignValues,
+  } = useSignup();
   const handleSignUp = async (values: SignUp) => {
-    if (!isAgree) {
-      message.error("You must agree to Terms and Conditions");
-      return;
-    }
-
-    const api: any = `/auth/register`;
-    setIsLoading(true);
-    const submitData = {
-      ...values,
-      role: "USER",
-    };
-    try {
-      const res: any = await handleAPI(api, submitData, "post");
-      if (res) {
-        setSignValues({ email: submitData.email });
-        form.resetFields();
-        message.success("Verification code sent to your email.");
-      }
-    } catch (error: any) {
-      message.error(error?.message || "Sign up failed");
-    } finally {
-      setIsLoading(false);
-    }
+    await signup(values);
+    form.resetFields();
   };
 
   const handleChangeNumsCode = (val: string, index: number) => {
-    const newValues = [...numsOfCode];
-    newValues[index] = val;
-    setNumsOfCode(newValues);
-
+    changeNumsCode(val, index);
     if (val && index < 5) refs.current[index + 1]?.focus();
     if (!val && index > 0) refs.current[index - 1]?.focus();
   };
 
   const handleVerify = async () => {
-    if (numsOfCode.length === 6 && numsOfCode.every((c) => c)) {
-      const code = numsOfCode.join("");
-      try {
-        const res: any = await handleAPI(
-          "/auth/verify-code-email",
-          {
-            email: signValues.email,
-            code,
-          },
-          "post"
-        );
-
-        dispatch(addAuth({ ...res.result, email: signValues.email }));
-        localStorage.setItem(
-          "authData",
-          JSON.stringify({ ...res.result, email: signValues.email })
-        );
-        router.push("/");
-      } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message ||
-          "Invalid verification code. Please try again.";
-        message.error(errorMessage);
-      }
-    } else {
-      message.error("Please enter all 6 digits");
-    }
+    await verify();
   };
 
   const handleResendCode = async () => {
-    setNumsOfCode([]);
-    try {
-      await handleAPI(
-        "/auth/send-code-email",
-        { email: form.getFieldValue("email") },
-        "post"
-      );
-      setTimes(300);
-      message.success("New verification code sent");
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message || "Failed to resend code";
-      message.error(errorMessage);
-    }
+    await resendCode();
   };
 
   return (

@@ -35,7 +35,6 @@ import { useDispatch, useSelector } from "react-redux";
 import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
 import CategoriesListCard from "./CategoriesListCard";
 import { FaUser } from "react-icons/fa";
-import handleAPI from "@/apis/handleApi";
 import axios from "axios";
 
 const { useToken } = theme;

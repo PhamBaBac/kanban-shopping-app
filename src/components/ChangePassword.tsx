@@ -17,12 +17,12 @@ import {
   EyeInvisibleOutlined,
   EyeTwoTone,
 } from "@ant-design/icons";
-import handleAPI from "@/apis/handleApi";
-import { useDispatch, useSelector } from "react-redux";
-import { authSelector, removeAuth } from "@/redux/reducers/authReducer";
 import { useRouter } from "next/router";
 import { removeCarts } from "@/redux/reducers/cartReducer";
 import axios from "axios";
+import { userService } from "@/services";
+import { useDispatch, useSelector } from "react-redux";
+import { authSelector, removeAuth } from "@/redux/reducers/authReducer";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -37,9 +37,9 @@ const ChangePassword = () => {
   const [loading, setLoading] = useState(false);
   const auth = useSelector(authSelector);
   const dispatch = useDispatch();
-const router = useRouter();
-  const onFinish = async (values: ChangePasswordForm) => {
+  const router = useRouter();
 
+  const onFinish = async (values: ChangePasswordForm) => {
     if (values.newPassword !== values.confirmPassword) {
       message.error("Mật khẩu mới và xác nhận mật khẩu không khớp!");
       return;
@@ -52,15 +52,10 @@ const router = useRouter();
 
     try {
       setLoading(true);
-      const response: any = await handleAPI(
-        "/users/changePassword",
-        {
-          currentPassword: values.currentPassword,
-          newPassword: values.newPassword,
-          confirmationPassword: values.confirmPassword,
-        },
-        "patch"
-      );
+      const response = await userService.changePassword({
+        oldPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      });
 
       if (response) {
         Modal.confirm({
@@ -68,17 +63,19 @@ const router = useRouter();
           title: "Thành công",
           //Dung tiep hay dang xuat
           content: "Đổi mật khẩu thành công! Bạn có muốn đăng xuất không?",
-          onOk: async () =>{ await axios.post(`http://localhost:8080/api/v1/auth/logout`, null, {
-            headers: {
-              Authorization: `Bearer ${auth.accessToken}`,
-            },
-            withCredentials: true,
-          });
+          onOk: async () => {
+            await axios.post(`http://localhost:8080/api/v1/auth/logout`, null, {
+              headers: {
+                Authorization: `Bearer ${auth.accessToken}`,
+              },
+              withCredentials: true,
+            });
 
-          localStorage.clear();
-          router.push("/");
-          dispatch(removeAuth({}));
-          dispatch(removeCarts());},
+            localStorage.clear();
+            router.push("/");
+            dispatch(removeAuth({}));
+            dispatch(removeCarts());
+          },
           cancelText: "Back to home",
           onCancel: () => router.push("/"),
         });

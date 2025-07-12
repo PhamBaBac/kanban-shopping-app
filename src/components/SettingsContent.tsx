@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import TwoFactorAuthSettings from "./TwoFactorAuthSettings";
 import { authSelector, addAuth } from "@/redux/reducers/authReducer";
 import { setTheme, themeSelector } from "@/redux/reducers/themeSlice";
-import handleAPI from "@/apis/handleApi";
+import { authService } from "@/services";
 
 const SettingsContent = () => {
   const auth = useSelector(authSelector);
@@ -27,7 +27,7 @@ const SettingsContent = () => {
       // Disable TFA - call disable API
       try {
         setIsLoading2fa(true);
-        await handleAPI(`/users/disable-tfa?email=${auth.email}`, {}, "put");
+        await authService.disable2FA(auth.email);
 
         // Update local state
         const updatedAuth = { ...auth, mfaEnabled: false };

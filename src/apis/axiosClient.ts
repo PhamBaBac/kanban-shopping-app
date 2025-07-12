@@ -9,9 +9,16 @@ import { store } from "../redux/store";
 const baseURL = `http://localhost:8080/api/v1`;
 
 const getAuthData = () => {
-  const res = localStorage.getItem(localDataNames.authData);
-  if (res) return JSON.parse(res);
-  return null;
+  try {
+    if (typeof window === "undefined") {
+      return null; // Server-side rendering
+    }
+    const res = localStorage.getItem(localDataNames.authData);
+    if (res) return JSON.parse(res);
+    return null;
+  } catch (error) {
+    return null;
+  }
 };
 
 const getAccessToken = () => {
@@ -50,26 +57,32 @@ const refreshToken = async (): Promise<string | null> => {
     );
 
     const newToken = response.data.accessToken;
-    const currentAuthData = getAuthData();
 
-    if (currentAuthData) {
-      const updatedAuthData = {
-        ...currentAuthData,
-        accessToken: newToken, // ✅ fix: dùng accessToken chứ không phải token
-      };
-      localStorage.setItem(
-        localDataNames.authData,
-        JSON.stringify(updatedAuthData)
-      );
-      store.dispatch(addAuth(updatedAuthData));
+    // Only update localStorage and Redux store on client-side
+    if (typeof window !== "undefined") {
+      const currentAuthData = getAuthData();
+
+      if (currentAuthData) {
+        const updatedAuthData = {
+          ...currentAuthData,
+          accessToken: newToken,
+        };
+        localStorage.setItem(
+          localDataNames.authData,
+          JSON.stringify(updatedAuthData)
+        );
+        store.dispatch(addAuth(updatedAuthData));
+      }
     }
 
     processQueue(null, newToken);
     return newToken;
   } catch (error) {
-    localStorage.removeItem(localDataNames.authData);
-    store.dispatch(removeAuth({}));
-    // window.location.href = "/auth/login";
+    // Only clear auth on client-side
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(localDataNames.authData);
+      store.dispatch(removeAuth({}));
+    }
     return null;
   } finally {
     isRefreshing = false;
@@ -104,6 +117,11 @@ axiosClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+
+    // Check if originalRequest exists and has url property
+    if (!originalRequest || !originalRequest.url) {
+      return Promise.reject(error.response?.data || error.message);
+    }
 
     const isLoginRequest = originalRequest.url?.includes("/auth/authenticate");
     const isRefreshRequest = originalRequest.url?.includes(

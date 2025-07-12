@@ -12,9 +12,10 @@ import { BiTransfer } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { FaRegStar } from "react-icons/fa";
 import { MdImage } from "react-icons/md";
-import handleAPI from "@/apis/handleApi";
 import { useSelector } from "react-redux";
 import { authSelector } from "@/redux/reducers/authReducer";
+import { productService } from "@/services";
+import { userService } from "@/services/userService";
 
 interface Props {
   item: ProductModel;
@@ -49,9 +50,9 @@ const ProductItem = (props: Props) => {
 
   const fetchSupplierInfo = async () => {
     try {
-      const res: any = await handleAPI(`/suppliers/${item.supplierId}`);
-      if (res && res.result) {
-        setSupplier(res.result);
+      const res = await productService.getSupplier(item.supplierId);
+      if (res) {
+        setSupplier(res);
       }
     } catch (error) {
       console.log("Error fetching supplier:", error);
@@ -61,11 +62,9 @@ const ProductItem = (props: Props) => {
   const fetchSubProducts = async () => {
     setIsLoading(true);
     try {
-      const res: any = await handleAPI(
-        `/subProducts/get-all-sub-product/${item.id}`
-      );
-      if (res && res.result) {
-        setSubProducts(res.result);
+      const res = await productService.getSubProductsByProductId(item.id);
+      if (res) {
+        setSubProducts(res);
       }
     } catch (error) {
       console.log("Error fetching sub-products:", error);
@@ -73,20 +72,19 @@ const ProductItem = (props: Props) => {
       setIsLoading(false);
     }
   };
+
   const recordView = async () => {
     try {
-      // await handleAPI(
-      //   `/users/userActivity`,
-      //   {
-      //     userId: auth.userId,
-      //     productId: item.id,
-      //   },
-      //   "post"
-      // );
+      await userService.recordUserActivity({
+        userId: auth.userId,
+        productId: item.id,
+        activityType: "view",
+      });
     } catch (error) {
       console.error("Failed to record product view:", error);
     }
   };
+
   const handleClick = async () => {
     if (auth.userId) {
       await recordView(); // Gửi lịch sử xem trước khi chuyển trang

@@ -21,7 +21,7 @@ import {
   DeleteOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import handleAPI from "@/apis/handleApi";
+import { orderService } from "@/services";
 import { useRouter } from "next/router";
 import { OrderDetailModal } from "@/modals";
 import Reviews from "./Reviews";
@@ -45,7 +45,7 @@ interface OrderItemProps {
   };
   onOrderDeleted?: (orderId: string) => void;
   onOrderStatusChanged?: (orderId: string, newStatus: string) => void;
-  onReviewSubmitted?:  () => void;
+  onReviewSubmitted?: () => void;
 }
 
 const OrderItem: React.FC<OrderItemProps> = ({
@@ -109,7 +109,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const updateOrderStatus = async () => {
     try {
       setCancelLoading(true);
-      await handleAPI(`/orders/${order.orderId}/cancel`, {}, "patch");
+      await orderService.cancelOrder(order.orderId);
       message.success("Order status updated successfully");
       // Gọi callback để thông báo cho component cha
       onOrderStatusChanged?.(order.orderId, "CANCELLED");
@@ -123,13 +123,9 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const handleViewOrderDetails = async () => {
     try {
       setLoading(true);
-      const response: any = await handleAPI(
-        `/orders/${order.orderId}`,
-        {},
-        "get"
-      );
-      if (response?.result) {
-        setOrderDetail(response.result);
+      const response = await orderService.getOrderDetail(order.orderId);
+      if (response) {
+        setOrderDetail(response);
         setOrderDetailVisible(true);
       }
     } catch (error) {
@@ -147,7 +143,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const handleDeleteOrder = async () => {
     try {
       setDeleteLoading(true);
-      await handleAPI(`/orders/${order.orderId}`, {}, "delete");
+      await orderService.deleteOrder(order.orderId);
       message.success("Order deleted successfully");
       // Gọi callback để thông báo cho component cha
       onOrderDeleted?.(order.orderId);

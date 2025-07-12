@@ -1,18 +1,16 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import HeaderComponent from "@/components/HeaderComponent";
 import { localDataNames } from "@/constants/appInfos";
 import { addAuth, authSelector } from "@/redux/reducers/authReducer";
-import { syncProducts } from "@/redux/reducers/cartReducer";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { Layout, Spin } from "antd";
 import { useRouter } from "next/router";
-import { getOrCreateSessionId } from "@/utils/session";
 import FooterComponent from "@/components/FooterComponent";
+import { useCartOperations } from "@/hooks/useCartOperations";
 
 const Routers = ({ Component, pageProps }: any) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +19,7 @@ const Routers = ({ Component, pageProps }: any) => {
   const dispatch = useDispatch();
   const auth = useSelector(authSelector);
   const router = useRouter();
+  const { getCartInDatabase, getRedisCart, fetchCartById } = useCartOperations();
 
   useEffect(() => {
     getData();
@@ -54,7 +53,7 @@ const Routers = ({ Component, pageProps }: any) => {
       const cartId = localStorage.getItem("cartId");
       if (cartId) {
         // Only call Redis cart when not on auth page and not logged in
-        fetchCart(cartId);
+        fetchCartById(cartId);
       }
     }
   };
@@ -67,44 +66,6 @@ const Routers = ({ Component, pageProps }: any) => {
       console.log(error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getCartInDatabase = async () => {
-    try {
-      const res: any = await handleAPI("/carts");
-      if (res.result && res.result.length > 0) {
-        dispatch(syncProducts(res.result));
-      }
-    } catch (error) {
-      console.error("Failed to get cart", error);
-    }
-  };
-  const getRedisCart = async () => {
-    const sessionId = getOrCreateSessionId();
-    try {
-      const res: any = await handleAPI(`/redisCarts?sessionId=${sessionId}`);
-      const result = Array.isArray(res.result) ? res.result : [res.result];
-      const flatResult = result.flat(); // Đề phòng mảng lồng
-
-      flatResult.forEach((item: any) => {
-        if (item && item.subProductId) {
-          dispatch(syncProducts(flatResult));
-        }
-      });
-    } catch (err) {
-      console.error("Failed to fetch Redis cart", err);
-    }
-  };
-
-  const fetchCart = async (newCartId: string) => {
-    try {
-      const response: any = await handleAPI(`/carts/${newCartId}`);
-      const result = response.result || [];
-      const flatResult = result.flat(); // Prevent nested arrays
-      dispatch(syncProducts(flatResult));
-    } catch (error) {
-      console.error("Error fetching cart:", error);
     }
   };
 

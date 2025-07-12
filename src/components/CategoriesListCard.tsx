@@ -1,6 +1,5 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { CategoyModel } from "@/models/Products";
 import {
   Card,
@@ -15,6 +14,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { shopService } from "@/services";
 
 const { useToken } = theme;
 
@@ -43,10 +43,8 @@ const CategoriesListCard = (props: Props) => {
   const getCategories = async () => {
     setIsLoading(true);
     try {
-      const res: any = await handleAPI(`/public/categories/all`);
-      if (res && res.result) {
-        changeListToTreeList(res.result);
-      }
+      const categoriesRes = await shopService.getCategoriesForFilter();
+      changeListToTreeList(categoriesRes);
     } catch (error) {
       console.log(error);
     } finally {

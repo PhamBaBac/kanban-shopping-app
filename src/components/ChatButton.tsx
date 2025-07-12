@@ -13,7 +13,7 @@ import {
 import { useState, useEffect } from "react";
 import { BsChatDots, BsX, BsSend } from "react-icons/bs";
 import axiosClient from "@/apis/axiosClient";
-import handleAPI from "@/apis/handleApi";
+import { useChat } from "@/hooks";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -47,144 +47,14 @@ interface ChatHistoryResponse {
 
 const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Helper function để format timestamp cho Java LocalDateTime
-  const formatTimestampForJava = (date: Date): string => {
-    // Sử dụng local time thay vì UTC để tránh lệch múi giờ
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
+  const { messages, isLoading, sendMessage, clearHistory } = useChat();
 
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
-
-  // Helper function để parse timestamp từ API
-  const parseTimestamp = (timestamp: string): Date => {
-    return new Date(timestamp);
-  };
-
-  // Load chat history khi mở modal
-  const loadChatHistory = async () => {
-    setIsLoadingHistory(true);
-    try {
-      const response: any = await handleAPI("/ai/chat/history", {}, "get");
-
-      if (response.code === 1000 && response.result) {
-        const historyMessages: Message[] = [];
-        const rawHistory = response.result;
-
-        // Nếu không có lịch sử thì hiển thị tin nhắn chào mừng
-        if (rawHistory.length === 0) {
-          historyMessages.push({
-            id: "welcome",
-            text: "Xin chào! Tôi có thể giúp gì cho bạn?",
-            isUser: false,
-            timestamp: new Date(),
-          });
-        } else {
-          // Ghép từng cặp USER/ASSISTANT thành các message
-          for (let i = 0; i < rawHistory.length; i++) {
-            const item = rawHistory[i];
-            if (item.role === "USER") {
-              historyMessages.push({
-                id: `user-${i}`,
-                text: item.message,
-                isUser: true,
-                timestamp: new Date(item.createdAt),
-              });
-            } else if (item.role === "ASSISTANT") {
-              historyMessages.push({
-                id: `ai-${i}`,
-                text: item.message,
-                isUser: false,
-                timestamp: new Date(item.createdAt),
-              });
-            }
-          }
-        }
-        setMessages(historyMessages);
-      }
-    } catch (error) {
-      console.error("Error loading chat history:", error);
-      // Fallback to welcome message
-      setMessages([
-        {
-          id: "welcome",
-          text: "Xin chào! Tôi có thể giúp gì cho bạn?",
-          isUser: false,
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  // Load history khi mở modal
-  useEffect(() => {
-    if (isOpen) {
-      loadChatHistory();
-    }
-  }, [isOpen]);
-
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (inputValue.trim() && !isLoading) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text: inputValue,
-        isUser: true,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
+      sendMessage(inputValue);
       setInputValue("");
-      setIsLoading(true);
-
-      try {
-        const response: any = await handleAPI(
-          `/ai/chat/support`,
-          { message: userMessage.text },
-          "post"
-        );
-
-        if (response.code === 1000) {
-          // Sử dụng message và aiCreatedAt từ response.result
-          const botMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: response.result?.message || "",
-            isUser: false,
-            timestamp: response.result?.aiCreatedAt
-              ? new Date(response.result.aiCreatedAt)
-              : new Date(),
-          };
-          setMessages((prev) => [...prev, botMessage]);
-        } else {
-          throw new Error(response.message || "Có lỗi xảy ra");
-        }
-      } catch (error: any) {
-        console.error("Chat API error:", error);
-
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: "Xin lỗi, có lỗi xảy ra khi xử lý tin nhắn của bạn. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.",
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-
-        message.error(
-          "Không thể kết nối với hệ thống chat. Vui lòng thử lại sau."
-        );
-      } finally {
-        setIsLoading(false);
-      }
     }
   };
 
@@ -195,24 +65,8 @@ const ChatButton = () => {
     }
   };
 
-  const clearChat = async () => {
-    try {
-      await handleAPI("/ai/chat/history", {}, "delete");
-      message.success("Đã xóa lịch sử chat thành công");
-
-      // Reset về tin nhắn chào mừng
-      setMessages([
-        {
-          id: "welcome",
-          text: "Xin chào! Tôi có thể giúp gì cho bạn?",
-          isUser: false,
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (error) {
-      console.error("Error clearing chat history:", error);
-      message.error("Không thể xóa lịch sử chat");
-    }
+  const handleClearChat = async () => {
+    await clearHistory();
   };
 
   return (
@@ -270,7 +124,7 @@ const ChatButton = () => {
               marginBottom: 10,
             }}
           >
-            {isLoadingHistory ? (
+            {isLoading ? (
               <div style={{ textAlign: "center", padding: "20px" }}>
                 <Text style={{ color: "#666" }}>Đang tải lịch sử chat...</Text>
               </div>
@@ -346,14 +200,14 @@ const ChatButton = () => {
               placeholder="Nhập tin nhắn..."
               autoSize={{ minRows: 1, maxRows: 3 }}
               style={{ resize: "none" }}
-              disabled={isLoading || isLoadingHistory}
+              disabled={isLoading}
             />
             <Divider type="vertical" />
             <Button
               type="primary"
               icon={<BsSend />}
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading || isLoadingHistory}
+              disabled={!inputValue.trim() || isLoading}
               loading={isLoading}
             />
           </Space.Compact>
@@ -363,9 +217,9 @@ const ChatButton = () => {
             <Button
               type="link"
               size="small"
-              onClick={clearChat}
+              onClick={handleClearChat}
               style={{ fontSize: "12px" }}
-              disabled={isLoadingHistory}
+              disabled={isLoading}
             >
               Xóa lịch sử chat
             </Button>

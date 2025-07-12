@@ -1,6 +1,5 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { CategoyModel } from "@/models/Products";
 import { MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import {
@@ -18,11 +17,13 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFilterValues } from "@/redux/reducers/filterSlice";
 import { RootState } from "@/redux/store";
+import { FilterValues, shopService } from "@/services";
 
 const { Title } = Typography;
 const { useToken } = theme;
 
-export interface FilterValues {
+// Interface cho form filter values (từ Redux)
+interface FormFilterValues {
   catIds?: string[];
   price?: [number, number];
   colors?: string[];
@@ -36,31 +37,24 @@ const FilterPanel = () => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoyModel[]>([]);
-  const [filterData, setFilterData] = useState<{
-    colors: string[];
-    sizes: string[];
-    prices: number[];
-  }>();
+  const [filterData, setFilterData] = useState<FilterValues>();
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
   const { token } = useToken();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FormFilterValues>();
 
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
       try {
-        const [catsRes, filtersRes]: [any, any] = await Promise.all([
-          handleAPI("/public/categories/all", undefined, "get"),
-          handleAPI("/subProducts/get-filter-values", undefined, "get"),
+        const [categoriesRes, filterValuesRes] = await Promise.all([
+          shopService.getCategoriesForFilter(),
+          shopService.getFilterValues(),
         ]);
-        if (catsRes.result) {
-          const hierarchicalCategories = buildHierarchy(catsRes.result);
-          setCategories(hierarchicalCategories);
-        }
-        if (filtersRes.result) {
-          setFilterData(filtersRes.result);
-        }
+
+        const hierarchicalCategories = buildHierarchy(categoriesRes);
+        setCategories(hierarchicalCategories);
+        setFilterData(filterValuesRes);
       } catch (error) {
         console.log(error);
       } finally {
@@ -95,8 +89,24 @@ const FilterPanel = () => {
   useEffect(() => {
     if (filterValues) {
       form.setFieldsValue(filterValues);
+
+      // Auto-expand category if catIds are selected
+      if (filterValues.catIds && filterValues.catIds.length > 0) {
+        const newExpandedKeys = new Set(expandedKeys);
+        categories.forEach((cat) => {
+          if (
+            cat.children &&
+            cat.children.some((child) =>
+              filterValues.catIds?.includes(child.id)
+            )
+          ) {
+            newExpandedKeys.add(cat.id);
+          }
+        });
+        setExpandedKeys(Array.from(newExpandedKeys));
+      }
     }
-  }, [filterValues, form]);
+  }, [filterValues, form, categories, expandedKeys]);
 
   const handleToggle = (key: string) => {
     setExpandedKeys((prev) =>

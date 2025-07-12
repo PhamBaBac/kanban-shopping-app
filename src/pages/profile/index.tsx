@@ -9,21 +9,25 @@ import { useSelector } from "react-redux";
 import ProsionalInfomation from "../../components/PersionalInfomations";
 import { FaCog, FaLock, FaShoppingCart } from "react-icons/fa";
 import OrderItem from "@/components/OrderItem";
-import handleAPI from "@/apis/handleApi";
 import { SettingsContent, TwoFactorAuthSettings } from "@/components";
 import ChangePassword from "@/components/ChangePassword";
+import { useOrders } from "@/hooks/useOrders";
 
 import { useRouter } from "next/router";
 
 const ProfilePage = () => {
   const router = useRouter();
   const [tabPosition, setTabPosition] = useState<TabsPosition>("left");
-  const [orders, setOrders] = useState<any[]>([]);
-  const defaultTab = router.query.tab?.toString() || "edit"; // <-- đọc query tab
+  const defaultTab = router.query.tab?.toString() || "edit";
 
-  useEffect(() => {
-    getOrders();
-  }, []);
+  const {
+    orders,
+    loading,
+    error,
+    refetch,
+    handleOrderDeleted,
+    handleOrderStatusChanged,
+  } = useOrders();
 
   useEffect(() => {
     const WIDTH = window ? window.innerWidth : undefined;
@@ -32,80 +36,6 @@ const ProfilePage = () => {
       setTabPosition(WIDTH < 768 ? "top" : "left");
     }
   }, []);
-
-  const getOrders = async () => {
-    const response: any = await handleAPI("/orders/listOrders");
-
-    const orderMap = new Map();
-
-    response.result.forEach((item: any) => {
-      const orderId = item.orderId;
-
-      if (orderMap.has(orderId)) {
-        const existingOrder = orderMap.get(orderId);
-        existingOrder.items.push({
-          image: item.image,
-          title: item.title,
-          size: item.size,
-          qty: item.qty,
-          price: item.price,
-          totalPrice: item.totalPrice,
-          orderStatus: item.orderStatus,
-          subProductId: item.subProductId, 
-          isReviewed: item.isReviewed, 
-        });
-        existingOrder.totalAmount += item.totalPrice;
-      } else {
-        orderMap.set(orderId, {
-          orderId: orderId,
-          items: [
-            {
-              image: item.image,
-              title: item.title,
-              size: item.size,
-              qty: item.qty,
-              price: item.price,
-              totalPrice: item.totalPrice,
-              orderStatus: item.orderStatus,
-              subProductId: item.subProductId,
-              isReviewed: item.isReviewed,
-            },
-          ],
-          totalAmount: item.totalPrice,
-          orderStatus: item.orderStatus,
-        });
-      }
-    });
-
-    const groupedOrders = Array.from(orderMap.values());
-    setOrders(groupedOrders);
-  };
-
-
-  // Callback khi order bị xóa
-  const handleOrderDeleted = (orderId: string) => {
-    setOrders((prevOrders) =>
-      prevOrders.filter((order) => order.orderId !== orderId)
-    );
-  };
-
-  // Callback khi trạng thái order thay đổi
-  const handleOrderStatusChanged = (orderId: string, newStatus: string) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.orderId === orderId
-          ? {
-              ...order,
-              orderStatus: newStatus,
-              items: order.items.map((item: any) => ({
-                ...item,
-                orderStatus: newStatus,
-              })),
-            }
-          : order
-      )
-    );
-  };
 
   const profileTabs: TabsProps["items"] = [
     {
@@ -120,15 +50,19 @@ const ProfilePage = () => {
       icon: <FaShoppingCart size={14} className="text-muted" />,
       children: (
         <div className="space-y-4">
-          {orders.map((order: any, idx: number) => (
-            <OrderItem
-              key={order.orderId || idx}
-              order={order}
-              onOrderDeleted={handleOrderDeleted}
-              onOrderStatusChanged={handleOrderStatusChanged}
-              onReviewSubmitted={getOrders} 
-            />
-          ))}
+          {loading && <div>Loading orders...</div>}
+          {error && <div className="text-red-500">Error: {error}</div>}
+          {!loading &&
+            !error &&
+            orders.map((order: any, idx: number) => (
+              <OrderItem
+                key={order.orderId || idx}
+                order={order}
+                onOrderDeleted={handleOrderDeleted}
+                onOrderStatusChanged={handleOrderStatusChanged}
+                onReviewSubmitted={refetch}
+              />
+            ))}
         </div>
       ),
     },

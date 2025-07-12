@@ -17,12 +17,12 @@ interface Props {
   promotions: PromotionModel[];
   categories: CategoyModel[];
   bestSellers: ProductModel[];
-  recommendations: ProductModel[];
+  // recommendations: ProductModel[];
 }
 
 const HomePage = (props: Props) => {
   // const { promotions, categories, bestSellers } = props;
-  const { promotions, categories, bestSellers, recommendations } = props;
+  const { promotions, categories, bestSellers } = props;
 
   const [numOfColumn, setNumOfColumn] = useState<number>();
   const [catsArrays, setCatsArrays] = useState<

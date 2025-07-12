@@ -1,9 +1,9 @@
 /** @format */
 
-import handleAPI from "@/apis/handleApi";
 import { ReviewModel } from "@/models/ReviewModel";
 import { authSelector } from "@/redux/reducers/authReducer";
 import { handleChangeFile, uploadFile } from "@/utils/uploadFile";
+import { reviewService } from "@/services";
 import {
   Avatar,
   Button,
@@ -77,11 +77,10 @@ const Reviews = (props: Props) => {
   };
 
   const handleAddReview = async (data: any) => {
-    const api = `/reviewProducts`;
     console.log("data", data);
 
     try {
-      await handleAPI(api, data, "post");
+      await reviewService.createReview(data);
       message.success("Review added successfully");
       setStarScore(0);
       setcomment("");
