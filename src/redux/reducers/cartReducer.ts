@@ -15,7 +15,13 @@ export interface CartItemModel {
   image: string;
   slug: string;
   id: string | null; // Can be null if not logged in
-  addressId?: string; // Optional address ID for checkout
+  addressId?: string;
+  discountValue?: DiscountValue;
+}
+
+export interface DiscountValue {
+  value: number;
+  type: string;
 }
 
 const initialState: CartItemModel[] = [];

@@ -29,6 +29,7 @@ interface ChatResponse {
   code: number;
   message: string;
   result: string;
+  aiCreatedAt?: string; // Thêm timestamp từ AI response
 }
 
 interface ChatHistoryItem {
@@ -53,7 +54,15 @@ const ChatButton = () => {
 
   // Helper function để format timestamp cho Java LocalDateTime
   const formatTimestampForJava = (date: Date): string => {
-    return date.toISOString().replace("T", " ").substring(0, 19);
+    // Sử dụng local time thay vì UTC để tránh lệch múi giờ
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
 
   // Helper function để parse timestamp từ API
@@ -69,9 +78,10 @@ const ChatButton = () => {
 
       if (response.code === 1000 && response.result) {
         const historyMessages: Message[] = [];
+        const rawHistory = response.result;
 
-        // Thêm tin nhắn chào mừng nếu không có lịch sử
-        if (response.result.length === 0) {
+        // Nếu không có lịch sử thì hiển thị tin nhắn chào mừng
+        if (rawHistory.length === 0) {
           historyMessages.push({
             id: "welcome",
             text: "Xin chào! Tôi có thể giúp gì cho bạn?",
@@ -79,26 +89,26 @@ const ChatButton = () => {
             timestamp: new Date(),
           });
         } else {
-          // Convert lịch sử chat từ API thành format Message
-          response.result.forEach((item: ChatHistoryItem, index: number) => {
-            // Thêm tin nhắn user
-            historyMessages.push({
-              id: `user-${index}`,
-              text: item.userMessage,
-              isUser: true,
-              timestamp: parseTimestamp(item.userCreatedAt),
-            });
-
-            // Thêm tin nhắn AI
-            historyMessages.push({
-              id: `ai-${index}`,
-              text: item.aiResponse,
-              isUser: false,
-              timestamp: parseTimestamp(item.aiCreatedAt),
-            });
-          });
+          // Ghép từng cặp USER/ASSISTANT thành các message
+          for (let i = 0; i < rawHistory.length; i++) {
+            const item = rawHistory[i];
+            if (item.role === "USER") {
+              historyMessages.push({
+                id: `user-${i}`,
+                text: item.message,
+                isUser: true,
+                timestamp: new Date(item.createdAt),
+              });
+            } else if (item.role === "ASSISTANT") {
+              historyMessages.push({
+                id: `ai-${i}`,
+                text: item.message,
+                isUser: false,
+                timestamp: new Date(item.createdAt),
+              });
+            }
+          }
         }
-
         setMessages(historyMessages);
       }
     } catch (error) {
@@ -139,19 +149,20 @@ const ChatButton = () => {
 
       try {
         const response: any = await handleAPI(
-          `/ai/chat/support?message=${encodeURIComponent(
-            userMessage.text
-          )}&userCreatedAt=${formatTimestampForJava(userMessage.timestamp)}`,
-          {},
+          `/ai/chat/support`,
+          { message: userMessage.text },
           "post"
         );
 
         if (response.code === 1000) {
+          // Sử dụng message và aiCreatedAt từ response.result
           const botMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: response.result,
+            text: response.result?.message || "",
             isUser: false,
-            timestamp: new Date(),
+            timestamp: response.result?.aiCreatedAt
+              ? new Date(response.result.aiCreatedAt)
+              : new Date(),
           };
           setMessages((prev) => [...prev, botMessage]);
         } else {

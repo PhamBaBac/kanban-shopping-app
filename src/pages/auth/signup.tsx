@@ -41,13 +41,12 @@ const SignUp = () => {
       return;
     }
 
-    const api = `/auth/register`;
+    const api: any = `/auth/register`;
     setIsLoading(true);
     const submitData = {
       ...values,
       role: "USER",
     };
-
     try {
       const res: any = await handleAPI(api, submitData, "post");
       if (res) {
@@ -56,7 +55,7 @@ const SignUp = () => {
         message.success("Verification code sent to your email.");
       }
     } catch (error: any) {
-      message.error(`User already exists`);
+      message.error(error?.message || "Sign up failed");
     } finally {
       setIsLoading(false);
     }
@@ -90,8 +89,11 @@ const SignUp = () => {
           JSON.stringify({ ...res.result, email: signValues.email })
         );
         router.push("/");
-      } catch (error) {
-        message.error("Invalid verification code. Please try again.");
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message ||
+          "Invalid verification code. Please try again.";
+        message.error(errorMessage);
       }
     } else {
       message.error("Please enter all 6 digits");
@@ -108,8 +110,10 @@ const SignUp = () => {
       );
       setTimes(300);
       message.success("New verification code sent");
-    } catch (error) {
-      message.error("Failed to resend code");
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || "Failed to resend code";
+      message.error(errorMessage);
     }
   };
 

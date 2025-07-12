@@ -69,7 +69,9 @@ const ShopPageContent = () => {
       (v) => v && v.length > 0
     );
 
-    const endpoint = hasFilters ? "/products/filter" : "/products/page";
+    const endpoint = hasFilters
+      ? "/public/products/filter"
+      : "/public/products/page";
     setApi(`${endpoint}?${queryString}`);
   }, [filterValues, page]);
 

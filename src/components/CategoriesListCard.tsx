@@ -43,7 +43,7 @@ const CategoriesListCard = (props: Props) => {
   const getCategories = async () => {
     setIsLoading(true);
     try {
-      const res: any = await handleAPI(`/categories/all`);
+      const res: any = await handleAPI(`/public/categories/all`);
       if (res && res.result) {
         changeListToTreeList(res.result);
       }

@@ -69,7 +69,7 @@ const refreshToken = async (): Promise<string | null> => {
   } catch (error) {
     localStorage.removeItem(localDataNames.authData);
     store.dispatch(removeAuth({}));
-    window.location.href = "/auth/login";
+    // window.location.href = "/auth/login";
     return null;
   } finally {
     isRefreshing = false;

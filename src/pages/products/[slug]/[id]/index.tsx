@@ -46,7 +46,7 @@ const ProductDetail = ({ pageProps }: any) => {
     useState<SubProductModel>();
   const [count, setCount] = useState(1);
   const [instockQuantity, setInstockQuantity] = useState(
-    subProductSelected?.qty
+    subProductSelected?.stock
   );
   const [reviews, setReviews] = useState<any[]>([]);
 
@@ -118,9 +118,9 @@ const ProductDetail = ({ pageProps }: any) => {
     const item = cart.find((el) => el.subProductId === subProductSelected?.id);
     if (subProductSelected) {
       if (item) {
-        setInstockQuantity(subProductSelected.qty - item.count);
+        setInstockQuantity(subProductSelected.stock - item.count);
       } else {
-        setInstockQuantity(subProductSelected.qty);
+        setInstockQuantity(subProductSelected.stock);
       }
     }
   }, [cart, subProductSelected]);
@@ -143,7 +143,7 @@ const ProductDetail = ({ pageProps }: any) => {
       title: detail.title,
       color: subProductSelected.color,
       price: subProductSelected.discount ?? subProductSelected.price,
-      qty: subProductSelected.qty,
+      qty: subProductSelected.stock,
       productId: product.id,
       image: subProductSelected.images[0] ?? "",
     };
@@ -206,8 +206,8 @@ const ProductDetail = ({ pageProps }: any) => {
   const renderButtonGroup = () => {
     const item = cart.find((el) => el.subProductId === subProductSelected?.id);
     const availableQty = item
-      ? (subProductSelected?.qty ?? 0) - item.count
-      : subProductSelected?.qty ?? 0;
+      ? (subProductSelected?.stock ?? 0) - item.count
+      : subProductSelected?.stock ?? 0;
 
     return (
       subProductSelected && (
@@ -250,7 +250,7 @@ const ProductDetail = ({ pageProps }: any) => {
       <HeadComponent
         title={detail.title}
         description={detail.description}
-        url={`${appInfo.baseUrl}/products/${detail.slug}/${detail.id}`}
+        url={`${appInfo.baseUrl}/public/products/${detail.slug}/${detail.id}`}
       />
       <div className="container-fluid mt-3 mb-5">
         <div className="container">
@@ -305,8 +305,8 @@ const ProductDetail = ({ pageProps }: any) => {
                   </Typography.Title>
                 </div>
                 <div>
-                  <Tag color={subProductSelected.qty > 0 ? "success" : "error"}>
-                    {subProductSelected.qty > 0
+                  <Tag color={subProductSelected.stock > 0 ? "success" : "error"}>
+                    {subProductSelected.stock > 0
                       ? `In Stock (${instockQuantity})`
                       : "Out of Stock"}
                   </Tag>
@@ -559,7 +559,7 @@ const ProductDetail = ({ pageProps }: any) => {
 export const getStaticProps = async (context: any) => {
   try {
     const res = await fetch(
-      `${appInfo.baseUrl}/products/${context.params.slug}/${context.params.id}`
+      `${appInfo.baseUrl}/public/products/${context.params.slug}/${context.params.id}`
     );
     const result = await res.json();
     if (!result.result) return { notFound: true };

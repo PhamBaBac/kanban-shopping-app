@@ -112,8 +112,8 @@ const HomePage = (props: Props) => {
                           className="m-0"
                           style={{ fontWeight: 300 }}
                         >
-                          UP TO {item.value}{" "}
-                          {item.type === "percent" ? "%" : ""}
+                          UP TO {item.numOfAvailable}{" "}
+                          {item.type === "PERCENT" ? "%" : ""}
                         </Title>
                         <Divider type="vertical" />
                         <Title
@@ -132,6 +132,7 @@ const HomePage = (props: Props) => {
                           size="large"
                           icon={<BsArrowRight size={18} />}
                           type="primary"
+                          onClick={() => router.push(`/shop`)}
                         >
                           Shop now
                         </Button>
@@ -144,7 +145,6 @@ const HomePage = (props: Props) => {
         </div>
       </div>
       <div className="container">
-       
         <Section>
           <TabbarComponent
             title="Shop by Categories"

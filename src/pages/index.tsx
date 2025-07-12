@@ -24,8 +24,8 @@ const Home = () => {
     try {
       const [promRes, catRes, bestSellerRes, idRes]: any = await Promise.all([
         handleAPI("/promotions"),
-        handleAPI("/categories/all"),
-        handleAPI("/products/bestSellers"),
+        handleAPI("/public/categories/all"),
+        handleAPI("/public/products/bestSellers"),
         // handleAPI("/ai/recommendations"),
       ]);
 
@@ -67,8 +67,8 @@ export const getStaticProps = async () => {
   try {
     const [promRes, catRes, bestSellerRes] = await Promise.all([
       fetch(`${appInfo.baseUrl}/promotions`).then((res) => res.json()),
-      fetch(`${appInfo.baseUrl}/categories/all`).then((res) => res.json()),
-      fetch(`${appInfo.baseUrl}/products/bestSellers`).then((res) =>
+      fetch(`${appInfo.baseUrl}/public/categories/all`).then((res) => res.json()),
+      fetch(`${appInfo.baseUrl}/public/products/bestSellers`).then((res) =>
         res.json()
       ),
       // fetch(`${appInfo.baseUrl}/ai/recommendations`).then((res) => res.json()),

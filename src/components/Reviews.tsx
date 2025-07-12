@@ -88,8 +88,8 @@ const Reviews = (props: Props) => {
       setFileList([]);
       setHasReviewed(true);
       if (onReviewed) onReviewed();
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      message.error(error?.message || "Review failed");
     } finally {
       setIsLoading(false);
     }

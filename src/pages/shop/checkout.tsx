@@ -39,17 +39,13 @@ import { useRouter } from "next/router";
 
 const { Title, Text, Paragraph } = Typography;
 
-interface PaymentDetail {
-  address: AddressModel;
-  paymentMethod: any;
-}
-
 const CheckoutPage = () => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountValue, setDiscountValue] = useState<{
     value: number;
     type: string;
   }>();
+  console.log("discountValue", discountValue);
   //grandTotal =gia trong cart - discountValue
   const [grandTotal, setGrandTotal] = useState(0);
   const [isCheckingCode, setIsCheckingCode] = useState(false);
@@ -74,7 +70,7 @@ const CheckoutPage = () => {
 
     if (discountValue && selectedItems.length > 0) {
       setGrandTotal(
-        discountValue.type === "percent"
+        discountValue.type === "PERCENT"
           ? Math.ceil(total - total * (discountValue.value / 100))
           : total - discountValue.value
       );
@@ -83,43 +79,29 @@ const CheckoutPage = () => {
     }
   }, [discountValue, selectedItems]);
 
-  const handleCheckDiscountCode = async () => {
-    setIsCheckingCode(true);
-    try {
-      const res: any = await handleAPI(
-        "/promotions/apply",
-        {
-          userId: user.userId,
-          code: discountCode,
-        },
-        "post"
-      );
-
-      if (res.result === true) {
-        // If applicable, call the API to get discount information
-        const detail: any = await handleAPI(`/promotions/code/${discountCode}`);
-
-        setDiscountValue({
-          value: detail.result.numOfAvailable,
-          type: detail.result.discountType, // 'percent' | 'amount'
-        });
-        message.success("Code applied successfully!");
-      } else {
-        message.warning("Invalid or already used code!");
-        setDiscountValue(undefined);
-      }
-    } catch (error: any) {
-      // If error has code 1022, show message from backend
-      if (error?.code === 1022) {
-        message.error(error.message || "Code has been fully used");
-      } else {
-        message.error("Code has been fully used");
-      }
+const handleCheckDiscountCode = async () => {
+  setIsCheckingCode(true);
+  try {
+    const res: any = await handleAPI(`/promotions/check/${discountCode}`);
+    if (res.result) {
+      const detail: any = await handleAPI(`/promotions/code/${discountCode}`);
+      setDiscountValue({
+        value: detail.result.value,
+        type: detail.result.type,
+      });
+      message.success("Code is valid!");
+    } else {
+      message.warning("Invalid, expired, or out of stock code!");
       setDiscountValue(undefined);
-    } finally {
-      setIsCheckingCode(false);
     }
-  };
+  } catch (error) {
+    message.error("Could not check code. Please try again.");
+    setDiscountValue(undefined);
+  } finally {
+    setIsCheckingCode(false);
+  }
+};
+
 
   const renderComponents = () => {
     switch (currentStep) {
@@ -233,13 +215,15 @@ const CheckoutPage = () => {
     const method = paymentMethod?.methodSelected ?? "";
     const body = {
       addressId: paymentDetail?.address?.id,
-      items: selectedItems,
+      items: selectedItems.map((item) => ({
+        ...item,
+        discountValue: discountValue,
+      })),
     };
-    // If it's VNPay, call the payment API and open the URL
     if (method === "vnpay") {
       try {
         const res: any = await handleAPI(
-          `/payment/create?amount=${grandTotal}`,
+          `/payment/create`,
           body,
           "post"
         );
@@ -377,11 +361,12 @@ const CheckoutPage = () => {
                     onChange={(val) =>
                       setDiscountCode(val.target.value.toUpperCase())
                     }
+                    disabled={!!discountValue}
                   />
                   <Button
                     loading={isCheckingCode}
                     onClick={handleCheckDiscountCode}
-                    disabled={!discountCode}
+                    disabled={!discountCode || !!discountValue}
                     type="primary"
                     size="large"
                   >

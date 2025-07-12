@@ -51,7 +51,7 @@ const FilterPanel = () => {
       setIsLoading(true);
       try {
         const [catsRes, filtersRes]: [any, any] = await Promise.all([
-          handleAPI("/categories/all", undefined, "get"),
+          handleAPI("/public/categories/all", undefined, "get"),
           handleAPI("/subProducts/get-filter-values", undefined, "get"),
         ]);
         if (catsRes.result) {
