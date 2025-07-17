@@ -53,7 +53,7 @@ const ChangePassword = () => {
     try {
       setLoading(true);
       const response = await userService.changePassword({
-        oldPassword: values.currentPassword,
+        currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       });
 

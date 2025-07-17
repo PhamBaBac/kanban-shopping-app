@@ -7,6 +7,7 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  isLoading?: boolean;
 }
 
 interface UseChatReturn {
@@ -60,40 +61,61 @@ export const useChat = (): UseChatReturn => {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+    // Thêm message AI tạm thời với isLoading: true
+    const aiLoadingMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: "Đang nhập...",
+      isUser: false,
+      timestamp: new Date(),
+      isLoading: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage, aiLoadingMessage]);
+    // Không setIsLoading(true) nữa
 
     try {
       const response = await chatService.sendMessage({ message: text });
 
       if (response) {
         const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: (Date.now() + 2).toString(),
           text: response.message || "",
           isUser: false,
           timestamp: response.aiCreatedAt
             ? new Date(response.aiCreatedAt)
             : new Date(),
         };
-        setMessages((prev) => [...prev, botMessage]);
+        // Thay thế message AI tạm thời bằng message thật
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.isLoading) {
+            return [...prev.slice(0, -1), botMessage];
+          }
+          return prev;
+        });
       }
     } catch (error: any) {
       console.error("Chat API error:", error);
 
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: (Date.now() + 2).toString(),
         text: "Xin lỗi, có lỗi xảy ra khi xử lý tin nhắn của bạn. Vui lòng thử lại sau hoặc liên hệ trực tiếp với chúng tôi.",
         isUser: false,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.isLoading) {
+          return [...prev.slice(0, -1), errorMessage];
+        }
+        return prev;
+      });
 
       message.error(
         "Không thể kết nối với hệ thống chat. Vui lòng thử lại sau."
       );
-    } finally {
-      setIsLoading(false);
     }
+    // Không setIsLoading(false) nữa
   };
 
   const clearHistory = async () => {
@@ -109,7 +131,7 @@ export const useChat = (): UseChatReturn => {
 
   return {
     messages,
-    isLoading,
+    isLoading: false, // Luôn trả về false để không loading toàn bộ chat
     error,
     sendMessage,
     clearHistory,

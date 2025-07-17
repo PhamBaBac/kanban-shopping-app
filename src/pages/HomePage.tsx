@@ -5,11 +5,13 @@ import ChatButton from "@/components/ChatButton";
 import HeadComponent from "@/components/HeadComponent";
 import { CategoyModel, ProductModel } from "@/models/Products";
 import { PromotionModel } from "@/models/PromotionModel";
+import { authSelector } from "@/redux/reducers/authReducer";
 import { Button, Carousel, Divider, Space, Typography } from "antd";
 import { CarouselRef } from "antd/es/carousel";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
+import { useSelector } from "react-redux";
 
 const { Title } = Typography;
 
@@ -23,6 +25,7 @@ interface Props {
 const HomePage = (props: Props) => {
   // const { promotions, categories, bestSellers } = props;
   const { promotions, categories, bestSellers } = props;
+  const auth = useSelector(authSelector);
 
   const [numOfColumn, setNumOfColumn] = useState<number>();
   const [catsArrays, setCatsArrays] = useState<
@@ -238,7 +241,7 @@ const HomePage = (props: Props) => {
           </div>
         </Section>
       </div>
-      <ChatButton />
+      {auth.userId && <ChatButton />}
     </>
   );
 };

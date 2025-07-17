@@ -13,7 +13,7 @@ export interface CreateReviewData {
 export const reviewService = {
   // Tạo review
   createReview: async (data: CreateReviewData): Promise<any> => {
-    const res = await handleAPI("/reviewProducts", data, "post");
+    const res = await handleAPI("/ai/comments", data, "post");
     return res.data;
   },
 

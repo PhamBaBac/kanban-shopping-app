@@ -31,7 +31,6 @@ interface Props {
 
 const Reviews = (props: Props) => {
   const { subProductId, orderId, onReviewed, isReviewed } = props;
-  console.log("subProductId", subProductId);
 
   const [starScore, setStarScore] = useState(0);
   const [comment, setcomment] = useState("");

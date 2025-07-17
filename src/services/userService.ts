@@ -53,7 +53,7 @@ export const userService = {
     currentPassword: string;
     newPassword: string;
   }): Promise<any> => {
-    const res = await handleAPI("/users/change-password", data, "post");
+    const res = await handleAPI("/users/changePassword", data, "patch");
     return res.data;
   },
 
@@ -80,8 +80,8 @@ export const userService = {
   },
 
   // Enable 2FA
-  enable2FA: async (secret: string, code: string): Promise<any> => {
-    const res = await handleAPI("/users/enable-tfa", { secret, code }, "post");
+  enable2FA: async (email: string, code: string): Promise<any> => {
+    const res = await handleAPI("/auth/enable-tfa", { email, code }, "post");
     return res.data;
   },
 

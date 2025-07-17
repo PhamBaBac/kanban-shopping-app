@@ -38,12 +38,12 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
 
     try {
       setLoading(true);
-      const res = await userService.enable2FA("", verificationCode);
+     const res = await userService.enable2FA(auth.email, verificationCode);
 
       if (res) {
-        const updated = { ...res, email: auth.email };
-        dispatch(addAuth(updated));
-        localStorage.setItem("authData", JSON.stringify(updated));
+        // const updated = { ...res, email: auth.email };
+        // dispatch(addAuth(updated));
+        // localStorage.setItem("authData", JSON.stringify(updated));
         message.success("Two-factor authentication enabled successfully!");
         handleClose();
         if (onSuccess) onSuccess();

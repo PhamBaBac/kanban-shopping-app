@@ -74,14 +74,14 @@ export const authService = {
         code,
         newPassword,
       },
-      "post"
+      "put"
     );
     return res.data;
   },
 
   // Xác thực MFA
   verifyMFA: async (email: string, code: string): Promise<any> => {
-    const res = await handleAPI("/auth/verify-mfa", { email, code }, "post");
+    const res = await handleAPI("/auth/enable-tfa", { email, code }, "post");
     return res.data;
   },
 
@@ -91,7 +91,7 @@ export const authService = {
     code: string,
     accessToken: string
   ): Promise<any> => {
-    const res = await handleAPI("/auth/verify-mfa", { email, code }, "post", {
+    const res = await handleAPI("/auth/enable-tfa", { email, code }, "post", {
       Authorization: `Bearer ${accessToken}`,
     });
     return res.data;
