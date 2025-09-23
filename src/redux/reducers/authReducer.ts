@@ -12,6 +12,7 @@ const authSlice = createSlice({
       avatar: "",
       firstName: "",
       lastName: "",
+      role: "",
       mfaEnabled: false,
     },
   },
@@ -27,6 +28,7 @@ const authSlice = createSlice({
         firstName: "",
         lastName: "",
         avatar: "",
+        role: "",
         mfaEnabled: false,
       };
     },

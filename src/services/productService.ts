@@ -58,11 +58,9 @@ export const productService = {
   getProductDetail: async (slug: string, id: string): Promise<ProductModel> => {
     const decodedSlug = decodeURIComponent(slug);
     const url = `/public/products/${decodedSlug}/${id}`;
-    console.log("Calling API:", url);
 
     try {
       const res = await handleAPI(url);
-      console.log("API Response:", res);
       return res.data;
     } catch (error) {
       console.error("API Error in getProductDetail:", error);

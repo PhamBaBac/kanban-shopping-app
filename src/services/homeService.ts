@@ -18,7 +18,6 @@ export const homeService = {
   // Lấy best sellers
   getBestSellers: async (): Promise<ProductModel[]> => {
     const res = await handleAPI("/public/products/bestSellers");
-    console.log("Beseller:", res)
     return res.data || [];
   },
 

@@ -8,7 +8,7 @@ import { Button, Card, Space, Typography } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { BiTransfer } from "react-icons/bi";
+import { BiHeart, BiTransfer } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { FaRegStar } from "react-icons/fa";
 import { MdImage } from "react-icons/md";
@@ -16,6 +16,7 @@ import { useSelector } from "react-redux";
 import { authSelector } from "@/redux/reducers/authReducer";
 import { productService } from "@/services";
 import { userService } from "@/services/userService";
+import { Modal } from "antd";
 
 interface Props {
   item: ProductModel;
@@ -29,6 +30,8 @@ const ProductItem = (props: Props) => {
   const [supplier, setSupplier] = useState<SupplierModel | null>(null);
   const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showQuickView, setShowQuickView] = useState(false);
+  const [quickViewLoading, setQuickViewLoading] = useState(false);
 
   const ref = useRef<any>();
   const router = useRouter();
@@ -43,10 +46,7 @@ const ProductItem = (props: Props) => {
     if (item.supplierId) {
       fetchSupplierInfo();
     }
-    if (item.id) {
-      fetchSubProducts();
-    }
-  }, [item.supplierId, item.id]);
+  }, [item.supplierId]);
 
   const fetchSupplierInfo = async () => {
     try {
@@ -60,7 +60,7 @@ const ProductItem = (props: Props) => {
   };
 
   const fetchSubProducts = async () => {
-    setIsLoading(true);
+    setQuickViewLoading(true);
     try {
       const res = await productService.getSubProductsByProductId(item.id);
       if (res) {
@@ -69,7 +69,7 @@ const ProductItem = (props: Props) => {
     } catch (error) {
       console.log("Error fetching sub-products:", error);
     } finally {
-      setIsLoading(false);
+      setQuickViewLoading(false);
     }
   };
 
@@ -219,29 +219,26 @@ const ProductItem = (props: Props) => {
                 size="large"
                 className="btn-icon"
                 icon={<FaRegStar size={20} className="text-muted" />}
+                onClick={(e) => e.stopPropagation()}
               />
               <Button
                 size="large"
                 className="btn-icon"
-                icon={<BiTransfer size={20} className="text-muted" />}
+                icon={<BiHeart size={20} className="text-muted" />}
+                onClick={(e) => e.stopPropagation()}
               />
               <Button
                 size="large"
                 className="btn-icon"
                 icon={<BsEye size={20} className="text-muted" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowQuickView(true);
+                  fetchSubProducts();
+                }}
               />
             </Space>
           </div>
-
-          {/* <div className="text-center">
-            <Button
-              onClick={() => router.push(`/products/${item.slug}/${item.id}`)}
-              size="large"
-              style={{ width: "80%" }}
-            >
-              Detail
-            </Button>
-          </div> */}
         </div>
       </div>
       <div className="p-2">
@@ -255,6 +252,54 @@ const ProductItem = (props: Props) => {
           {isLoading ? "Loading..." : getPriceRange()}
         </Paragraph>
       </div>
+      {/* Quick View Modal */}
+      <Modal
+        open={showQuickView}
+        onCancel={() => setShowQuickView(false)}
+        footer={null}
+        width={700}
+      >
+        <div style={{ display: "flex", gap: 24 }}>
+          <div>
+            <img
+              src={item.images && item.images.length > 0 ? item.images[0] : ""}
+              alt={item.title}
+              style={{ width: 250, borderRadius: 8, objectFit: "cover" }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Title level={3}>{item.title}</Title>
+            <Paragraph style={{ fontSize: "1.2em", fontWeight: 500 }}>
+              {getPriceRange()}
+            </Paragraph>
+            <Paragraph>{item.description}</Paragraph>
+            <Paragraph strong>SubProducts:</Paragraph>
+            {quickViewLoading ? (
+              <div>Loading...</div>
+            ) : subProducts.length === 0 ? (
+              <div>No sub products found.</div>
+            ) : (
+              <ul style={{ paddingLeft: 18 }}>
+                {subProducts.map((sub) => (
+                  <li key={sub.id} style={{ marginBottom: 8 }}>
+                    Color: <b>{sub.color}</b> | Size: <b>{sub.size}</b> | Price:{" "}
+                    <b>{VND.format(sub.price)}</b>
+                    {sub.discount && sub.discount < sub.price && (
+                      <span>
+                        {" "}
+                        | Discount:{" "}
+                        <b style={{ color: "#d32f2f" }}>
+                          {VND.format(sub.discount)}
+                        </b>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -46,14 +46,11 @@ export const useLogin = (): UseLoginReturn => {
     try {
       const result = await authLogin(values);
 
-      // If MFA is enabled, set the state
       if (result && typeof result === "object" && "mfaEnabled" in result) {
         setIsMfaEnabled(true);
         setEmailMfa(values.email);
       }
-      // If login is successful and no MFA, redirect will be handled in useAuth
     } catch (error) {
-      // Errors are already handled in useAuth
       throw error;
     } finally {
       setIsLoading(false);

@@ -438,7 +438,6 @@ export const getStaticProps = async (context: any) => {
       context.params.id
     );
 
-    console.log("Product fetched:", product);
 
     if (!product || !product.id) {
       console.log("Product not found or invalid");

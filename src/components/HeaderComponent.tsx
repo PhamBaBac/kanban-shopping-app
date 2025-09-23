@@ -22,11 +22,13 @@ import {
   MenuProps,
   Space,
   Typography,
+  message,
+  notification,
   theme,
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AiOutlineTransaction } from "react-icons/ai";
 import { BiCart, BiPowerOff } from "react-icons/bi";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -36,6 +38,8 @@ import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
 import CategoriesListCard from "./CategoriesListCard";
 import { FaUser } from "react-icons/fa";
 import axios from "axios";
+import { useEffect } from "react";
+import { initSocket } from "@/connect/SocketIO";
 
 const { useToken } = theme;
 
@@ -53,6 +57,36 @@ const HeaderComponent = () => {
   const router = useRouter();
 
   const cart: CartItemModel[] = useSelector(cartSelector);
+    const socketRef = useRef<any>(null);
+  useEffect(() => {
+    if (!auth?.userId) return;
+
+    socketRef.current = initSocket(auth.accessToken, auth.userId, auth.role);
+
+    socketRef.current.on("connect", () => {
+      console.log(socketRef.current.id, "Connected to Socket.IO server");
+    });
+
+    socketRef.current.on("disconnect", () => {
+      console.log("Disconnected from Socket.IO server");
+    });
+
+    socketRef.current.on("orderConfirmed", (data: any) => {
+      // Mỗi lần nhận thông báo, tăng số lượng lên 1
+      // Hiển thị thông báoử dụng thư viện như antd message
+      console.log("Order Confirmed:", data);
+      message.info(`Order Confirmed: ${data.orderId}`);
+    }
+    );
+
+    return () => {
+      if (socketRef.current) {
+        console.log("Disconnecting old socket:", socketRef.current.id);
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [auth?.userId, auth?.accessToken, auth?.role]);
 
   const items: MenuProps["items"] = [
     {
@@ -116,9 +150,7 @@ const HeaderComponent = () => {
                     label: (
                       <Dropdown
                         placement="bottom"
-                        dropdownRender={() => (
-                          <CategoriesListCard type="card" />
-                        )}
+                        popupRender={() => <CategoriesListCard type="card" />}
                       >
                         <Typography.Text
                           onClick={() => setIsVisibleMenuDrawe(true)}
@@ -149,7 +181,7 @@ const HeaderComponent = () => {
                 <Button icon={<IoSearch size={24} />} type="text" />
                 <Button icon={<IoHeartOutline size={24} />} type="text" />
                 <Dropdown
-                  dropdownRender={() => (
+                  popupRender={() => (
                     <Card
                       className="shadow"
                       style={{

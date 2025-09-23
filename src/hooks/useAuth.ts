@@ -58,6 +58,7 @@ export const useAuth = (): UseAuthReturn => {
         firstName: userInfo.firstname,
         lastName: userInfo.lastname,
         avatar: userInfo.avatarUrl,
+        role: userInfo.role,
       };
 
       dispatch(addAuth(user));
@@ -126,7 +127,7 @@ export const useAuth = (): UseAuthReturn => {
   ) => {
     setIsLoading(true);
     try {
-      const res = await authService.verifyMFAAuth(email, code, accessToken);
+      await authService.verifyMFAAuth(email, code, accessToken);
       const userInfo = await authService.getOAuthUser(accessToken);
 
       const user = {
@@ -137,6 +138,7 @@ export const useAuth = (): UseAuthReturn => {
         firstName: userInfo.firstname,
         lastName: userInfo.lastname,
         avatar: userInfo.avatarUrl,
+        role: userInfo.role,
       };
 
       dispatch(addAuth(user));
@@ -222,6 +224,7 @@ export const useAuth = (): UseAuthReturn => {
         firstName: userInfo.firstname,
         lastName: userInfo.lastname,
         avatar: userInfo.avatarUrl,
+        role: userInfo.role,
       };
 
       dispatch(addAuth(user));

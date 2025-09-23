@@ -39,7 +39,11 @@ export const useOAuth = (): UseOAuthReturn => {
         const result = await handleOAuthLogin(token as string);
 
         // Nếu có MFA, set state để hiển thị UI nhập mã
-        if (result && typeof result === "object" && "mfaEnabled" in result) {
+        if (
+          result &&
+          typeof result === "object" &&
+          result.mfaEnabled === true
+        ) {
           setIsMfaEnabled(true);
           setUserInfo(result.userInfo);
         }
