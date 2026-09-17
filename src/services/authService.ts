@@ -125,4 +125,13 @@ export const authService = {
     const res = await handleAPI(`/users/disable-tfa?email=${email}`, {}, "put");
     return res.data;
   },
+
+  // Exchange OAuth2 one-time code for accessToken
+  exchangeOAuthToken: async (code: string): Promise<any> => {
+    const sessionId = getOrCreateSessionId();
+    const res = await handleAPI("/auth/exchange-token", { code }, "post", {
+      "X-Session-Id": sessionId,
+    });
+    return res.data;
+  },
 };

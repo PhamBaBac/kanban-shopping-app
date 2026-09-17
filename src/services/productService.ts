@@ -79,9 +79,14 @@ export const productService = {
   },
 
   // Lấy sản phẩm theo category
-  getProductsByCategory: async (categoryId: string): Promise<Product[]> => {
-    const res = await handleAPI(`/products/category/${categoryId}`);
-    return res.data || [];
+  getProductsByCategory: async (categoryId: string): Promise<ProductModel[]> => {
+    try {
+      const res = await handleAPI(`/public/products/category/${categoryId}`);
+      return res.data || [];
+    } catch (error) {
+      console.log("Failed to fetch products by category:", error);
+      return [];
+    }
   },
 
   // Tìm kiếm sản phẩm
@@ -118,5 +123,23 @@ export const productService = {
   getCategories: async (): Promise<any[]> => {
     const res = await handleAPI("/public/categories/all");
     return res.data || [];
+  },
+
+  // Lấy sản phẩm liên quan (AI phân tích)
+  getRelatedProducts: async (
+    productId: string,
+    limit: number = 4
+  ): Promise<ProductModel[]> => {
+    try {
+      const res = await handleAPI(
+        `/public/products/related/${productId}?limit=${limit}`
+      );
+      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        return res.data.slice(0, Math.min(limit, 4));
+      }
+    } catch (error) {
+      console.log("Failed to fetch related products from API:", error);
+    }
+    return [];
   },
 };

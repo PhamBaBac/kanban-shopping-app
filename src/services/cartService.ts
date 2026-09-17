@@ -1,9 +1,9 @@
 import handleAPI from "@/apis/handleApi";
 
 export interface CartItem {
-  id?: string;
+  id?: string | null;
   subProductId: string;
-  productId: string;
+  productId?: string | null;
   title: string;
   image: string;
   price: number;
@@ -14,9 +14,9 @@ export interface CartItem {
 }
 
 export interface UpdateCartItemData {
-  id?: string;
+  id?: string | null;
   subProductId: string;
-  productId: string;
+  productId?: string | null;
   title: string;
   image: string;
   price: number;
@@ -86,7 +86,7 @@ export const cartService = {
 
   // Xóa sản phẩm khỏi cart
   removeFromCart: async (id: string): Promise<any> => {
-    const res = await handleAPI(`/carts/${id}`, {}, "delete");
+    const res = await handleAPI(`/carts/remove?id=${id}`, {}, "delete");
     return res.data;
   },
 

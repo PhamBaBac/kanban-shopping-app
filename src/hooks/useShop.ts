@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { shopService, ShopFilters, FilterValues } from "@/services";
 import { ProductModel } from "@/models/Products";
 import { CategoyModel } from "@/models/Products";
@@ -32,20 +32,31 @@ export const useShop = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Dùng requestRef để chống race condition khi chuyển danh mục nhanh
+  const requestRef = useRef(0);
+
   const fetchProducts = useCallback(async (filters: ShopFilters) => {
+    const currentReq = ++requestRef.current;
     setIsLoading(true);
     setError(null);
     try {
       const result = await shopService.getProductsByFilter(filters);
-      setProducts(result.data);
-      setTotalItems(result.totalElements);
+      // Chỉ cập nhật dữ liệu nếu đây là request mới nhất
+      if (currentReq === requestRef.current) {
+        setProducts(result.data);
+        setTotalItems(result.totalElements);
+      }
     } catch (error: any) {
-      setError(error.message || "Lỗi khi lấy danh sách sản phẩm");
-      console.error("Lỗi khi lấy danh sách sản phẩm:", error);
-      setProducts([]);
-      setTotalItems(0);
+      if (currentReq === requestRef.current) {
+        setError(error.message || "Lỗi khi lấy danh sách sản phẩm");
+        console.error("Lỗi khi lấy danh sách sản phẩm:", error);
+        setProducts([]);
+        setTotalItems(0);
+      }
     } finally {
-      setIsLoading(false);
+      if (currentReq === requestRef.current) {
+        setIsLoading(false);
+      }
     }
   }, []);
 

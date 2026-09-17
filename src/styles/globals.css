@@ -23,27 +23,51 @@
   left: 0;
   padding: 15px;
 }
+
 .btn-list .ant-btn-icon-only {
   border: none;
   width: 38px;
   border-radius: 100px !important;
 }
+
 .product-item .button-container .btn-list {
   height: 100%;
 }
+
+.product-item {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  transition: all 0.25s ease-in-out;
+}
+
 .product-item .button-container {
   display: none;
 }
+
 .product-item:hover .button-container {
   display: block;
   transition: 530ms;
 }
 
 .product-item:hover {
-  box-shadow: 10px 9px 49px 1px rgba(0, 0, 0, 0.44);
-  -webkit-box-shadow: 10px 9px 49px 1px rgba(0, 0, 0, 0.44);
-  -moz-box-shadow: 10px 9px 49px 1px rgba(0, 0, 0, 0.44);
-  transition: 1s;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+body[data-theme="dark"] .product-item {
+  border-color: #303030;
+  background-color: #141414;
+}
+
+body[data-theme="dark"] .product-item:hover {
+  border-color: #434343;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .shadow-hover:hover {
@@ -253,6 +277,7 @@ body[data-theme="dark"] .ant-list-item {
 body[data-theme="dark"] .ant-steps-item-title {
   color: rgba(255, 255, 255, 0.85) !important;
 }
+
 body[data-theme="dark"] .ant-steps-item-description {
   color: rgba(255, 255, 255, 0.65) !important;
 }
@@ -262,10 +287,7 @@ body[data-theme="dark"] .ant-steps-item-icon {
   border-color: #5a5a5a;
 }
 
-body[data-theme="dark"]
-  .ant-steps-item-process
-  > .ant-steps-item-container
-  > .ant-steps-item-icon {
+body[data-theme="dark"] .ant-steps-item-process>.ant-steps-item-container>.ant-steps-item-icon {
   background-color: #1677ff;
   border-color: #1677ff;
 }
@@ -323,7 +345,19 @@ body[data-theme="dark"] .ant-affix .container-fluid {
 [data-theme="dark"] .social-login-icon-github {
   filter: invert(1);
 }
+
 /* Tắt màu nền khi chọn dòng trong bảng Ant Design */
-.ant-table-tbody > tr.ant-table-row-selected > td {
+.ant-table-tbody>tr.ant-table-row-selected>td {
   background: inherit !important;
 }
+
+/* Filter Panel Layout Alignment */
+.filter-panel .ant-collapse .ant-collapse-header {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.filter-panel .ant-collapse .ant-collapse-content-box {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

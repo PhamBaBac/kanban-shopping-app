@@ -7,6 +7,7 @@ import {
   Button,
   Drawer,
   Empty,
+  Input,
   Layout,
   Pagination,
   Skeleton,
@@ -14,7 +15,7 @@ import {
   Typography,
 } from "antd";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { BsArrowDown, BsFilterLeft } from "react-icons/bs";
 import { FaElementor } from "react-icons/fa";
@@ -27,6 +28,8 @@ import { updateFilterValues } from "@/redux/reducers/filterSlice";
 const { Sider, Content } = Layout;
 
 const ShopPageContent = () => {
+  const router = useRouter();
+  const { isReady, query } = router;
   const dispatch = useDispatch();
   const filterValues = useSelector(
     (state: RootState) => state.filter.filterValues
@@ -34,29 +37,74 @@ const ShopPageContent = () => {
   const [page, setPage] = useState(1);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
-  const params = useSearchParams();
-  const catId = params.get("catId");
-
   // Use shop hook
   const { products, totalItems, isLoading, error, fetchProducts } = useShop();
 
+  // 1. Khi router sẵn sàng (load trang / refresh F5), đọc query từ URL đưa vào Redux
   useEffect(() => {
-    if (catId) {
-      // Update Redux state with category ID from URL
-      dispatch(updateFilterValues({ catIds: [catId] }));
-    }
-  }, [catId, dispatch]);
+    if (!isReady) return;
 
+    const rawCatId = query.catId;
+    const catIdsFromUrl = Array.isArray(rawCatId)
+      ? rawCatId
+      : typeof rawCatId === "string" && rawCatId.includes(",")
+      ? rawCatId.split(",").map((s) => s.trim())
+      : rawCatId
+      ? [rawCatId]
+      : [];
+
+    const rawSearch = (query.search || query.q) as string | undefined;
+
+    const updates: any = {
+      catIds: catIdsFromUrl,
+    };
+    if (rawSearch !== undefined) {
+      updates.search = rawSearch.trim();
+    }
+
+    dispatch(updateFilterValues(updates));
+  }, [isReady, query.catId, query.search, query.q, dispatch]);
+
+  // 2. Fetch sản phẩm theo filterValues khi router đã sẵn sàng
   useEffect(() => {
+    if (!isReady) return;
+
+    // Luôn ưu tiên catId từ URL query nếu có để tránh stale state từ Redux khi click danh mục mới
+    const rawCatId = query.catId;
+    const catIdsFromUrl = Array.isArray(rawCatId)
+      ? rawCatId
+      : typeof rawCatId === "string" && rawCatId.includes(",")
+      ? rawCatId.split(",").map((s) => s.trim())
+      : rawCatId
+      ? [rawCatId]
+      : [];
+
+    const catIdsToFilter =
+      catIdsFromUrl.length > 0
+        ? catIdsFromUrl
+        : filterValues.catIds && filterValues.catIds.length > 0
+        ? filterValues.catIds
+        : [];
+
+    const urlSearch = query.search || query.q;
+    if (urlSearch && !filterValues.search) {
+      return;
+    }
+
     // Build filters from filterValues
     const filters: any = {
       page,
       pageSize: 12,
     };
 
+    // Map search
+    if (filterValues.search && filterValues.search.trim()) {
+      filters.search = filterValues.search.trim();
+    }
+
     // Map category IDs
-    if (filterValues.catIds && filterValues.catIds.length > 0) {
-      filters.catIds = filterValues.catIds;
+    if (catIdsToFilter.length > 0) {
+      filters.catIds = catIdsToFilter;
     }
 
     // Map price range
@@ -78,7 +126,7 @@ const ShopPageContent = () => {
 
     console.log("Sending filters:", filters); // Debug log
     fetchProducts(filters);
-  }, [filterValues, page]); // Removed fetchProducts from dependencies
+  }, [filterValues, page, isReady, query.catId, query.search, query.q]);
 
   return (
     <div className="container">
@@ -105,14 +153,54 @@ const ShopPageContent = () => {
         </Sider>
 
         <Content style={{ padding: "0 24px", minHeight: 850 }}>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <Button
-              className="d-lg-none"
-              icon={<BsFilterLeft />}
-              onClick={() => setDrawerVisible(true)}
-            >
-              Filter
-            </Button>
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div className="d-flex align-items-center gap-2">
+              <Button
+                className="d-lg-none"
+                icon={<BsFilterLeft />}
+                onClick={() => setDrawerVisible(true)}
+              >
+                Filter
+              </Button>
+              <Input.Search
+                placeholder="Tìm kiếm sản phẩm..."
+                allowClear
+                value={filterValues.search || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  dispatch(updateFilterValues({ search: val }));
+                  if (!val && router && router.isReady) {
+                    const newQuery = { ...router.query };
+                    delete newQuery.search;
+                    delete newQuery.q;
+                    router.replace(
+                      { pathname: router.pathname, query: newQuery },
+                      undefined,
+                      { shallow: true }
+                    );
+                  }
+                }}
+                onSearch={(value) => {
+                  const val = value.trim();
+                  dispatch(updateFilterValues({ search: val }));
+                  if (router && router.isReady) {
+                    const newQuery = { ...router.query };
+                    if (val) {
+                      newQuery.search = val;
+                    } else {
+                      delete newQuery.search;
+                    }
+                    delete newQuery.q;
+                    router.replace(
+                      { pathname: router.pathname, query: newQuery },
+                      undefined,
+                      { shallow: true }
+                    );
+                  }
+                }}
+                style={{ width: 240 }}
+              />
+            </div>
             <Typography.Text type="secondary" className="d-none d-md-block">
               Showing 1–{products.length} of {totalItems} results
             </Typography.Text>
@@ -138,7 +226,7 @@ const ShopPageContent = () => {
               </div>
             </>
           ) : (
-            <Empty description="No products found matching your criteria." />
+            <Empty description="Không tìm thấy sản phẩm nào trong danh mục này." />
           )}
         </Content>
       </Layout>

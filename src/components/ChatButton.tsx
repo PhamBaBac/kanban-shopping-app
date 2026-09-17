@@ -11,9 +11,13 @@ import {
   Divider,
 } from "antd";
 import { useState, useEffect } from "react";
-import { BsChatDots, BsX, BsSend } from "react-icons/bs";
+import { BsX, BsSend, BsRobot } from "react-icons/bs";
+import { RiSparklingFill } from "react-icons/ri";
 import axiosClient from "@/apis/axiosClient";
 import { useChat } from "@/hooks";
+import { useSelector } from "react-redux";
+import { authSelector } from "@/redux/reducers/authReducer";
+import { useRouter } from "next/router";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -48,8 +52,19 @@ interface ChatHistoryResponse {
 const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const auth = useSelector(authSelector);
+  const router = useRouter();
 
   const { messages, isLoading, sendMessage, clearHistory } = useChat();
+
+  const handleOpen = () => {
+    if (!auth.userId) {
+      message.info("Please login to chat with AI");
+      router.push("/auth/login");
+      return;
+    }
+    setIsOpen(true);
+  };
 
   const handleSendMessage = () => {
     if (inputValue.trim() && !isLoading) {
@@ -72,28 +87,43 @@ const ChatButton = () => {
   return (
     <>
       {/* Chat Button */}
-      <Button
-        type="primary"
-        shape="circle"
-        size="large"
-        icon={<BsChatDots size={24} />}
-        onClick={() => setIsOpen(true)}
+      <button
+        onClick={() => handleOpen()}
         style={{
           position: "fixed",
-          bottom: 20,
-          right: 20,
+          bottom: 24,
+          right: 24,
           zIndex: 1000,
           width: 60,
           height: 60,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          borderRadius: "50%",
+          border: "none",
+          cursor: "pointer",
+          background: "linear-gradient(135deg, #7c3aed 0%, #db2777 100%)",
+          boxShadow: "0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(124,58,237,0.15)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          transition: "transform 0.2s ease, box-shadow 0.2s ease",
         }}
-      />
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 28px rgba(124, 58, 237, 0.7), 0 0 0 6px rgba(124,58,237,0.2)";
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(124,58,237,0.15)";
+        }}
+      >
+        <RiSparklingFill size={28} />
+      </button>
 
       <Modal
         title={
           <Space>
-            <Avatar size="small" style={{ backgroundColor: "#1890ff" }}>
-              <BsChatDots />
+            <Avatar size="small" style={{ background: "linear-gradient(135deg, #7c3aed, #db2777)" }}>
+              <RiSparklingFill />
             </Avatar>
             <Text strong>Hỗ trợ khách hàng</Text>
           </Space>

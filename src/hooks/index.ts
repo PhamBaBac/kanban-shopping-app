@@ -1,6 +1,12 @@
 export { useProductDetail } from "./useProductDetail";
 export { useCart } from "./useCart";
 export { useCartOperations } from "./useCartOperations";
+export {
+  useCartValidation,
+  isItemDeleted,
+  isItemSoldOut,
+  isItemInvalid,
+} from "./useCartValidation";
 export { useHome } from "./useHome";
 export { useShop } from "./useShop";
 export { useAuth } from "./useAuth";

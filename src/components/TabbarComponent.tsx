@@ -20,7 +20,7 @@ const TabbarComponent = (props: Props) => {
 			<div className='row'>
 				<div
 					className={`col ${
-						!right ? '' : orentation ? orentation : 'text-center'
+						orentation ? orentation : !right ? '' : 'text-center'
 					}`}>
 					<Title style={{ fontWeight: 300 }} level={level ?? 2}>
 						{title}

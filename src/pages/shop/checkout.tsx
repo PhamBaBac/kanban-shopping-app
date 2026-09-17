@@ -27,12 +27,14 @@ import React, { useEffect, useState } from "react";
 import ListCart from "./components/ListCart";
 import PaymentMethod, { methods } from "./components/PaymentMethod";
 import ShipingAddress from "./components/ShipingAddress";
+import { useCartValidation, isItemInvalid } from "@/hooks";
 
 const { Title, Paragraph } = Typography;
 
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState<CartItemModel[]>([]);
   const [currentStep, setCurrentStep] = useState<number | undefined>(0);
+  const { hasInvalidItems, invalidItems } = useCartValidation();
   const [paymentDetail, setPaymentDetail] = useState<any>({});
   const [paymentMethod, setPaymentMethod] = useState<any>();
   const [discountCode, setDiscountCode] = useState("");
@@ -280,6 +282,12 @@ const CheckoutPage = () => {
                 current={currentStep}
                 labelPlacement="vertical"
                 onChange={(val: number) => {
+                  if (hasInvalidItems && val > 0) {
+                    message.warning(
+                      "Vui lòng xóa các sản phẩm đã hết hàng hoặc bị xóa khỏi giỏ hàng trước khi tiếp tục!"
+                    );
+                    return;
+                  }
                   if (val <= (currentStep ?? 0)) {
                     setCurrentStep(val);
                   }
@@ -380,15 +388,49 @@ const CheckoutPage = () => {
                 </Space>
               </div>
               <div className="mt-3">
-                {currentStep === 0 && selectedItems.length > 0 && (
-                  <Button
-                    type="primary"
-                    onClick={() => setCurrentStep(1)}
-                    size="large"
-                    style={{ width: "100%", marginTop: 16 }}
-                  >
-                    Continue
-                  </Button>
+                {currentStep === 0 && (
+                  <>
+                    {hasInvalidItems && (
+                      <div
+                        className="p-3 mb-3"
+                        style={{
+                          backgroundColor: "#fff2f0",
+                          border: "1px solid #ffccc7",
+                          borderRadius: 8,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography.Text
+                          type="danger"
+                          strong
+                          style={{ fontSize: "0.85rem", display: "block" }}
+                        >
+                          ⚠️ Giỏ hàng có {invalidItems.length} sản phẩm đã hết hàng hoặc bị xóa. Bạn cần xóa chúng để tiếp tục mua hàng.
+                        </Typography.Text>
+                      </div>
+                    )}
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        if (hasInvalidItems) {
+                          message.error(
+                            "Vui lòng xóa các sản phẩm hết hàng hoặc đã bị xóa trước khi tiếp tục!"
+                          );
+                          return;
+                        }
+                        if (selectedItems.length === 0) {
+                          message.warning("Vui lòng chọn ít nhất 1 sản phẩm để mua!");
+                          return;
+                        }
+                        setCurrentStep(1);
+                      }}
+                      disabled={selectedItems.length === 0 || hasInvalidItems}
+                      size="large"
+                      style={{ width: "100%" }}
+                    >
+                      {hasInvalidItems ? "Vui lòng xóa sản phẩm lỗi" : "Continue"}
+                    </Button>
+                  </>
                 )}
                 {selectedItems.length > 0 && currentStep === 3 && (
                   <Button
@@ -396,6 +438,11 @@ const CheckoutPage = () => {
                     onClick={handlePaymentOrder}
                     size="large"
                     style={{ width: "100%" }}
+                    disabled={
+                      hasInvalidItems ||
+                      selectedItems.some(isItemInvalid) ||
+                      isLoading
+                    }
                   >
                     Process to Checkout
                   </Button>

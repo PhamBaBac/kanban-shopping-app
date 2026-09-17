@@ -10,6 +10,7 @@ import {
 import { VND } from "@/utils/handleCurrency";
 import {
   Affix,
+  Alert,
   Avatar,
   Badge,
   Button,
@@ -17,15 +18,19 @@ import {
   Divider,
   Drawer,
   Dropdown,
+  Input,
   List,
   Menu,
   MenuProps,
   Space,
+  Tag,
+  Tooltip,
   Typography,
   message,
   notification,
   theme,
 } from "antd";
+import { isItemDeleted, isItemSoldOut, isItemInvalid } from "@/hooks";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
@@ -38,8 +43,6 @@ import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
 import CategoriesListCard from "./CategoriesListCard";
 import { FaUser } from "react-icons/fa";
 import axios from "axios";
-import { useEffect } from "react";
-import { initSocket } from "@/connect/SocketIO";
 
 const { useToken } = theme;
 
@@ -57,36 +60,7 @@ const HeaderComponent = () => {
   const router = useRouter();
 
   const cart: CartItemModel[] = useSelector(cartSelector);
-    const socketRef = useRef<any>(null);
-  useEffect(() => {
-    if (!auth?.userId) return;
-
-    socketRef.current = initSocket(auth.accessToken, auth.userId, auth.role);
-
-    socketRef.current.on("connect", () => {
-      console.log(socketRef.current.id, "Connected to Socket.IO server");
-    });
-
-    socketRef.current.on("disconnect", () => {
-      console.log("Disconnected from Socket.IO server");
-    });
-
-    socketRef.current.on("orderConfirmed", (data: any) => {
-      // Mỗi lần nhận thông báo, tăng số lượng lên 1
-      // Hiển thị thông báoử dụng thư viện như antd message
-      console.log("Order Confirmed:", data);
-      message.info(`Order Confirmed: ${data.orderId}`);
-    }
-    );
-
-    return () => {
-      if (socketRef.current) {
-        console.log("Disconnecting old socket:", socketRef.current.id);
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [auth?.userId, auth?.accessToken, auth?.role]);
+  const hasInvalidInCart = cart.some(isItemInvalid);
 
   const items: MenuProps["items"] = [
     {
@@ -178,7 +152,34 @@ const HeaderComponent = () => {
             </div>
             <div className="col text-right">
               <Space>
-                <Button icon={<IoSearch size={24} />} type="text" />
+                <Dropdown
+                  dropdownRender={() => (
+                    <Card
+                      className="shadow"
+                      style={{
+                        padding: "8px 12px",
+                        minWidth: 280,
+                        backgroundColor: token.colorBgContainer,
+                      }}
+                    >
+                      <Input.Search
+                        placeholder="Tìm kiếm sản phẩm..."
+                        allowClear
+                        autoFocus
+                        onSearch={(value) => {
+                          if (value.trim()) {
+                            router.push(
+                              `/shop?search=${encodeURIComponent(value.trim())}`
+                            );
+                          }
+                        }}
+                      />
+                    </Card>
+                  )}
+                  trigger={["click"]}
+                >
+                  <Button icon={<IoSearch size={24} />} type="text" />
+                </Dropdown>
                 <Button icon={<IoHeartOutline size={24} />} type="text" />
                 <Dropdown
                   popupRender={() => (
@@ -192,6 +193,16 @@ const HeaderComponent = () => {
                       <Typography.Paragraph>
                         You have {cart.length} items in your cart
                       </Typography.Paragraph>
+
+                      {hasInvalidInCart && (
+                        <Alert
+                          type="error"
+                          showIcon
+                          message="Có sản phẩm không khả dụng"
+                          description="Sản phẩm đã hết hàng hoặc bị xóa. Vui lòng xóa để tiếp tục thanh toán."
+                          style={{ marginBottom: 12, borderRadius: 6, fontSize: "0.85rem" }}
+                        />
+                      )}
 
                       <List
                         dataSource={cart}
@@ -238,45 +249,68 @@ const HeaderComponent = () => {
                                     style={{
                                       fontWeight: "bold",
                                       fontSize: "1.2rem",
-                                      marginBottom: 12,
+                                      marginBottom: 4,
                                     }}
                                   >
                                     {item.count} x {VND.format(item.price)}
                                   </Typography.Paragraph>
+                                  {isItemDeleted(item) && (
+                                    <Tag color="error" style={{ fontSize: "0.75rem", borderRadius: 4, marginBottom: 6 }}>
+                                      Đã xóa / Ngừng bán
+                                    </Tag>
+                                  )}
+                                  {isItemSoldOut(item) && (
+                                    <Tag color="warning" style={{ fontSize: "0.75rem", borderRadius: 4, marginBottom: 6 }}>
+                                      Hết hàng
+                                    </Tag>
+                                  )}
                                 </>
                               }
                               description={
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                  }}
-                                >
-                                  <Typography.Text>
-                                    Size: {item.size}
-                                  </Typography.Text>
-                                  <Divider type="vertical" />
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "8px",
-                                    }}
-                                  >
-                                    <Typography.Text>Color:</Typography.Text>
-                                    <div
-                                      style={{
-                                        width: 20,
-                                        height: 20,
-                                        backgroundColor: item.color,
-                                        border: "1px solid #d9d9d9",
-                                        borderRadius: 4,
-                                        display: "inline-block",
-                                      }}
-                                    />
-                                  </div>
-                                </div>
+                                 <div
+                                   style={{
+                                     display: "flex",
+                                     alignItems: "center",
+                                     gap: "8px",
+                                     flexWrap: "wrap",
+                                     marginTop: 2,
+                                   }}
+                                 >
+                                   {item.size && (
+                                     <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
+                                       <span style={{ color: "#333", fontWeight: 500 }}>{item.size}</span>
+                                     </Typography.Text>
+                                   )}
+                                   {item.size && item.color && <Divider type="vertical" style={{ margin: "0 4px" }} />}
+                                   {item.color && (
+                                     <div
+                                       style={{
+                                         display: "flex",
+                                         alignItems: "center",
+                                         gap: "6px",
+                                       }}
+                                     >
+                                       {/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim()) ? (
+                                         <Tooltip title={item.color}>
+                                           <div
+                                             style={{
+                                               width: 16,
+                                               height: 16,
+                                               backgroundColor: item.color,
+                                               border: "1px solid #d9d9d9",
+                                               borderRadius: 3,
+                                               display: "inline-block",
+                                             }}
+                                           />
+                                         </Tooltip>
+                                       ) : (
+                                         <Typography.Text style={{ fontSize: "0.85rem", fontWeight: 500, color: "#333" }}>
+                                           {item.color}
+                                         </Typography.Text>
+                                       )}
+                                     </div>
+                                   )}
+                                 </div>
                               }
                             />
                           </List.Item>
@@ -297,12 +331,18 @@ const HeaderComponent = () => {
                           type="primary"
                           size="large"
                           style={{ width: "100%" }}
-                          disabled={cart.length === 0 || !auth.accessToken}
+                          disabled={
+                            cart.length === 0 ||
+                            !auth.accessToken ||
+                            hasInvalidInCart
+                          }
                         >
                           {!auth.accessToken
                             ? "Please login to checkout"
                             : cart.length === 0
                             ? "Your cart is empty"
+                            : hasInvalidInCart
+                            ? "Vui lòng xóa sản phẩm không khả dụng"
                             : `Checkout (${cart.length} items)`}
                         </Button>
                       </div>

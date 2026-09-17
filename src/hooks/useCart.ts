@@ -63,17 +63,73 @@ export const useCart = ({
     const isLoggedIn = auth.userId && auth.accessToken;
     const sessionId = getOrCreateSessionId();
 
+    // Parse attributes from subProductSelected
+    let attrs: Record<string, any> = {};
+    if (subProductSelected.attributes) {
+      if (typeof subProductSelected.attributes === "string") {
+        try {
+          attrs = JSON.parse(subProductSelected.attributes);
+        } catch (e) {
+          attrs = {};
+        }
+      } else if (typeof subProductSelected.attributes === "object") {
+        attrs = subProductSelected.attributes;
+      }
+    }
+
+    // Resolve color
+    let resolvedColor = subProductSelected.color || "";
+    if (!resolvedColor) {
+      for (const [key, val] of Object.entries(attrs)) {
+        const lowerKey = key.trim().toLowerCase();
+        if (
+          lowerKey.includes("màu") ||
+          lowerKey.includes("color") ||
+          lowerKey.includes("colour")
+        ) {
+          resolvedColor = String(val);
+          break;
+        }
+      }
+    }
+
+    // Resolve size / specs
+    const nonColorList: string[] = [];
+    for (const [key, val] of Object.entries(attrs)) {
+      const lowerKey = key.trim().toLowerCase();
+      if (
+        !lowerKey.includes("màu") &&
+        !lowerKey.includes("color") &&
+        !lowerKey.includes("colour")
+      ) {
+        if (val) nonColorList.push(String(val));
+      }
+    }
+
+    let resolvedSize = "";
+    if (nonColorList.length > 0) {
+      resolvedSize = nonColorList.join(" - ");
+    } else if (subProductSelected.size) {
+      resolvedSize = subProductSelected.size;
+    }
+
+    const resolvedImage =
+      subProductSelected.imgURL ||
+      subProductSelected.images?.[0] ||
+      product.images?.[0] ||
+      "";
+
     const value = {
       createdBy: isLoggedIn ? auth.userId : sessionId,
       count,
       subProductId: subProductSelected.id,
-      size: subProductSelected.size,
+      size: resolvedSize,
       title: product.title,
-      color: subProductSelected.color,
+      color: resolvedColor,
       price: subProductSelected.discount ?? subProductSelected.price,
       qty: subProductSelected.stock,
       productId: product.id,
-      image: subProductSelected.images[0] ?? "",
+      image: resolvedImage,
     };
 
     const index = cart.findIndex(

@@ -27,6 +27,7 @@ export interface ProductModel {
   v: number;
   isDeleted: boolean | null;
   subItems?: SubProductModel[];
+  subProducts?: SubProductModel[];
   price?: number[];
 }
 
@@ -35,6 +36,7 @@ export interface SubProductModel {
   color: string;
   price: number;
   stock: number;
+  qty?: number;
   productId: string;
   images: any[];
   id: string;
@@ -45,6 +47,7 @@ export interface SubProductModel {
   imgURL?: string;
   count: number;
   createdBy: string;
+  attributes?: Record<string, string>;
 }
 
 export interface AddressModel {

@@ -6,6 +6,7 @@ interface FormFilterValues {
   price?: [number, number];
   colors?: string[];
   sizes?: string[];
+  search?: string;
 }
 
 interface FilterState {
@@ -17,6 +18,7 @@ const initialState: FilterState = {
     catIds: [],
     colors: [],
     sizes: [],
+    search: "",
   },
 };
 
@@ -25,7 +27,7 @@ const filterSlice = createSlice({
   initialState,
   reducers: {
     setFilterValues(state, action: PayloadAction<FormFilterValues>) {
-      state.filterValues = action.payload;
+      state.filterValues = { ...state.filterValues, ...action.payload };
     },
     updateFilterValues(
       state,
@@ -38,6 +40,7 @@ const filterSlice = createSlice({
         catIds: [],
         colors: [],
         sizes: [],
+        search: "",
       };
     },
   },

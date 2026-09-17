@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { message } from "antd";
+import { useDispatch } from "react-redux";
+import { authService } from "@/services";
+import { addAuth } from "@/redux/reducers/authReducer";
+import { localDataNames } from "@/constants/appInfos";
 import { useAuth } from "./useAuth";
 
 interface UseOAuthReturn {
@@ -23,41 +27,80 @@ export const useOAuth = (): UseOAuthReturn => {
   const hasFetchedRef = useRef(false);
 
   const router = useRouter();
-  const { handleOAuthLogin, verifyMFAAuth } = useAuth();
+  const dispatch = useDispatch();
+  const { verifyMFAAuth } = useAuth();
 
   useEffect(() => {
-    const { accessToken: token } = router.query;
+    // BE mới redirect về FE với ?code= (exchange code 1 lần, TTL 60s)
+    const { code } = router.query;
 
-    // Nếu chưa có token hoặc đã fetch rồi thì return
-    if (!token || hasFetchedRef.current) return;
-
+    if (!code || hasFetchedRef.current) return;
     hasFetchedRef.current = true;
-    setAccessToken(token as string);
 
     const processOAuth = async () => {
       try {
-        const result = await handleOAuthLogin(token as string);
-
-        // Nếu có MFA, set state để hiển thị UI nhập mã
-        if (
-          result &&
-          typeof result === "object" &&
-          result.mfaEnabled === true
-        ) {
-          setIsMfaEnabled(true);
-          setUserInfo(result.userInfo);
+        // React StrictMode (Next.js dev) chạy effect 2 lần.
+        // Nếu auth đã được lưu từ lần chạy đầu, redirect luôn thay vì gọi API lại
+        // (exchange code là one-time use — đã bị xóa khỏi Redis sau lần dùng đầu tiên)
+        const existingAuth = localStorage.getItem(localDataNames.authData);
+        if (existingAuth) {
+          setIsLoading(false);
+          router.replace("/");
+          return;
         }
-        // Nếu không có MFA, redirect sẽ được xử lý trong handleOAuthLogin
+
+        // Đổi exchange code lấy { accessToken, userId, mfaEnabled }
+        const authData = await authService.exchangeOAuthToken(code as string);
+
+        const token = authData.accessToken;
+        setAccessToken(token);
+
+        if (authData.mfaEnabled) {
+          // Lấy userInfo để có email cho verifyMFAAuth
+          const user = await authService.getOAuthUser(token);
+          setUserInfo(user);
+          setIsMfaEnabled(true);
+          message.info("Please verify with MFA");
+          return;
+        }
+
+        // Không có MFA → lấy userInfo và lưu vào redux/localStorage
+        const user = await authService.getOAuthUser(token);
+        const userData = {
+          accessToken: token,
+          userId: user.id,
+          mfaEnabled: user.mfaEnabled,
+          email: user.email,
+          firstName: user.firstname,
+          lastName: user.lastname,
+          avatar: user.avatarUrl,
+          role: user.role,
+        };
+
+        dispatch(addAuth(userData));
+        localStorage.setItem(localDataNames.authData, JSON.stringify(userData));
+        localStorage.removeItem("sessionId");
+
+        message.success("Login successful!");
+        setTimeout(() => {
+          router.replace("/");
+        }, 300);
       } catch (err) {
         console.error("OAuth callback error:", err);
-        setError("Login failed! Please try again.");
+        // Fallback: nếu auth đã được lưu (do StrictMode double-invoke)
+        const existingAuth = localStorage.getItem(localDataNames.authData);
+        if (existingAuth) {
+          router.replace("/");
+          return;
+        }
+        setError("Login failed! The link may have expired. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
 
     processOAuth();
-  }, [router.query, handleOAuthLogin]);
+  }, [router.query]);
 
   const verifyMFA = async (code: string) => {
     if (code.length !== 6) {
@@ -69,7 +112,6 @@ export const useOAuth = (): UseOAuthReturn => {
     try {
       await verifyMFAAuth(userInfo.email, code, accessToken);
       message.success("Verification successful!");
-      // Redirect sẽ được xử lý trong verifyMFAAuth
     } catch (error) {
       message.error("The verification code is incorrect.");
     } finally {

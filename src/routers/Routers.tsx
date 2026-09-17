@@ -3,6 +3,7 @@
 import HeaderComponent from "@/components/HeaderComponent";
 import { localDataNames } from "@/constants/appInfos";
 import { addAuth, authSelector } from "@/redux/reducers/authReducer";
+import { getSavedCartFromStorage, syncProducts } from "@/redux/reducers/cartReducer";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,21 +29,24 @@ const Routers = ({ Component, pageProps }: any) => {
   useEffect(() => {
     if (auth.userId) {
       getDatabaseDatas();
+    } else {
+      getRedisCart();
     }
   }, [auth.userId]);
 
   useEffect(() => {
-    if (auth.accessToken && path.includes("/auth")) {
+    if (auth.accessToken && path?.includes("/auth")) {
       router.push("/");
     }
   }, [auth.accessToken, path]);
 
-  //getRedisCart
-  useEffect(() => {
-    getRedisCart();
-  }, []);
-
   const getData = () => {
+    // 1. Phục hồi giỏ hàng từ localStorage ngay khi tải trang (tránh mất giỏ hàng khi reload)
+    const savedCart = getSavedCartFromStorage();
+    if (savedCart && savedCart.length > 0) {
+      dispatch(syncProducts(savedCart));
+    }
+
     const res = localStorage.getItem(localDataNames.authData);
     if (res) {
       const parsed = JSON.parse(res);
@@ -71,12 +75,12 @@ const Routers = ({ Component, pageProps }: any) => {
 
   return isLoading ? (
     <Spin />
-  ) : path.includes("/auth") || path.includes("/oauth-callback") ? (
+  ) : path?.includes("/auth") || path?.includes("/oauth-callback") ? (
     <Layout>
       <Component pageProps={pageProps} />
     </Layout>
   ) : (
-    <Layout>
+    <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Layout.Header
         style={{
           padding: 0,
@@ -86,7 +90,7 @@ const Routers = ({ Component, pageProps }: any) => {
       >
         <HeaderComponent />
       </Layout.Header>
-      <Layout.Content>
+      <Layout.Content style={{ flex: 1 }}>
         <Component pageProps={pageProps} />
       </Layout.Content>
       <Layout.Footer style={{ padding: 0, background: "transparent" }}>

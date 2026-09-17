@@ -241,7 +241,7 @@ const HomePage = (props: Props) => {
           </div>
         </Section>
       </div>
-      {auth.userId && <ChatButton />}
+      <ChatButton />
     </>
   );
 };

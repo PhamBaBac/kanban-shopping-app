@@ -13,6 +13,7 @@ export interface ShopFilters {
   colors?: string[];
   sizes?: string[];
   price?: [number, number];
+  search?: string;
   page?: number;
   pageSize?: number;
 }
@@ -27,6 +28,10 @@ export const shopService = {
   }> => {
     // Build query parameters
     const params = new URLSearchParams();
+
+    if (filters.search && filters.search.trim()) {
+      params.append("search", filters.search.trim());
+    }
 
     if (filters.catIds && filters.catIds.length > 0) {
       filters.catIds.forEach((id) => params.append("catIds", id));
@@ -74,9 +79,22 @@ export const shopService = {
     return res.data || [];
   },
 
-  // Lấy filter values (colors, sizes, prices)
-  getFilterValues: async (): Promise<FilterValues> => {
-    const res = await handleAPI("/subProducts/get-filter-values");
+  // Lấy filter values (colors, sizes, prices) tương ứng với catIds và search
+  getFilterValues: async (
+    catIds?: string[],
+    search?: string
+  ): Promise<FilterValues> => {
+    const params = new URLSearchParams();
+    if (catIds && catIds.length > 0) {
+      catIds.forEach((id) => params.append("catIds", id));
+    }
+    if (search && search.trim()) {
+      params.append("search", search.trim());
+    }
+    const queryString = params.toString();
+    const res = await handleAPI(
+      `/subProducts/get-filter-values${queryString ? `?${queryString}` : ""}`
+    );
     return res.data || { colors: [], sizes: [], prices: [] };
   },
 

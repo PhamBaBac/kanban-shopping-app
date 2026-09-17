@@ -31,21 +31,22 @@ export const useProductDetail = ({
   // Fetch sub products
   useEffect(() => {
     const fetchSubProducts = async () => {
+      if (!product?.id) return;
       setLoading(true);
       setError(null);
       try {
         const subProductsData = await productService.getSubProductsByProductId(
           product.id
         );
-        setSubProducts(subProductsData);
+        setSubProducts(subProductsData || []);
 
         // Fetch reviews for all sub products
-        const subProductIds = subProductsData.map(
+        const subProductIds = (subProductsData || []).map(
           (item: SubProductModel) => item.id
         );
         if (subProductIds.length > 0) {
           const reviewsData = await productService.getReviews(subProductIds);
-          setReviews(reviewsData);
+          setReviews(reviewsData || []);
         }
       } catch (err: any) {
         setError(err.message || "Failed to fetch sub products");
@@ -56,12 +57,12 @@ export const useProductDetail = ({
     };
 
     fetchSubProducts();
-  }, [product.id]);
+  }, [product?.id]);
 
   // Fetch supplier info
   useEffect(() => {
     const fetchSupplier = async () => {
-      if (!product.supplierId) return;
+      if (!product?.supplierId) return;
 
       try {
         const supplierData = await productService.getSupplier(
@@ -75,15 +76,17 @@ export const useProductDetail = ({
     };
 
     fetchSupplier();
-  }, [product.supplierId]);
+  }, [product?.supplierId]);
 
   // Set initial sub product selected
   useEffect(() => {
-    if (subProducts.length > 0) {
+    if (subProducts && subProducts.length > 0) {
       setSubProductSelected({
         ...subProducts[0],
         imgURL:
-          subProducts[0].images.length > 0 ? subProducts[0].images[0] : "",
+          subProducts[0].images && subProducts[0].images.length > 0
+            ? subProducts[0].images[0]
+            : "",
       });
     }
   }, [subProducts]);

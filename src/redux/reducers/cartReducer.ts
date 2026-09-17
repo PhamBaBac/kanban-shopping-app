@@ -10,6 +10,8 @@ export interface CartItemModel {
   color: string;
   price: number;
   qty: number;
+  stock?: number;
+  isDeleted?: boolean;
   title: string;
   productId: string | null;
   image: string;
@@ -24,6 +26,33 @@ export interface DiscountValue {
   type: string;
 }
 
+const CART_STORAGE_KEY = "kanban_cart_items";
+
+const saveCartToStorage = (items: CartItemModel[]) => {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {
+      console.error("Failed to save cart to localStorage", e);
+    }
+  }
+};
+
+export const getSavedCartFromStorage = (): CartItemModel[] => {
+  if (typeof window !== "undefined") {
+    try {
+      const data = localStorage.getItem(CART_STORAGE_KEY);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to read cart from localStorage", e);
+    }
+  }
+  return [];
+};
+
 const initialState: CartItemModel[] = [];
 
 const cartSlice = createSlice({
@@ -36,64 +65,68 @@ const cartSlice = createSlice({
       const item: CartItemModel = action.payload;
       const items = [...state.data];
 
+      // Cart items represent unique subProductId
       const index = items.findIndex(
-        (el) =>
-          el.subProductId === item.subProductId &&
-          (el.id === item.id || el.id === null || item.id === null)
+        (el) => el.subProductId === item.subProductId
       );
 
       if (index !== -1) {
         items[index].count += item.count;
+        if (!items[index].id && item.id) {
+          items[index].id = item.id;
+        }
       } else {
         items.push(item);
       }
 
       state.data = items;
+      saveCartToStorage(items);
     },
 
     removeProduct: (state, action) => {
-      const { id, subProductId } = action.payload;
+      const { id, subProductId } = action.payload || {};
       state.data = state.data.filter(
-        (el) =>
-          !(
-            el.subProductId === subProductId &&
-            (el.id === id || el.id === null || id === null)
-          )
+        (el) => {
+          if (subProductId && el.subProductId === subProductId) return false;
+          if (id && el.id === id) return false;
+          return true;
+        }
       );
+      saveCartToStorage(state.data);
     },
 
     changeProduct: (state, action) => {
       const { id, subProductId, data } = action.payload;
       const index = state.data.findIndex(
-        (el) =>
-          el.subProductId === subProductId &&
-          (el.id === id || el.id === null || id === null)
+        (el) => (id && el.id === id) || el.subProductId === subProductId
       );
 
       if (index !== -1) {
-        state.data[index] = { ...data, id };
+        state.data[index] = { ...data, id: id || state.data[index].id };
+        saveCartToStorage(state.data);
       }
     },
 
     changeCount: (state, action) => {
       const { id, subProductId, val } = action.payload;
       const index = state.data.findIndex(
-        (el) =>
-          el.subProductId === subProductId &&
-          (el.id === id || el.id === null || id === null)
+        (el) => (id && el.id === id) || el.subProductId === subProductId
       );
 
       if (index !== -1) {
         state.data[index].count += val;
+        saveCartToStorage(state.data);
       }
     },
 
     syncProducts: (state, action) => {
-      state.data = action.payload;
+      state.data = action.payload || [];
+      saveCartToStorage(state.data);
     },
 
     removeCarts: (state) => {
       state.data = [];
+      saveCartToStorage([]);
     },
   },
 });
