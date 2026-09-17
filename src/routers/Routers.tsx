@@ -29,8 +29,6 @@ const Routers = ({ Component, pageProps }: any) => {
   useEffect(() => {
     if (auth.userId) {
       getDatabaseDatas();
-    } else {
-      getRedisCart();
     }
   }, [auth.userId]);
 
@@ -49,16 +47,26 @@ const Routers = ({ Component, pageProps }: any) => {
 
     const res = localStorage.getItem(localDataNames.authData);
     if (res) {
-      const parsed = JSON.parse(res);
-      if (parsed?.userId && parsed.userId !== auth.userId) {
-        dispatch(addAuth(parsed));
+      try {
+        const parsed = JSON.parse(res);
+        if (parsed?.userId) {
+          if (parsed.userId !== auth.userId) {
+            dispatch(addAuth(parsed));
+          }
+          getDatabaseDatas();
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse authData", e);
       }
+    }
+
+    // Chỉ gọi Redis cart khi người dùng chưa đăng nhập
+    const cartId = localStorage.getItem("cartId");
+    if (cartId) {
+      fetchCartById(cartId);
     } else {
-      const cartId = localStorage.getItem("cartId");
-      if (cartId) {
-        // Only call Redis cart when not on auth page and not logged in
-        fetchCartById(cartId);
-      }
+      getRedisCart();
     }
   };
 

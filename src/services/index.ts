@@ -16,7 +16,7 @@ export type { AuthUser, LoginCredentials, SignupData } from "./authService";
 export type { FilterValues, ShopFilters } from "./shopService";
 export type { OrderItem, CreateOrderData } from "./orderService";
 export type { PaymentData } from "./paymentService";
-export type { CreateAddressData } from "./addressService";
+export type { CreateAddressData, AdministrativeUnit } from "./addressService";
 export type {
   UpdateProfileData,
   ChangePasswordData,

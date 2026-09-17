@@ -11,7 +11,7 @@ export const useCartOperations = () => {
   const getCartInDatabase = async () => {
     try {
       const result = await cartService.getCart();
-      if (result && Array.isArray(result) && result.length > 0) {
+      if (result && Array.isArray(result)) {
         dispatch(syncProducts(result));
       }
     } catch (error) {
@@ -24,7 +24,7 @@ export const useCartOperations = () => {
     const sessionId = getOrCreateSessionId();
     try {
       const result = await cartService.getRedisCart(sessionId);
-      if (result && Array.isArray(result) && result.length > 0) {
+      if (result && Array.isArray(result)) {
         const flatResult = result.flat();
         dispatch(syncProducts(flatResult));
       }

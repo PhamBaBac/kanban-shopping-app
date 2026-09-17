@@ -12,6 +12,8 @@ import {
   Card,
   Divider,
   message,
+  Popconfirm,
+  Tooltip,
 } from "antd";
 import { VND } from "@/utils/handleCurrency";
 import {
@@ -20,6 +22,7 @@ import {
   EyeOutlined,
   DeleteOutlined,
   CloseOutlined,
+  CarOutlined,
 } from "@ant-design/icons";
 import { orderService } from "@/services";
 import { useRouter } from "next/router";
@@ -29,15 +32,19 @@ import Reviews from "./Reviews";
 interface OrderItemProps {
   order: {
     orderId: string;
+    trackingCode?: string;
     items: Array<{
       image: string;
       title: string;
-      size: string;
+      size?: string;
+      color?: string;
+      attributes?: Record<string, any>;
       qty: number;
       price: number;
       totalPrice: number;
       orderStatus: string;
       subProductId: string;
+      trackingCode?: string;
       isReviewed?: boolean;
     }>;
     totalAmount: number;
@@ -58,6 +65,32 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const [orderDetailVisible, setOrderDetailVisible] = useState(false);
   const [orderDetail, setOrderDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  const getItemAttributes = (item: any): Record<string, string> => {
+    let attrs: any = item.attributes;
+    if (typeof attrs === "string") {
+      try {
+        attrs = JSON.parse(attrs);
+      } catch (e) {
+        attrs = null;
+      }
+    }
+    const res: Record<string, string> = {};
+    if (attrs && typeof attrs === "object") {
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (v !== null && v !== undefined && String(v).trim() !== "") {
+          res[k] = String(v);
+        }
+      });
+    }
+    if (item.color && !Object.keys(res).some((k) => /màu|color/i.test(k))) {
+      res["Màu sắc"] = item.color;
+    }
+    if (item.size && !Object.keys(res).some((k) => /size|kích/i.test(k))) {
+      res["Size"] = item.size;
+    }
+    return res;
+  };
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -107,14 +140,19 @@ const OrderItem: React.FC<OrderItemProps> = ({
   };
 
   const updateOrderStatus = async () => {
+    if (cancelLoading) return;
     try {
       setCancelLoading(true);
       await orderService.cancelOrder(order.orderId);
-      message.success("Order status updated successfully");
+      message.success("Hủy đơn hàng thành công");
       // Gọi callback để thông báo cho component cha
       onOrderStatusChanged?.(order.orderId, "CANCELLED");
-    } catch (error) {
-      message.error("Failed to update order status");
+    } catch (error: any) {
+      const errMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể hủy đơn hàng";
+      message.error(errMsg);
     } finally {
       setCancelLoading(false);
     }
@@ -197,9 +235,20 @@ const OrderItem: React.FC<OrderItemProps> = ({
                   >
                     {order.items[0].title}
                   </Typography.Text>
-                  <Typography.Text type="secondary">
-                    Size: {order.items[0].size}
-                  </Typography.Text>
+                  {(() => {
+                    const attrs = getItemAttributes(order.items[0]);
+                    const entries = Object.entries(attrs);
+                    if (entries.length === 0) return null;
+                    return (
+                      <Space wrap size={[4, 4]}>
+                        {entries.map(([key, val]) => (
+                          <Tag key={key} style={{ margin: 0, fontSize: "11px", padding: "0 6px" }}>
+                            {key}: {val}
+                          </Tag>
+                        ))}
+                      </Space>
+                    );
+                  })()}
                   <Typography.Text type="secondary">
                     Qty: {order.items[0].qty}
                   </Typography.Text>
@@ -301,9 +350,20 @@ const OrderItem: React.FC<OrderItemProps> = ({
                           >
                             {item.title}
                           </Typography.Text>
-                          <Typography.Text type="secondary">
-                            Size: {item.size}
-                          </Typography.Text>
+                          {(() => {
+                            const attrs = getItemAttributes(item);
+                            const entries = Object.entries(attrs);
+                            if (entries.length === 0) return null;
+                            return (
+                              <Space wrap size={[4, 4]}>
+                                {entries.map(([key, val]) => (
+                                  <Tag key={key} style={{ margin: 0, fontSize: "11px", padding: "0 6px" }}>
+                                    {key}: {val}
+                                  </Tag>
+                                ))}
+                              </Space>
+                            );
+                          })()}
                           <Typography.Text type="secondary">
                             Qty: {item.qty}
                           </Typography.Text>
@@ -380,6 +440,28 @@ const OrderItem: React.FC<OrderItemProps> = ({
               <Tag color={getOrderStatusColor(order.orderStatus)}>
                 {getOrderStatusText(order.orderStatus) || "PENDING"}
               </Tag>
+              {(() => {
+                const code = order.trackingCode || order.items?.[0]?.trackingCode;
+                if (!code) return null;
+                return (
+                  <Tooltip title="Bấm để xem chi tiết lộ trình vận chuyển GHN">
+                    <Tag
+                      color="green"
+                      style={{
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "2px 8px",
+                      }}
+                      onClick={handleViewOrderDetails}
+                    >
+                      <CarOutlined />
+                      <span>GHN: {code}</span>
+                    </Tag>
+                  </Tooltip>
+                );
+              })()}
               <Typography.Text type="secondary">
                 {getOrderStatusDescription(order.orderStatus)}
               </Typography.Text>
@@ -397,32 +479,47 @@ const OrderItem: React.FC<OrderItemProps> = ({
             </Button>
 
             {order.orderStatus?.toLowerCase() === "pending" && (
-              <Button
-                type="primary"
-                danger
-                size="small"
-                onClick={() => updateOrderStatus()}
-                icon={<CloseOutlined />}
-                loading={cancelLoading}
+              <Popconfirm
+                title="Hủy đơn hàng"
+                description="Bạn có chắc chắn muốn hủy đơn hàng này không?"
+                onConfirm={() => updateOrderStatus()}
+                okText="Hủy đơn"
+                cancelText="Đóng"
+                okButtonProps={{ danger: true, loading: cancelLoading }}
               >
-                Cancel Order
-              </Button>
+                <Button
+                  type="primary"
+                  danger
+                  size="small"
+                  icon={<CloseOutlined />}
+                  loading={cancelLoading}
+                >
+                  Cancel Order
+                </Button>
+              </Popconfirm>
             )}
 
             {(order.orderStatus?.toLowerCase() === "cancelled" ||
               order.orderStatus?.toLowerCase() === "refunded" ||
               order.orderStatus?.toLowerCase() === "completed") && (
-              <Button
-                type="primary"
-                danger
-                size="small"
-                onClick={() => handleDeleteOrder()}
-                icon={<DeleteOutlined />}
-                loading={deleteLoading}
-              >
-                Delete Order
-              </Button>
-            )}
+                <Popconfirm
+                  title="Xóa đơn hàng"
+                  description="Xóa đơn hàng này khỏi lịch sử mua sắm của bạn?"
+                  onConfirm={() => handleDeleteOrder()}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                >
+                  <Button
+                    type="primary"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    loading={deleteLoading}
+                  >
+                    Delete Order
+                  </Button>
+                </Popconfirm>
+              )}
           </Space>
         </Row>
       </Card>

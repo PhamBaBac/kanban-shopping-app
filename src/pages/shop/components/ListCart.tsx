@@ -36,6 +36,20 @@ const ListCart = ({
 
   // State lưu các key (id) của sản phẩm được chọn
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const hasInitializedSelection = React.useRef(false);
+
+  // Tự động chọn tất cả sản phẩm hợp lệ khi tải giỏ hàng lần đầu
+  useEffect(() => {
+    if (carts && carts.length > 0 && !hasInitializedSelection.current) {
+      const validKeys = carts
+        .filter((c) => !isItemInvalid(c) && c.id)
+        .map((c) => c.id as React.Key);
+      if (validKeys.length > 0) {
+        setSelectedRowKeys(validKeys);
+        hasInitializedSelection.current = true;
+      }
+    }
+  }, [carts]);
 
   // Tự động loại bỏ các sản phẩm không hợp lệ khỏi danh sách được chọn
   useEffect(() => {

@@ -1,12 +1,11 @@
 /** @format */
 
-import { addressService } from "@/services";
+import { addressService, AdministrativeUnit } from "@/services/addressService";
 import { AddressModel } from "@/models/Products";
 import { authSelector } from "@/redux/reducers/authReducer";
-import { Button, Checkbox, Form, Input, Select, Spin, Typography } from "antd";
+import { Button, Checkbox, Form, Input, message, Select, Space, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { replaceName } from "@/utils/replaceName";
 
 interface Props {
   visible?: boolean;
@@ -14,398 +13,308 @@ interface Props {
   onAddnew?: (val: AddressModel) => void;
   values?: AddressModel;
   onSelectAddress?: (val: string) => void;
-  onClose?: (val: string) => void;
+  onClose?: () => void;
 }
 
+// Chuẩn hóa chuỗi tiếng Việt để tìm kiếm không dấu
+const removeAccents = (str?: string): string => {
+  if (!str) return "";
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+};
+
 const AddNewAddress = (props: Props) => {
-  const { onAddnew, values, onSelectAddress } = props;
+  const { onAddnew, values, onSelectAddress, onClose } = props;
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
-  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
   const [isLoadingWards, setIsLoadingWards] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
-  const [locationValues, setLocationValues] = useState({
-    ward: "",
-    district: "",
-    province: "",
-  });
-  const [locationData, setLocationData] = useState<{
-    provinces: any[];
-    districts: any[];
-    wards: any[];
-  }>({
-    provinces: [],
-    districts: [],
-    wards: [],
-  });
+
+  const [provinces, setProvinces] = useState<AdministrativeUnit[]>([]);
+  const [wards, setWards] = useState<AdministrativeUnit[]>([]);
 
   const auth = useSelector(authSelector);
 
   useEffect(() => {
-    getProvinces();
+    loadProvinces();
   }, []);
 
+  // Xử lý nạp dữ liệu khi sửa địa chỉ
   useEffect(() => {
     if (values) {
+      let houseNo = values.address || "";
+      // Loại bỏ phần hậu tố xã/phường, quận/huyện, tỉnh/thành khỏi chuỗi địa chỉ chi tiết
+      if (values.ward && values.province) {
+        const suffix2Tier = `, ${values.ward}, ${values.province}`;
+        const suffix3Tier = values.district
+          ? `, ${values.ward}, ${values.district}, ${values.province}`
+          : "";
+
+        if (suffix3Tier && houseNo.endsWith(suffix3Tier)) {
+          houseNo = houseNo.slice(0, -suffix3Tier.length);
+        } else if (houseNo.endsWith(suffix2Tier)) {
+          houseNo = houseNo.slice(0, -suffix2Tier.length);
+        }
+      }
+
       form.setFieldsValue({
         name: values.name,
         phoneNumber: values.phoneNumber,
-        houseNo: values.address,
-        province: values.province,
-        district: values.district,
-        ward: values.ward,
+        houseNo: houseNo,
       });
-      setLocationValues({
-        ward: values.ward,
-        district: values.district,
-        province: values.province,
-      });
-      setIsDefault(values.isDefault);
+      setIsDefault(values.isDefault ?? false);
+
+      initializeForEdit(values);
+    } else {
+      form.resetFields();
+      setIsDefault(false);
+      setWards([]);
     }
   }, [values, form]);
 
-  const handleFormatForms = async (vals: string[]) => {
-    const items: any[] = [];
-    for (const i in vals) {
-      // Tìm trong provinces
-      let item = locationData.provinces.find(
-        (element) => element.value === vals[i]
-      );
-
-      // Nếu không tìm thấy trong provinces, tìm trong districts
-      if (!item) {
-        item = locationData.districts.find(
-          (element) => element.value === vals[i]
-        );
-      }
-
-      // Nếu không tìm thấy trong districts, tìm trong wards
-      if (!item) {
-        item = locationData.wards.find((element) => element.value === vals[i]);
-      }
-
-      if (item) {
-        items.push(item);
-      }
-    }
-    return items;
-  };
-
-  const getProvinces = async () => {
+  const loadProvinces = async () => {
     setIsLoadingProvinces(true);
     try {
-      const result = await addressService.getProvinces();
-      setLocationData((prev) => ({
-        ...prev,
-        provinces: result,
-      }));
+      const res = await addressService.getProvinces();
+      setProvinces(res);
+      return res;
     } catch (error) {
-      console.error("Failed to fetch provinces:", error);
+      console.error("Failed to load provinces:", error);
+      message.error("Không thể tải danh sách tỉnh/thành phố");
+      return [];
     } finally {
       setIsLoadingProvinces(false);
     }
   };
 
-  const handleProvinceChange = async (val: string) => {
-    console.log("Selected province value:", val);
-
-    // Tìm province object để lấy thông tin chi tiết
-    const selectedProvince = locationData.provinces.find(
-      (p) => p.value === val
-    );
-    console.log("Selected province object:", selectedProvince);
-
-    setLocationValues({
-      ...locationValues,
-      province: val,
-      district: "",
-      ward: "",
-    });
-
-    // Reset form fields
-    form.setFieldsValue({
-      district: undefined,
-      ward: undefined,
-    });
-
-    setLocationData((prev) => ({
-      ...prev,
-      districts: [],
-      wards: [],
-    }));
-
-    setIsLoadingDistricts(true);
+  const initializeForEdit = async (addr: AddressModel) => {
     try {
-      const result = await addressService.getDistricts(val);
-      console.log("Districts result:", result);
-      setLocationData((prev) => ({
-        ...prev,
-        districts: result,
-      }));
-    } catch (error) {
-      console.error("Failed to fetch districts:", error);
-    } finally {
-      setIsLoadingDistricts(false);
+      const provList =
+        provinces.length > 0 ? provinces : await addressService.getProvinces();
+
+      const prov = provList.find(
+        (p) =>
+          p.name === addr.province ||
+          p.label === addr.province ||
+          p.value === String(addr.province)
+      );
+
+      if (prov) {
+        form.setFieldValue("province", prov.value);
+        setIsLoadingWards(true);
+        const wardList = await addressService.getWardsByProvince(prov.value);
+        setWards(wardList);
+        setIsLoadingWards(false);
+
+        const w = wardList.find(
+          (item) =>
+            item.name === addr.ward ||
+            item.label === addr.ward ||
+            item.value === String(addr.ward)
+        );
+        if (w) {
+          form.setFieldValue("ward", w.value);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to initialize address for edit:", err);
     }
   };
 
-  const handleDistrictChange = async (val: string) => {
-    console.log("Selected district value:", val);
-
-    setLocationValues({ ...locationValues, district: val, ward: "" });
-
-    // Reset ward form field
+  const handleProvinceChange = async (val: string) => {
+    // Reset ward field
     form.setFieldsValue({
       ward: undefined,
     });
+    setWards([]);
 
-    setLocationData((prev) => ({
-      ...prev,
-      wards: [],
-    }));
+    if (!val) return;
 
     setIsLoadingWards(true);
     try {
-      const result = await addressService.getWards(val);
-      console.log("Wards result:", result);
-      setLocationData((prev) => ({
-        ...prev,
-        wards: result,
-      }));
+      const wardList = await addressService.getWardsByProvince(val);
+      setWards(wardList);
     } catch (error) {
-      console.error("Failed to fetch wards:", error);
+      console.error("Failed to load wards for province:", error);
+      message.error("Không thể tải danh sách phường/xã");
     } finally {
       setIsLoadingWards(false);
     }
   };
 
-  const handleAddNewAddress = async (datas: any) => {
-    console.log("Form data received:", datas);
-    console.log("Location values:", locationValues);
-
-    const items = await handleFormatForms([
-      datas.province,
-      datas.district,
-      datas.ward,
-    ]);
-
-    let address = datas.houseNo;
-    // Add province, district, ward to address
-    if (datas.province) {
-      const provinceItem = items.find(
-        (element) => element.value === datas.province
+  const handleAddNewAddress = async (formData: any) => {
+    setIsLoading(true);
+    try {
+      const selectedProvince = provinces.find(
+        (p) => p.value === String(formData.province)
       );
-      if (provinceItem) {
-        address += `, ${provinceItem.label}`;
-      }
-    }
-    if (datas.district) {
-      const districtItem = items.find(
-        (element) => element.value === datas.district
+      const selectedWard = wards.find(
+        (w) => w.value === String(formData.ward)
       );
-      if (districtItem) {
-        address += `, ${districtItem.label}`;
-      }
-    }
-    if (datas.ward) {
-      const wardItem = items.find((element) => element.value === datas.ward);
-      if (wardItem) {
-        address += `, ${wardItem.label}`;
-      }
-    }
 
-    delete datas.houseNo;
-    datas["address"] = address;
+      const provinceName =
+        selectedProvince?.name || selectedProvince?.label || formData.province;
+      const wardName = selectedWard?.name || selectedWard?.label || formData.ward;
 
-    // Thêm thông tin location vào datas để lưu xuống database
-    datas["province"] = datas.province;
-    datas["district"] = datas.district;
-    datas["ward"] = datas.ward;
+      const street = (formData.houseNo || "").trim();
+      // Địa chỉ chuẩn chính quyền 2 cấp: [Số nhà/Đường], [Phường/Xã], [Tỉnh/Thành phố]
+      const formattedAddress = `${street}, ${wardName}, ${provinceName}`;
 
-    console.log("Final data to save:", datas);
+      const payload = {
+        name: formData.name.trim(),
+        phoneNumber: formData.phoneNumber.trim(),
+        address: formattedAddress,
+        province: provinceName,
+        district: "", // Bỏ cấp huyện theo mô hình chính quyền 2 cấp
+        ward: wardName,
+        isDefault: !!isDefault,
+        createdBy: auth.userId,
+      };
 
-    for (const i in datas) {
-      datas[i] = datas[i] || datas[i] === false ? datas[i] : "";
-    }
-
-    datas["isDefault"] = isDefault;
-    datas["createdBy"] = auth.userId;
-
-    if (onSelectAddress) {
-      let val = datas["address"];
-      onSelectAddress(val);
-    } else {
-      setIsLoading(true);
-      try {
-        let result;
-        if (values) {
-          result = await addressService.updateAddress(values.id!, datas);
+      if (onSelectAddress) {
+        onSelectAddress(formattedAddress);
+      } else {
+        let result: AddressModel;
+        if (values && values.id) {
+          result = await addressService.updateAddress(values.id, payload);
+          message.success("Cập nhật địa chỉ thành công!");
         } else {
-          result = await addressService.createAddress(datas);
+          result = await addressService.createAddress(payload);
+          message.success("Thêm địa chỉ mới thành công!");
         }
 
         onAddnew && onAddnew(result);
         form.resetFields();
-        setLocationValues({ ward: "", district: "", province: "" });
-        setLocationData((prev) => ({
-          ...prev,
-          districts: [],
-          wards: [],
-        }));
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
+        setWards([]);
+        onClose && onClose();
       }
+    } catch (error: any) {
+      console.error("Failed to save address:", error);
+      message.error(error?.message || "Lỗi khi lưu địa chỉ. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const isEditing = !!values?.id;
+
   return (
-    <div>
-      <Typography.Title level={3}>Add a new address</Typography.Title>
+    <div style={{ padding: "8px 4px" }}>
+      <Typography.Title level={4} style={{ marginBottom: 16 }}>
+        {isEditing ? "Cập nhật địa chỉ nhận hàng" : "Thêm địa chỉ nhận hàng mới"}
+      </Typography.Title>
+
       <Form
         form={form}
         onFinish={handleAddNewAddress}
         disabled={isLoading}
         size="large"
         layout="vertical"
+        initialValues={{ isDefault: false }}
       >
         <Form.Item
-          name={"name"}
-          label="Full Name"
-          rules={[{ required: true, message: "Please enter your full name" }]}
+          name="name"
+          label="Họ và tên người nhận"
+          rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
         >
-          <Input allowClear placeholder="Enter recipient's full name" />
+          <Input allowClear placeholder="Ví dụ: Nguyễn Văn A" />
         </Form.Item>
+
         <Form.Item
-          name={"phoneNumber"}
-          label="Phone Number"
+          name="phoneNumber"
+          label="Số điện thoại"
           rules={[
-            { required: true, message: "Please enter your phone number" },
+            { required: true, message: "Vui lòng nhập số điện thoại" },
             {
-              pattern: /^[0-9]{10,11}$/,
-              message: "Invalid phone number",
+              pattern: /(84|0[3|5|7|8|9])+([0-9]{8})\b/,
+              message: "Số điện thoại không hợp lệ (10 chữ số)",
             },
           ]}
         >
-          <Input type="tel" allowClear placeholder="Enter phone number" />
+          <Input type="tel" allowClear placeholder="Ví dụ: 0912345678" />
         </Form.Item>
+
+        {/* Phân cấp 2 tầng: Tỉnh/Thành phố -> Phường/Xã */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <Form.Item
+            name="province"
+            label="Tỉnh / Thành phố"
+            rules={[{ required: true, message: "Vui lòng chọn Tỉnh/Thành phố" }]}
+          >
+            <Select
+              loading={isLoadingProvinces}
+              options={provinces}
+              onChange={handleProvinceChange}
+              showSearch
+              placeholder="Chọn Tỉnh / Thành phố"
+              filterOption={(input, option) =>
+                removeAccents(option?.label as string).includes(removeAccents(input))
+              }
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="ward"
+            label="Phường / Xã / Thị trấn"
+            rules={[{ required: true, message: "Vui lòng chọn Phường/Xã" }]}
+          >
+            <Select
+              disabled={wards.length === 0}
+              loading={isLoadingWards}
+              options={wards}
+              showSearch
+              placeholder={
+                wards.length === 0
+                  ? "Chọn tỉnh/thành trước"
+                  : "Chọn Phường / Xã / Thị trấn"
+              }
+              filterOption={(input, option) =>
+                removeAccents(option?.label as string).includes(removeAccents(input))
+              }
+            />
+          </Form.Item>
+        </div>
+
         <Form.Item
-          name={"houseNo"}
-          label="Detailed Address"
-          rules={[
-            { required: true, message: "Please enter your detailed address" },
-          ]}
+          name="houseNo"
+          label="Địa chỉ cụ thể (Số nhà, tên đường, thôn, xóm...)"
+          rules={[{ required: true, message: "Vui lòng nhập địa chỉ cụ thể" }]}
         >
-          <Input allowClear placeholder="House number, street name, etc." />
+          <Input allowClear placeholder="Ví dụ: Số 12 ngõ 34, đường Giải Phóng" />
         </Form.Item>
-        <Form.Item
-          name={"province"}
-          rules={[{ required: true, message: "Please select a province/city" }]}
-          label="Province/City"
-        >
-          <Select
-            disabled={locationData.provinces.length === 0}
-            options={locationData["provinces"]}
-            optionLabelProp="label"
-            onChange={handleProvinceChange}
-            showSearch
-            placeholder="Select a province/city"
-            notFoundContent={
-              isLoadingProvinces ? <Spin size="small" /> : "Not found"
-            }
-            filterOption={(input, option) =>
-              (replaceName(option?.label as string) ?? "").includes(
-                replaceName(input)
-              )
-            }
-            filterSort={(optionA, optionB) =>
-              (optionA?.label ?? "")
-                .toLowerCase()
-                .localeCompare((optionB?.label ?? "").toLowerCase())
-            }
-          />
-        </Form.Item>
-        <Form.Item
-          name={"district"}
-          rules={[{ required: true, message: "Please select a district" }]}
-          label="District"
-        >
-          <Select
-            disabled={
-              locationData.districts.length === 0 || !locationValues.province
-            }
-            onChange={handleDistrictChange}
-            options={locationData["districts"]}
-            optionLabelProp="label"
-            showSearch
-            placeholder="Select a district"
-            notFoundContent={
-              isLoadingDistricts ? <Spin size="small" /> : "Not found"
-            }
-            filterOption={(input, option) =>
-              (replaceName(option?.label as string) ?? "").includes(
-                replaceName(input)
-              )
-            }
-            filterSort={(optionA, optionB) =>
-              (optionA?.label ?? "")
-                .toLowerCase()
-                .localeCompare((optionB?.label ?? "").toLowerCase())
-            }
-          />
-        </Form.Item>
-        <Form.Item
-          name={"ward"}
-          rules={[{ required: true, message: "Please select a ward/commune" }]}
-          label="Ward/Commune"
-        >
-          <Select
-            disabled={
-              locationData.wards.length === 0 || !locationValues.district
-            }
-            onChange={(val) =>
-              setLocationValues({ ...locationValues, ward: val })
-            }
-            options={locationData["wards"]}
-            optionLabelProp="label"
-            showSearch
-            placeholder="Select a ward/commune"
-            notFoundContent={
-              isLoadingWards ? <Spin size="small" /> : "Not found"
-            }
-            filterOption={(input, option) =>
-              (replaceName(option?.label as string) ?? "").includes(
-                replaceName(input)
-              )
-            }
-            filterSort={(optionA, optionB) =>
-              (optionA?.label ?? "")
-                .toLowerCase()
-                .localeCompare((optionB?.label ?? "").toLowerCase())
-            }
-          />
-        </Form.Item>
-        <Form.Item name={"isDefault"}>
+
+        <Form.Item name="isDefault" valuePropName="checked" style={{ marginBottom: 20 }}>
           <Checkbox
             checked={isDefault}
-            onChange={() => setIsDefault(!isDefault)}
+            onChange={(e) => setIsDefault(e.target.checked)}
           >
-            Use as my default address
+            Đặt làm địa chỉ nhận hàng mặc định
           </Checkbox>
         </Form.Item>
-      </Form>
 
-      <Button
-        type="primary"
-        size="large"
-        onClick={() => form.submit()}
-        loading={isLoading}
-        style={{ width: "40%", marginBottom: 16 }}
-      >
-        {isLoading ? "Adding..." : "Add new address"}
-      </Button>
+        <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+          {onClose && (
+            <Button size="large" onClick={onClose} disabled={isLoading}>
+              Hủy
+            </Button>
+          )}
+          <Button
+            type="primary"
+            size="large"
+            onClick={() => form.submit()}
+            loading={isLoading}
+            style={{ minWidth: 160 }}
+          >
+            {isEditing ? "Cập nhật địa chỉ" : "Thêm địa chỉ"}
+          </Button>
+        </Space>
+      </Form>
     </div>
   );
 };

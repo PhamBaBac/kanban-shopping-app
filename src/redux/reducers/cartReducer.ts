@@ -128,6 +128,14 @@ const cartSlice = createSlice({
       state.data = [];
       saveCartToStorage([]);
     },
+
+    removeSelectedItems: (state, action) => {
+      const subProductIds: string[] = action.payload || [];
+      state.data = state.data.filter(
+        (el) => !subProductIds.includes(el.subProductId)
+      );
+      saveCartToStorage(state.data);
+    },
   },
 });
 
@@ -139,6 +147,7 @@ export const {
   changeCount,
   changeProduct,
   removeCarts,
+  removeSelectedItems,
 } = cartSlice.actions;
 
 export const cartSelector = (state: any) => state.cart.data;

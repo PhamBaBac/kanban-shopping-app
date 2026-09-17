@@ -2,11 +2,13 @@
 
 import { paymentService, orderService } from "@/services";
 import { promotionService } from "@/services";
-import { CartItemModel, removeCarts } from "@/redux/reducers/cartReducer";
+import { CartItemModel, removeCarts, removeSelectedItems } from "@/redux/reducers/cartReducer";
 import { DateTime } from "@/utils/dateTime";
 import { VND } from "@/utils/handleCurrency";
 import { useRouter } from "next/router";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { authSelector } from "@/redux/reducers/authReducer";
+import { useCartOperations } from "@/hooks/useCartOperations";
 import { BiEdit, BiCreditCard } from "react-icons/bi";
 import { FaStar } from "react-icons/fa6";
 import { HiHome } from "react-icons/hi";
@@ -46,6 +48,50 @@ const CheckoutPage = () => {
 
   const router = useRouter();
   const dispatch = useDispatch();
+  const auth = useSelector(authSelector);
+  const { getCartInDatabase, getRedisCart } = useCartOperations();
+
+  // Đồng bộ giỏ hàng mới nhất khi vào trang checkout
+  useEffect(() => {
+    if (auth.userId) {
+      getCartInDatabase();
+    } else {
+      getRedisCart();
+    }
+  }, [auth.userId]);
+
+  // Xử lý khi quay lại trang bằng nút Back trình duyệt (BFCache)
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      setCurrentStep(0);
+      setIsLoading(false);
+      if (auth.userId) {
+        getCartInDatabase();
+      } else {
+        getRedisCart();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [auth.userId]);
+
+  // Xử lý khi quay lại từ trang kết quả thanh toán VNPay
+  useEffect(() => {
+    if (router.query.from_payment) {
+      setCurrentStep(0);
+      setIsLoading(false);
+      if (auth.userId) {
+        getCartInDatabase();
+      } else {
+        getRedisCart();
+      }
+      message.info("Giao dịch thanh toán chưa hoàn tất. Sản phẩm của bạn vẫn được lưu nguyên vẹn trong giỏ hàng.");
+      router.replace("/shop/checkout", undefined, { shallow: true });
+    }
+  }, [router.query.from_payment, auth.userId]);
 
   useEffect(() => {
     const total = selectedItems.reduce((a, b) => a + b.count * b.price, 0);
@@ -95,18 +141,23 @@ const CheckoutPage = () => {
       })),
     };
     if (method === "vnpay") {
+      setIsLoading(true);
       try {
         const res = await paymentService.createPayment(body);
 
         if (res?.paymentUrl) {
+          // Lưu ý: Không xóa giỏ hàng ở đây vì giao dịch VNPay chưa hoàn tất.
+          // Đặt lại step về 0 trước khi chuyển hướng để nếu người dùng nhấn nút Back sẽ quay về bước giỏ hàng
+          setCurrentStep(0);
           window.location.href = res.paymentUrl;
-          dispatch(removeCarts());
           return; // Do not proceed with order creation
         } else {
+          setIsLoading(false);
           message.error("Could not create VNPay payment link.");
           return;
         }
       } catch (error) {
+        setIsLoading(false);
         console.error("VNPay error:", error);
         message.error("An error occurred while connecting to VNPay.");
         return;
@@ -128,7 +179,9 @@ const CheckoutPage = () => {
         },
       });
 
-      dispatch(removeCarts());
+      // Chỉ xóa các sản phẩm đã chọn mua khỏi giỏ hàng
+      const selectedSubProductIds = selectedItems.map((item) => item.subProductId);
+      dispatch(removeSelectedItems(selectedSubProductIds));
     } catch (error: any) {
       console.log(error);
 
@@ -374,9 +427,8 @@ const CheckoutPage = () => {
                       style={{
                         fontSize: 18,
                       }}
-                    >{`${discountValue?.value}${
-                      discountValue?.type === "percent" ? "%" : ""
-                    }`}</Typography.Text>
+                    >{`${discountValue?.value}${discountValue?.type === "percent" ? "%" : ""
+                      }`}</Typography.Text>
                   )}
                 </Space>
                 <Divider />

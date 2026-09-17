@@ -48,4 +48,16 @@ export const orderService = {
     const res = await handleAPI(`/orders/${orderId}`, {}, "delete");
     return res.data;
   },
+
+  // Tra cứu vận đơn GHN theo trackingCode
+  getTrackingByCode: async (trackingCode: string): Promise<any> => {
+    const res: any = await handleAPI(`/shipping/tracking/${trackingCode}`, {}, "get");
+    return res?.data !== undefined ? res.data : res;
+  },
+
+  // Tra cứu vận đơn GHN theo orderId
+  getOrderTracking: async (orderId: string): Promise<any> => {
+    const res: any = await handleAPI(`/shipping/order/${orderId}`, {}, "get");
+    return res?.data !== undefined ? res.data : res;
+  },
 };
