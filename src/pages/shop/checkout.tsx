@@ -17,10 +17,8 @@ import { IoWarningOutline } from "react-icons/io5";
 import {
   Avatar,
   Button,
-  Card,
   Divider,
   Input,
-  List,
   message,
   Modal,
   Space,
@@ -32,8 +30,6 @@ import ListCart from "./components/ListCart";
 import PaymentMethod, { methods } from "./components/PaymentMethod";
 import ShipingAddress from "./components/ShipingAddress";
 import { useCartValidation, isItemInvalid } from "@/hooks";
-
-const { Title, Paragraph } = Typography;
 
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState<CartItemModel[]>([]);
@@ -225,13 +221,19 @@ const CheckoutPage = () => {
         return <ListCart onSelectItems={setSelectedItems} />;
       case 1:
         return (
-          <>
+          <div>
             <Button
               type="default"
               onClick={() => setCurrentStep(0)}
-              style={{ marginBottom: 16 }}
+              style={{
+                marginBottom: 16,
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
             >
-              Back
+              ← Quay lại giỏ hàng
             </Button>
             <ShipingAddress
               onSelectAddress={(val) => {
@@ -239,178 +241,430 @@ const CheckoutPage = () => {
                 setCurrentStep(2);
               }}
             />
-          </>
+          </div>
         );
       case 2:
         return (
-          <PaymentMethod
-            onContinue={(val) => {
-              setPaymentMethod(val);
-              setCurrentStep(3);
-            }}
-          />
+          <div>
+            <Button
+              type="default"
+              onClick={() => setCurrentStep(1)}
+              style={{
+                marginBottom: 16,
+                borderRadius: "8px",
+                border: "1px solid #E5E7EB",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              ← Quay lại chọn địa chỉ
+            </Button>
+            <PaymentMethod
+              onContinue={(val) => {
+                setPaymentMethod(val);
+                setCurrentStep(3);
+              }}
+            />
+          </div>
         );
       case 3:
         return (
-          <>
-            <div>
-              <Title level={4}>
-                Estimated delivery:{" "}
-                {DateTime.getShortDateEng(
-                  new Date(
-                    new Date().getTime() + 3 * 24 * 60 * 60 * 1000
-                  ).toISOString()
-                )}
-              </Title>
-              <List
-                dataSource={selectedItems}
-                renderItem={(item) => (
-                  <List.Item key={item.id}>
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar src={item.image} shape="square" size={72} />
-                      }
-                      title={
-                        <Title level={4} className="mb-1">
-                          {item.title}
-                        </Title>
-                      }
-                      description={
-                        <>
-                          <Paragraph type="secondary" className="m-0">
-                            ${VND.format(item.price)}
-                          </Paragraph>
-                          <Paragraph type="secondary" className="m-0">
-                            size: {item.size}
-                          </Paragraph>
-                        </>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h2
+                  style={{
+                    fontFamily: "Rubik, sans-serif",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    color: "#131118",
+                    margin: 0,
+                  }}
+                >
+                  Xác nhận lại đơn hàng
+                </h2>
+                <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                  Vui lòng kiểm tra lại sản phẩm, địa chỉ nhận hàng và phương thức thanh toán trước khi đặt mua
+                </span>
+              </div>
+              <Button
+                type="default"
+                onClick={() => setCurrentStep(2)}
+                style={{
+                  borderRadius: "8px",
+                  border: "1px solid #E5E7EB",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                ← Quay lại
+              </Button>
             </div>
-            <div>
-              <Title level={4}>Shipping address</Title>
-              <List
-                dataSource={[paymentDetail]}
-                renderItem={(item) => (
-                  <List.Item
-                    extra={
-                      <Button
-                        onClick={() => setCurrentStep(1)}
-                        icon={<BiEdit size={20} />}
-                        className="text-muted"
-                        type="text"
-                      />
-                    }
+
+            {/* Delivery Schedule & Items Card */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                padding: "20px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "16px",
+                  paddingBottom: "12px",
+                  borderBottom: "1px solid #F3F4F6",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <HiHome size={18} color="#131118" />
+                  <span
+                    style={{
+                      fontFamily: "Rubik, sans-serif",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      color: "#131118",
+                    }}
                   >
-                    <List.Item.Meta
-                      title={`${item.address.name} ${item.address.phoneNumber}`}
-                      description={item.address.address}
-                    />
-                  </List.Item>
-                )}
-              />
+                    Dự kiến nhận hàng:{" "}
+                    {DateTime.getShortDateEng(
+                      new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+                    )}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    background: "#F3F4F6",
+                    color: "#131118",
+                    padding: "2px 10px",
+                    borderRadius: "20px",
+                    border: "1px solid #E5E7EB",
+                  }}
+                >
+                  Giao Hàng Nhanh (GHN)
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {selectedItems.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 12px",
+                      background: "#FAFAFA",
+                      borderRadius: "8px",
+                      border: "1px solid #F3F4F6",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <Avatar
+                        src={item.image}
+                        shape="square"
+                        size={56}
+                        style={{
+                          borderRadius: "6px",
+                          border: "1px solid #E5E7EB",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div>
+                        <span
+                          style={{
+                            fontFamily: "Rubik, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "#131118",
+                            display: "block",
+                          }}
+                        >
+                          {item.title}
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}>
+                          {item.size && (
+                            <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                              Size: <strong style={{ color: "#131118" }}>{item.size}</strong>
+                            </span>
+                          )}
+                          {item.color && (
+                            <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                              Màu: <strong style={{ color: "#131118" }}>{item.color}</strong>
+                            </span>
+                          )}
+                          <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                            x{item.count}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontSize: "15px",
+                        fontWeight: 700,
+                        color: "#131118",
+                      }}
+                    >
+                      {VND.format(item.price * item.count)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              <Title level={4}>Paymen method</Title>
-              <Paragraph>
-                {paymentMethod &&
-                  methods.find(
-                    (element) => element.key === paymentMethod.methodSelected
-                  )?.title}
-              </Paragraph>
+
+            {/* Shipping Address Review Card */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                padding: "20px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "12px",
+                  paddingBottom: "10px",
+                  borderBottom: "1px solid #F3F4F6",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <HiHome size={18} color="#131118" />
+                  <span
+                    style={{
+                      fontFamily: "Rubik, sans-serif",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      color: "#131118",
+                    }}
+                  >
+                    Địa chỉ nhận hàng
+                  </span>
+                </div>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<BiEdit size={16} />}
+                  onClick={() => setCurrentStep(1)}
+                  style={{ color: "#4B5563", fontSize: "13px", fontWeight: 500 }}
+                >
+                  Thay đổi
+                </Button>
+              </div>
+
+              {paymentDetail?.address ? (
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#131118", marginBottom: "4px" }}>
+                    {paymentDetail.address.name}{" "}
+                    <span style={{ color: "#6B7280", fontWeight: 400 }}>
+                      ({paymentDetail.address.phoneNumber})
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#4B5563", lineHeight: 1.4 }}>
+                    {paymentDetail.address.address}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: "#DC2626", fontSize: "13px" }}>
+                  Chưa chọn địa chỉ nhận hàng. Vui lòng bấm Thay đổi để chọn địa chỉ.
+                </div>
+              )}
             </div>
-          </>
+
+            {/* Payment Method Review Card */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                padding: "20px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "12px",
+                  paddingBottom: "10px",
+                  borderBottom: "1px solid #F3F4F6",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <BiCreditCard size={18} color="#131118" />
+                  <span
+                    style={{
+                      fontFamily: "Rubik, sans-serif",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      color: "#131118",
+                    }}
+                  >
+                    Phương thức thanh toán
+                  </span>
+                </div>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<BiEdit size={16} />}
+                  onClick={() => setCurrentStep(2)}
+                  style={{ color: "#4B5563", fontSize: "13px", fontWeight: 500 }}
+                >
+                  Thay đổi
+                </Button>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    fontFamily: "Rubik, sans-serif",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#131118",
+                  }}
+                >
+                  {paymentMethod &&
+                    methods.find(
+                      (element) => element.key === paymentMethod.methodSelected
+                    )?.title}
+                </span>
+                <span style={{ fontSize: "12px", color: "#6B7280", display: "block", marginTop: "2px" }}>
+                  {paymentMethod &&
+                    methods.find(
+                      (element) => element.key === paymentMethod.methodSelected
+                    )?.desc}
+                </span>
+              </div>
+            </div>
+          </div>
         );
       default:
         return <ListCart onSelectItems={setSelectedItems} />;
     }
   };
 
-  return (
-    <div className="container-fluid">
-      <div className="container mt-4">
-        <div className="row">
-          <div className="col-sm-12 col-md-8">
-            <div className="mb-4">
-              <Steps
-                current={currentStep}
-                labelPlacement="vertical"
-                onChange={(val: number) => {
-                  if (hasInvalidItems && val > 0) {
-                    message.warning(
-                      "Vui lòng xóa các sản phẩm đã hết hàng hoặc bị xóa khỏi giỏ hàng trước khi tiếp tục!"
-                    );
-                    return;
-                  }
-                  if (val <= (currentStep ?? 0)) {
-                    setCurrentStep(val);
-                  }
-                }}
-                items={[
-                  {
-                    title: "Cart",
-                    icon: (
-                      <span>
-                        <HiHome size={18} />
-                      </span>
-                    ),
-                  },
-                  {
-                    title: "Address",
-                    icon: (
-                      <span>
-                        <BiEdit size={20} />
-                      </span>
-                    ),
-                  },
-                  {
-                    title: "Payment Method",
-                    icon: (
-                      <span>
-                        <BiCreditCard size={20} />
-                      </span>
-                    ),
-                  },
-                  {
-                    title: "Review",
-                    icon: (
-                      <span>
-                        <FaStar size={18} />
-                      </span>
-                    ),
-                  },
-                ]}
-              />
-            </div>
+  const discountAmount = discountValue
+    ? discountValue.type === "PERCENT"
+      ? Math.ceil(subtotal * (discountValue.value / 100))
+      : discountValue.value
+    : 0;
 
+  return (
+    <div className="container-fluid" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "24px 0" }}>
+      <div className="container">
+        {/* Step Indicator */}
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: "12px",
+            border: "1px solid #E5E7EB",
+            padding: "20px 24px",
+            marginBottom: "24px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+          }}
+        >
+          <Steps
+            current={currentStep}
+            labelPlacement="vertical"
+            onChange={(val: number) => {
+              if (hasInvalidItems && val > 0) {
+                message.warning(
+                  "Vui lòng xóa các sản phẩm đã hết hàng hoặc bị xóa khỏi giỏ hàng trước khi tiếp tục!"
+                );
+                return;
+              }
+              if (val <= (currentStep ?? 0)) {
+                setCurrentStep(val);
+              }
+            }}
+            items={[
+              {
+                title: "1. Giỏ hàng",
+                icon: <HiHome size={18} />,
+              },
+              {
+                title: "2. Địa chỉ nhận",
+                icon: <BiEdit size={18} />,
+              },
+              {
+                title: "3. Thanh toán",
+                icon: <BiCreditCard size={18} />,
+              },
+              {
+                title: "4. Xác nhận đơn",
+                icon: <FaStar size={18} />,
+              },
+            ]}
+          />
+        </div>
+
+        <div className="row">
+          {/* Main Content Area */}
+          <div className="col-sm-12 col-md-8 mb-4">
             {renderComponents()}
           </div>
-          <div className="col-sm-12 col-md-4 mt-5 ">
-            <Card
-              title="Subtotal"
-              extra={
-                <Typography.Title level={3} className="m-0">
-                  {VND.format(subtotal)}
-                </Typography.Title>
-              }
+
+          {/* Right Sidebar: Order Summary */}
+          <div className="col-sm-12 col-md-4">
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                padding: "22px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                position: "sticky",
+                top: "20px",
+              }}
             >
-              <div className="mt-3">
-                <Typography.Text type="secondary">
-                  Discount code
-                </Typography.Text>
-                <Space.Compact className="mb-3">
+              <h3
+                style={{
+                  fontFamily: "Rubik, sans-serif",
+                  fontSize: "17px",
+                  fontWeight: 700,
+                  color: "#131118",
+                  margin: 0,
+                  paddingBottom: "14px",
+                  borderBottom: "1px solid #F3F4F6",
+                }}
+              >
+                Tóm tắt đơn hàng
+              </h3>
+
+              {/* Promo Code Section */}
+              <div style={{ marginTop: "16px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 500, color: "#374151", display: "block", marginBottom: "6px" }}>
+                  Mã khuyến mãi / Giảm giá
+                </span>
+                <Space.Compact style={{ width: "100%", marginBottom: "8px" }}>
                   <Input
                     size="large"
-                    placeholder="code"
+                    placeholder="Nhập mã giảm giá..."
                     allowClear
                     value={discountCode}
                     onChange={(val) =>
                       setDiscountCode(val.target.value.toUpperCase())
                     }
                     disabled={!!discountValue}
+                    style={{
+                      borderRadius: "8px 0 0 8px",
+                      borderColor: "#E5E7EB",
+                      fontSize: "14px",
+                    }}
                   />
                   <Button
                     loading={isCheckingCode}
@@ -418,50 +672,124 @@ const CheckoutPage = () => {
                     disabled={!discountCode || !!discountValue}
                     type="primary"
                     size="large"
+                    style={{
+                      background: "#131118",
+                      color: "#FFFFFF",
+                      borderRadius: "0 8px 8px 0",
+                      fontWeight: 600,
+                      cursor: !discountCode || !!discountValue ? "not-allowed" : "pointer",
+                    }}
                   >
-                    Apply
+                    Áp dụng
                   </Button>
                 </Space.Compact>
-                <Space style={{ justifyContent: "space-between" }}>
-                  <Typography.Text style={{ fontSize: 18 }}>
-                    Delivery charge:
-                  </Typography.Text>
-                  {discountValue && (
-                    <Typography.Text
-                      style={{
-                        fontSize: 18,
+
+                {discountValue && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      background: "#ECFDF5",
+                      border: "1px solid #A7F3D0",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <span style={{ fontSize: "12px", color: "#059669", fontWeight: 600 }}>
+                      ✓ Đã áp dụng mã ({discountValue.type === "PERCENT" ? `${discountValue.value}%` : VND.format(discountValue.value)})
+                    </span>
+                    <Button
+                      type="text"
+                      size="small"
+                      danger
+                      onClick={() => {
+                        setDiscountValue(undefined);
+                        setDiscountCode("");
                       }}
-                    >{`${discountValue?.value}${discountValue?.type === "percent" ? "%" : ""
-                      }`}</Typography.Text>
+                      style={{ padding: 0, height: "auto", fontSize: "12px" }}
+                    >
+                      Bỏ áp dụng
+                    </Button>
+                  </div>
+                )}
+
+                {/* Price Breakdown */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+                    <span style={{ color: "#6B7280" }}>
+                      Tạm tính ({selectedItems.length} sản phẩm):
+                    </span>
+                    <strong style={{ color: "#131118" }}>
+                      {VND.format(subtotal)}
+                    </strong>
+                  </div>
+
+                  {discountValue && (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+                      <span style={{ color: "#6B7280" }}>Giảm giá:</span>
+                      <strong style={{ color: "#059669" }}>
+                        -{VND.format(discountAmount)}
+                      </strong>
+                    </div>
                   )}
-                </Space>
-                <Divider />
-                <Space style={{ justifyContent: "space-between" }}>
-                  <Typography.Title level={4}>Grand Total:</Typography.Title>
-                  <Typography.Title level={4}>{`${VND.format(
-                    grandTotal
-                  )}`}</Typography.Title>
-                </Space>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+                    <span style={{ color: "#6B7280" }}>Phí vận chuyển:</span>
+                    <span style={{ color: "#059669", fontWeight: 600 }}>
+                      Miễn phí
+                    </span>
+                  </div>
+
+                  <Divider style={{ borderColor: "#F3F4F6", margin: "8px 0" }} />
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: "#131118",
+                      }}
+                    >
+                      Tổng thanh toán:
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontSize: "22px",
+                        fontWeight: 700,
+                        color: "#131118",
+                      }}
+                    >
+                      {VND.format(grandTotal)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-3">
+
+              {/* Action Buttons depending on step */}
+              <div style={{ marginTop: "20px" }}>
                 {currentStep === 0 && (
                   <>
                     {hasInvalidItems && (
                       <div
-                        className="p-3 mb-3"
                         style={{
-                          backgroundColor: "#fff2f0",
-                          border: "1px solid #ffccc7",
+                          backgroundColor: "#FEF2F2",
+                          border: "1px solid #FECACA",
                           borderRadius: 8,
+                          padding: "10px",
+                          marginBottom: "12px",
                           textAlign: "center",
                         }}
                       >
                         <Typography.Text
                           type="danger"
                           strong
-                          style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                          style={{ fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                         >
-                          <IoWarningOutline size={16} /> Giỏ hàng có {invalidItems.length} sản phẩm đã hết hàng hoặc bị xóa. Bạn cần xóa chúng để tiếp tục mua hàng.
+                          <IoWarningOutline size={16} /> Giỏ hàng có {invalidItems.length} sản phẩm hết hàng hoặc bị xóa.
                         </Typography.Text>
                       </div>
                     )}
@@ -482,29 +810,50 @@ const CheckoutPage = () => {
                       }}
                       disabled={selectedItems.length === 0 || hasInvalidItems}
                       size="large"
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        height: "46px",
+                        background: "#131118",
+                        color: "#FFFFFF",
+                        borderRadius: "8px",
+                        fontWeight: 600,
+                        fontSize: "15px",
+                        cursor: selectedItems.length === 0 || hasInvalidItems ? "not-allowed" : "pointer",
+                      }}
                     >
-                      {hasInvalidItems ? "Vui lòng xóa sản phẩm lỗi" : "Continue"}
+                      {hasInvalidItems ? "Vui lòng xóa sản phẩm lỗi" : `Tiếp tục đặt hàng (${selectedItems.length})`}
                     </Button>
                   </>
                 )}
-                {selectedItems.length > 0 && currentStep === 3 && (
+
+                {currentStep === 3 && (
                   <Button
                     type="primary"
                     onClick={handlePaymentOrder}
                     size="large"
-                    style={{ width: "100%" }}
+                    loading={isLoading}
+                    style={{
+                      width: "100%",
+                      height: "48px",
+                      background: "#131118",
+                      color: "#FFFFFF",
+                      borderRadius: "8px",
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      cursor: "pointer",
+                    }}
                     disabled={
                       hasInvalidItems ||
                       selectedItems.some(isItemInvalid) ||
-                      isLoading
+                      isLoading ||
+                      !paymentDetail?.address
                     }
                   >
-                    Process to Checkout
+                    Xác nhận đặt hàng
                   </Button>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>

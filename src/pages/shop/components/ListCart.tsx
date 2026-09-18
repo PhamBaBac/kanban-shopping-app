@@ -14,17 +14,19 @@ import {
   isItemInvalid,
 } from "@/hooks";
 import { VND } from "@/utils/handleCurrency";
-import { Alert, Avatar, Button, Space, Table, Tag, Typography } from "antd";
+import { Alert, Avatar, Button, Empty, Space, Table, Tag, Typography } from "antd";
 import { ColumnProps } from "antd/es/table";
 import { LuMinus } from "react-icons/lu";
 import { MdAdd } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
 
 const ListCart = ({
   onSelectItems,
 }: {
   onSelectItems?: (items: CartItemModel[]) => void;
 }) => {
+  const router = useRouter();
   const carts: CartItemModel[] = useSelector(cartSelector);
   const dispatch = useDispatch();
 
@@ -75,13 +77,19 @@ const ListCart = ({
     {
       key: "image",
       dataIndex: "image",
+      width: 80,
       render: (img: string, item: CartItemModel) => (
         <div style={{ position: "relative", display: "inline-block" }}>
           <Avatar
             src={img}
-            size={52}
+            size={64}
             shape="square"
-            style={{ opacity: isItemInvalid(item) ? 0.5 : 1 }}
+            style={{
+              borderRadius: "8px",
+              border: "1px solid #E5E7EB",
+              opacity: isItemInvalid(item) ? 0.45 : 1,
+              objectFit: "cover",
+            }}
           />
         </div>
       ),
@@ -89,7 +97,7 @@ const ListCart = ({
     {
       key: "products",
       dataIndex: "",
-      title: "Product",
+      title: "Sản phẩm",
       render: (item: CartItemModel) => {
         const deleted = isItemDeleted(item);
         const soldOut = isItemSoldOut(item);
@@ -97,69 +105,86 @@ const ListCart = ({
 
         return (
           <div>
-            <Typography.Title
-              level={5}
-              className="m-0"
+            <Typography.Text
+              strong
               style={{
-                color: invalid ? "#8c8c8c" : undefined,
+                fontFamily: "Rubik, sans-serif",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: invalid ? "#9CA3AF" : "#131118",
                 textDecoration: deleted ? "line-through" : undefined,
+                display: "block",
               }}
             >
               {item.title}
-            </Typography.Title>
-            <div className="d-flex align-items-center gap-3 mt-1 flex-wrap">
+            </Typography.Text>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
               {item.size && (
-                <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
-                  <span style={{ color: "#333", fontWeight: 500 }}>{item.size}</span>
-                </Typography.Text>
+                <Tag
+                  style={{
+                    margin: 0,
+                    fontSize: "11px",
+                    padding: "1px 8px",
+                    borderRadius: "4px",
+                    background: "#F3F4F6",
+                    border: "1px solid #E5E7EB",
+                    color: "#374151",
+                  }}
+                >
+                  Size: <strong>{item.size}</strong>
+                </Tag>
               )}
               {item.color && (
-                <div className="d-flex align-items-center gap-1">
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim()) ? (
                     <span
                       style={{
                         display: "inline-block",
-                        width: 16,
-                        height: 16,
+                        width: 14,
+                        height: 14,
                         backgroundColor: item.color,
-                        border: "1px solid #d9d9d9",
-                        borderRadius: 2,
-                        verticalAlign: "middle",
+                        border: "1px solid #D1D5DB",
+                        borderRadius: "50%",
                       }}
                     />
                   ) : (
-                    <span style={{ color: "#333", fontWeight: 500, fontSize: "0.85rem" }}>
-                      {item.color}
-                    </span>
+                    <Tag
+                      style={{
+                        margin: 0,
+                        fontSize: "11px",
+                        padding: "1px 8px",
+                        borderRadius: "4px",
+                        background: "#F3F4F6",
+                        border: "1px solid #E5E7EB",
+                        color: "#374151",
+                      }}
+                    >
+                      Màu: <strong>{item.color}</strong>
+                    </Tag>
                   )}
                 </div>
               )}
             </div>
 
             {deleted && (
-              <div className="mt-2">
+              <div style={{ marginTop: "6px" }}>
                 <Tag color="error" style={{ borderRadius: 4, fontWeight: 600 }}>
-                  Đã xóa / Ngừng kinh doanh
+                  Đã ngừng kinh doanh
                 </Tag>
-                <Typography.Text
-                  type="danger"
-                  style={{ fontSize: "0.82rem", display: "block", marginTop: 2 }}
-                >
-                  Sản phẩm này đã ngừng bán hoặc bị xóa. Vui lòng xóa khỏi giỏ hàng.
-                </Typography.Text>
+                <span style={{ fontSize: "12px", color: "#DC2626", display: "block", marginTop: 2 }}>
+                  Sản phẩm đã bị xóa hoặc ngừng bán. Vui lòng xóa khỏi giỏ hàng.
+                </span>
               </div>
             )}
 
             {soldOut && (
-              <div className="mt-2">
+              <div style={{ marginTop: "6px" }}>
                 <Tag color="warning" style={{ borderRadius: 4, fontWeight: 600 }}>
-                  Hết hàng / Đã bán hết
+                  Hết hàng
                 </Tag>
-                <Typography.Text
-                  style={{ fontSize: "0.82rem", display: "block", color: "#d46b08", marginTop: 2 }}
-                >
-                  Sản phẩm này hiện đã hết hàng. Vui lòng xóa khỏi giỏ hàng.
-                </Typography.Text>
+                <span style={{ fontSize: "12px", color: "#D97706", display: "block", marginTop: 2 }}>
+                  Sản phẩm tạm thời hết hàng. Vui lòng xóa để tiếp tục.
+                </span>
               </div>
             )}
           </div>
@@ -168,10 +193,18 @@ const ListCart = ({
     },
     {
       key: "price",
-      title: "Price",
+      title: "Đơn giá",
       dataIndex: "price",
+      align: "right",
       render: (price: number, item: CartItemModel) => (
-        <span style={{ color: isItemInvalid(item) ? "#8c8c8c" : undefined }}>
+        <span
+          style={{
+            fontFamily: "Rubik, sans-serif",
+            fontSize: "14px",
+            fontWeight: 600,
+            color: isItemInvalid(item) ? "#9CA3AF" : "#131118",
+          }}
+        >
           {VND.format(price)}
         </span>
       ),
@@ -179,92 +212,189 @@ const ListCart = ({
     {
       key: "quantity",
       dataIndex: "",
-      title: "Quantity",
+      title: "Số lượng",
+      align: "center",
       render: (item: CartItemModel) => {
         const invalid = isItemInvalid(item);
         const maxStock = item.stock ?? item.qty;
 
         return (
-          <Space className="btn-groups">
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              border: "1px solid #E5E7EB",
+              borderRadius: "8px",
+              overflow: "hidden",
+              background: "#FFFFFF",
+            }}
+          >
             <Button
-              key={"btn-add"}
-              onClick={() => dispatch(changeCount({ id: item.id, val: 1 }))}
-              disabled={invalid || item.count >= maxStock}
-              icon={<MdAdd size={22} className="text-muted" />}
               type="text"
-            />
-            <Typography.Text
+              size="small"
+              icon={<LuMinus size={13} />}
+              disabled={invalid || item.count <= 1}
+              onClick={() => dispatch(changeCount({ id: item.id, val: -1 }))}
               style={{
-                fontSize: "1.1rem",
-                padding: "0 10px",
-                color: invalid ? "#8c8c8c" : undefined,
+                width: "30px",
+                height: "30px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 0,
+                cursor: invalid || item.count <= 1 ? "not-allowed" : "pointer",
+              }}
+            />
+            <span
+              style={{
+                width: "36px",
+                textAlign: "center",
+                fontSize: "13px",
+                fontWeight: 700,
+                color: invalid ? "#9CA3AF" : "#131118",
               }}
             >
-              {`${item.count}`}
-            </Typography.Text>
+              {item.count}
+            </span>
             <Button
-              key={`btn-minus`}
-              onClick={() => dispatch(changeCount({ id: item.id, val: -1 }))}
-              disabled={invalid || item.count <= 1}
-              icon={<LuMinus size={22} className="text-muted" />}
               type="text"
+              size="small"
+              icon={<MdAdd size={13} />}
+              disabled={invalid || item.count >= maxStock}
+              onClick={() => dispatch(changeCount({ id: item.id, val: 1 }))}
+              style={{
+                width: "30px",
+                height: "30px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 0,
+                cursor: invalid || item.count >= maxStock ? "not-allowed" : "pointer",
+              }}
             />
-          </Space>
+          </div>
         );
       },
-      align: "center",
     },
     {
       key: "subtotal",
-      title: "SubTotal",
+      title: "Thành tiền",
       dataIndex: "",
+      align: "right",
       render: (item: CartItemModel) =>
         isItemInvalid(item) ? (
           <Typography.Text delete type="secondary">
             {VND.format(item.price * item.count)}
           </Typography.Text>
         ) : (
-          VND.format(item.price * item.count)
+          <span
+            style={{
+              fontFamily: "Rubik, sans-serif",
+              fontSize: "15px",
+              fontWeight: 700,
+              color: "#131118",
+            }}
+          >
+            {VND.format(item.price * item.count)}
+          </span>
         ),
     },
     {
       title: "",
       key: "action",
       dataIndex: "",
+      align: "center",
+      width: 60,
       render: (item: CartItemModel) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           <ButtonRemoveCartItem item={item} />
-          {isItemInvalid(item) && (
-            <Tag color="red" style={{ cursor: "pointer", margin: 0 }}>
-              Cần xóa
-            </Tag>
-          )}
         </div>
       ),
     },
   ];
 
+  if (!carts || carts.length === 0) {
+    return (
+      <div
+        style={{
+          background: "#FFFFFF",
+          borderRadius: "12px",
+          border: "1px solid #E5E7EB",
+          padding: "60px 24px",
+          textAlign: "center",
+        }}
+      >
+        <Empty
+          description={
+            <div style={{ marginTop: "8px" }}>
+              <span
+                style={{
+                  fontFamily: "Rubik, sans-serif",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  color: "#131118",
+                  display: "block",
+                }}
+              >
+                Giỏ hàng của bạn đang trống
+              </span>
+              <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                Chưa có sản phẩm nào được chọn để thanh toán.
+              </span>
+            </div>
+          }
+        >
+          <Button
+            type="primary"
+            onClick={() => router.push("/")}
+            style={{
+              marginTop: "16px",
+              background: "#131118",
+              color: "#FFFFFF",
+              borderRadius: "8px",
+              fontWeight: 600,
+              height: "40px",
+              padding: "0 24px",
+              cursor: "pointer",
+            }}
+          >
+            Tiếp tục mua sắm
+          </Button>
+        </Empty>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <Typography.Title
-        level={2}
-        style={{ fontWeight: 300 }}
-        className="text-muted"
-      >
-        Checkout
-      </Typography.Title>
+      <div style={{ marginBottom: "16px" }}>
+        <h2
+          style={{
+            fontFamily: "Rubik, sans-serif",
+            fontSize: "20px",
+            fontWeight: 700,
+            color: "#131118",
+            margin: 0,
+          }}
+        >
+          Giỏ hàng của bạn ({carts.length})
+        </h2>
+        <span style={{ fontSize: "13px", color: "#6B7280" }}>
+          Vui lòng kiểm tra lại số lượng và sản phẩm cần thanh toán
+        </span>
+      </div>
 
       {hasInvalidItems && (
         <Alert
           message="Cảnh báo sản phẩm không khả dụng trong giỏ hàng"
           description={
-            <div className="d-flex flex-column gap-2 mt-1">
-              <div>
-                Giỏ hàng của bạn có{" "}
-                <strong style={{ color: "#cf1322" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+              <div style={{ fontSize: "13px" }}>
+                Giỏ hàng có{" "}
+                <strong style={{ color: "#DC2626" }}>
                   {invalidItems.length}
                 </strong>{" "}
-                sản phẩm đã hết hàng hoặc bị xóa. Bạn cần xóa những sản phẩm này để có thể tiếp tục thanh toán.
+                sản phẩm đã hết hàng hoặc ngừng kinh doanh. Bạn cần xóa các sản phẩm này để tiếp tục thanh toán.
               </div>
               <div>
                 <Button
@@ -272,9 +402,9 @@ const ListCart = ({
                   type="primary"
                   size="small"
                   onClick={removeAllInvalidItems}
-                  style={{ borderRadius: 4, fontWeight: 500 }}
+                  style={{ borderRadius: "6px", fontWeight: 600 }}
                 >
-                  Xóa tất cả sản phẩm không khả dụng ({invalidItems.length})
+                  Xóa tất cả ({invalidItems.length}) sản phẩm lỗi
                 </Button>
               </div>
             </div>
@@ -282,29 +412,40 @@ const ListCart = ({
           type="error"
           showIcon
           style={{
-            marginBottom: 20,
+            marginBottom: 16,
             borderRadius: 8,
-            border: "1px solid #ffccc7",
-            backgroundColor: "#fff2f0",
+            border: "1px solid #FECACA",
+            backgroundColor: "#FEF2F2",
           }}
         />
       )}
 
-      <Table
-        dataSource={carts}
-        columns={columns}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: setSelectedRowKeys,
-          getCheckboxProps: (record) => ({
-            disabled: isItemInvalid(record),
-          }),
+      <div
+        style={{
+          background: "#FFFFFF",
+          borderRadius: "12px",
+          border: "1px solid #E5E7EB",
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
         }}
-        rowKey="id"
-        rowClassName={(record) =>
-          isItemInvalid(record) ? "table-row-invalid" : ""
-        }
-      />
+      >
+        <Table
+          dataSource={carts}
+          columns={columns}
+          pagination={false}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+            getCheckboxProps: (record) => ({
+              disabled: isItemInvalid(record),
+            }),
+          }}
+          rowKey="id"
+          rowClassName={(record) =>
+            isItemInvalid(record) ? "table-row-invalid" : ""
+          }
+        />
+      </div>
     </div>
   );
 };
