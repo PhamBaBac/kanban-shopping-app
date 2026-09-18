@@ -5,6 +5,7 @@ import queryString from "query-string";
 import { localDataNames } from "../constants/appInfos";
 import { addAuth, removeAuth } from "../redux/reducers/authReducer";
 import { store } from "../redux/store";
+import { getErrorMessage } from "../utils/errorHandler";
 
 const baseURL = `http://localhost:8080/api/v1`;
 
@@ -121,11 +122,25 @@ axiosClient.interceptors.response.use(
     throw new Error("Request failed");
   },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error?.config;
+
+    const formatRejectedError = (err: any) => {
+      const localizedMessage = getErrorMessage(err);
+      if (err.response?.data && typeof err.response.data === "object") {
+        return {
+          ...err.response.data,
+          message: localizedMessage,
+        };
+      }
+      return {
+        message: localizedMessage,
+        originalError: err,
+      };
+    };
 
     // Check if originalRequest exists and has url property
     if (!originalRequest || !originalRequest.url) {
-      return Promise.reject(error.response?.data || error.message);
+      return Promise.reject(formatRejectedError(error));
     }
 
     const isLoginRequest = originalRequest.url?.includes("/auth/authenticate");
@@ -134,7 +149,7 @@ axiosClient.interceptors.response.use(
     );
 
     if (isLoginRequest || isRefreshRequest) {
-      return Promise.reject(error.response?.data || error.message);
+      return Promise.reject(formatRejectedError(error));
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -142,16 +157,16 @@ axiosClient.interceptors.response.use(
 
       try {
         const newToken = await refreshToken();
-        if (!newToken) return Promise.reject("Unable to refresh token");
+        if (!newToken) return Promise.reject(formatRejectedError("Phiên đăng nhập đã hết hạn"));
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosClient(originalRequest);
       } catch (refreshError) {
-        return Promise.reject(refreshError);
+        return Promise.reject(formatRejectedError(refreshError));
       }
     }
 
-    return Promise.reject(error.response?.data || error.message);
+    return Promise.reject(formatRejectedError(error));
   }
 );
 

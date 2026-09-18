@@ -167,7 +167,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
         setOrderDetailVisible(true);
       }
     } catch (error) {
-      message.error("Failed to fetch order details");
+      message.error("Không thể tải chi tiết đơn hàng.");
     } finally {
       setLoading(false);
     }
@@ -182,11 +182,11 @@ const OrderItem: React.FC<OrderItemProps> = ({
     try {
       setDeleteLoading(true);
       await orderService.deleteOrder(order.orderId);
-      message.success("Order deleted successfully");
+      message.success("Xóa đơn hàng thành công!");
       // Gọi callback để thông báo cho component cha
       onOrderDeleted?.(order.orderId);
     } catch (error) {
-      message.error("Failed to delete order");
+      message.error("Không thể xóa đơn hàng.");
     } finally {
       setDeleteLoading(false);
     }

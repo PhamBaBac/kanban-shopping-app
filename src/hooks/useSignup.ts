@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { message } from "antd";
 import { useAuth } from "./useAuth";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface SignUpData {
   firstName: string;
@@ -44,7 +45,7 @@ export const useSignup = (): UseSignupReturn => {
 
   const signup = async (values: SignUpData) => {
     if (!isAgree) {
-      message.error("You must agree to Terms and Conditions");
+      message.error("Bạn phải đồng ý với Điều khoản và Điều kiện sử dụng!");
       return;
     }
 
@@ -52,9 +53,11 @@ export const useSignup = (): UseSignupReturn => {
     try {
       await authSignup(values);
       setSignValues({ email: values.email });
-      message.success("Verification code sent to your email.");
+      message.success(
+        "Mã xác thực OTP đã được gửi đến email. Vui lòng nhập mã OTP để hoàn tất đăng ký."
+      );
     } catch (error: any) {
-      error.message
+      showErrorMessage(error, "Đăng ký thất bại, vui lòng kiểm tra lại thông tin!");
     } finally {
       setIsLoading(false);
     }
@@ -73,13 +76,10 @@ export const useSignup = (): UseSignupReturn => {
         await verifyEmailCode(signValues.email, code);
         router.push("/");
       } catch (error: any) {
-        const errorMessage =
-          error?.message ||
-          "Invalid verification code. Please try again.";
-        message.error(errorMessage);
+        showErrorMessage(error, "Mã xác thực OTP không đúng hoặc đã hết hạn!");
       }
     } else {
-      message.error("Please enter all 6 digits");
+      message.error("Vui lòng nhập đầy đủ 6 chữ số mã OTP!");
     }
   };
 
@@ -88,11 +88,9 @@ export const useSignup = (): UseSignupReturn => {
     try {
       await sendVerificationCode(signValues.email);
       setTimes(300);
-      message.success("New verification code sent");
+      message.success("Mã xác thực mới đã được gửi đến email của bạn.");
     } catch (error: any) {
-      const errorMessage =
-        error?.message || "Failed to resend code";
-      message.error(errorMessage);
+      showErrorMessage(error, "Không thể gửi lại mã xác thực. Vui lòng thử lại sau!");
     }
   };
 

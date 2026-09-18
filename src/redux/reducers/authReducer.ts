@@ -14,6 +14,7 @@ const authSlice = createSlice({
       lastName: "",
       role: "",
       mfaEnabled: false,
+      provider: "LOCAL",
     },
   },
   reducers: {
@@ -30,6 +31,7 @@ const authSlice = createSlice({
         avatar: "",
         role: "",
         mfaEnabled: false,
+        provider: "LOCAL",
       };
     },
   },

@@ -6,6 +6,7 @@ import { authService } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
 import { useAuth } from "./useAuth";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface UseOAuthReturn {
   isLoading: boolean;
@@ -75,13 +76,14 @@ export const useOAuth = (): UseOAuthReturn => {
           lastName: user.lastname,
           avatar: user.avatarUrl,
           role: user.role,
+          provider: user.provider || "GOOGLE",
         };
 
         dispatch(addAuth(userData));
         localStorage.setItem(localDataNames.authData, JSON.stringify(userData));
         localStorage.removeItem("sessionId");
 
-        message.success("Login successful!");
+        message.success("Đăng nhập thành công!");
         setTimeout(() => {
           router.replace("/");
         }, 300);
@@ -93,7 +95,7 @@ export const useOAuth = (): UseOAuthReturn => {
           router.replace("/");
           return;
         }
-        setError("Login failed! The link may have expired. Please try again.");
+        setError("Đăng nhập thất bại! Liên kết có thể đã hết hạn. Vui lòng thử lại!");
       } finally {
         setIsLoading(false);
       }
@@ -104,16 +106,16 @@ export const useOAuth = (): UseOAuthReturn => {
 
   const verifyMFA = async (code: string) => {
     if (code.length !== 6) {
-      message.error("The OTP code must consist of 6 digits.");
+      message.error("Mã OTP phải bao gồm đúng 6 chữ số!");
       return;
     }
 
     setIsLoading(true);
     try {
       await verifyMFAAuth(userInfo.email, code, accessToken);
-      message.success("Verification successful!");
+      message.success("Xác thực thành công!");
     } catch (error) {
-      message.error("The verification code is incorrect.");
+      showErrorMessage(error, "Mã xác thực OTP không chính xác!");
     } finally {
       setIsLoading(false);
     }

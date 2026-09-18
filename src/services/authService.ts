@@ -10,6 +10,7 @@ export interface AuthUser {
   lastName: string;
   avatar: string;
   role: string;
+  provider?: string;
 }
 
 export interface LoginCredentials {
@@ -22,6 +23,7 @@ export interface SignupData {
   password: string;
   firstName: string;
   lastName: string;
+  role?: string;
 }
 
 export const authService = {
@@ -42,7 +44,11 @@ export const authService = {
 
   // Đăng ký
   signup: async (data: SignupData): Promise<any> => {
-    const res = await handleAPI("/auth/register", data, "post");
+    const payload = {
+      ...data,
+      role: data.role || "USER",
+    };
+    const res = await handleAPI("/auth/register", payload, "post");
     return res.data;
   },
 

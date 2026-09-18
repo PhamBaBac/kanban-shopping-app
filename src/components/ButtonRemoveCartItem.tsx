@@ -6,6 +6,7 @@ import { Button, Modal, message } from "antd";
 import { IoTrash } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { cartService } from "@/services";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface Props {
   item: CartItemModel;
@@ -24,13 +25,7 @@ const ButtonRemoveCartItem = (props: Props) => {
         dispatch(removeProduct(item));
       } catch (error: any) {
         console.error("Lỗi khi xóa cart Redis:", error);
-        if (error?.code === 1012) {
-          message.error("Product not found in cart.");
-        } else if (error?.message) {
-          message.error(error.message);
-        } else {
-          message.error("Failed to remove item from cart.");
-        }
+        showErrorMessage(error, "Không thể xóa sản phẩm khỏi giỏ hàng.");
       }
     } else {
       try {
@@ -38,13 +33,7 @@ const ButtonRemoveCartItem = (props: Props) => {
         dispatch(removeProduct(item));
       } catch (error: any) {
         console.error("Lỗi khi xóa cart DB:", error);
-        if (error?.code === 1020) {
-          message.error("Cart item not found.");
-        } else if (error?.message) {
-          message.error(error.message);
-        } else {
-          message.error("Failed to remove item from cart.");
-        }
+        showErrorMessage(error, "Không thể xóa sản phẩm khỏi giỏ hàng.");
       }
     }
   };

@@ -4,6 +4,7 @@ import { ReviewModel } from "@/models/ReviewModel";
 import { authSelector } from "@/redux/reducers/authReducer";
 import { handleChangeFile, uploadFile } from "@/utils/uploadFile";
 import { reviewService } from "@/services";
+import { showErrorMessage } from "@/utils/errorHandler";
 import {
   Avatar,
   Button,
@@ -80,14 +81,14 @@ const Reviews = (props: Props) => {
 
     try {
       await reviewService.createReview(data);
-      message.success("Review added successfully");
+      message.success("Đã gửi đánh giá thành công!");
       setStarScore(0);
       setcomment("");
       setFileList([]);
       setHasReviewed(true);
       if (onReviewed) onReviewed();
     } catch (error: any) {
-      message.error(error?.message || "Review failed");
+      showErrorMessage(error, "Gửi đánh giá thất bại. Vui lòng thử lại!");
     } finally {
       setIsLoading(false);
     }

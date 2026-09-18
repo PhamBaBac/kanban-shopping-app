@@ -26,14 +26,14 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
       setQrCodeUrl(response);
     } catch (error) {
       console.error("Error getting QR Code:", error);
-      message.error("Could not fetch QR code.");
+      message.error("Không thể tải mã QR xác thực 2FA.");
       handleClose();
     }
   };
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
-      return message.warning("Please enter a valid 6-digit code.");
+      return message.warning("Vui lòng nhập đúng mã xác thực 6 chữ số.");
     }
 
     try {
@@ -44,15 +44,15 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
         // const updated = { ...res, email: auth.email };
         // dispatch(addAuth(updated));
         // localStorage.setItem("authData", JSON.stringify(updated));
-        message.success("Two-factor authentication enabled successfully!");
+        message.success("Đã bật xác thực hai yếu tố (2FA) thành công!");
         handleClose();
         if (onSuccess) onSuccess();
       } else {
-        message.error("The verification code is incorrect.");
+        message.error("Mã xác thực không chính xác.");
       }
     } catch (error) {
       console.error("Error verifying code:", error);
-      message.error("Verification failed.");
+      message.error("Xác thực thất bại. Vui lòng thử lại!");
     } finally {
       setLoading(false);
     }

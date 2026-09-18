@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import { useAuth } from "./useAuth";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface UseLoginReturn {
   isLoading: boolean;
@@ -59,17 +60,17 @@ export const useLogin = (): UseLoginReturn => {
 
   const verifyMFA = async (code: string) => {
     if (code.length !== 6) {
-      message.error("The OTP code must consist of 6 digits.");
+      message.error("Mã OTP phải bao gồm đúng 6 chữ số!");
       return;
     }
 
     setIsLoading(true);
     try {
       await authVerifyMFA(emailMfa, code);
-      message.success("Verification successful!");
+      message.success("Xác thực thành công!");
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error) {
-      message.error("The verification code is incorrect.");
+      showErrorMessage(error, "Mã xác thực OTP không chính xác!");
       router.push("/auth/login");
     } finally {
       setIsLoading(false);
@@ -80,10 +81,10 @@ export const useLogin = (): UseLoginReturn => {
     setIsLoading(true);
     try {
       await sendVerificationCode(emailMfa);
-      message.success(`A verification code has been sent to ${emailMfa}`);
+      message.success(`Mã xác thực đã được gửi đến ${emailMfa}`);
       setIsEmailVerificationMode(true);
     } catch (error) {
-      message.error("Failed to send verification email. Please try again.");
+      showErrorMessage(error, "Không thể gửi email xác thực. Vui lòng thử lại!");
     } finally {
       setIsLoading(false);
     }
@@ -91,17 +92,17 @@ export const useLogin = (): UseLoginReturn => {
 
   const handleVerifyEmailCode = async (code: string) => {
     if (code.length !== 6) {
-      message.error("The verification code must be 6 digits.");
+      message.error("Mã xác thực phải bao gồm đúng 6 chữ số!");
       return;
     }
 
     setIsLoading(true);
     try {
       await verifyEmailCode(emailMfa, code);
-      message.success("Verification successful!");
+      message.success("Xác thực thành công!");
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error) {
-      message.error("Invalid verification code.");
+      showErrorMessage(error, "Mã xác thực OTP không hợp lệ!");
     } finally {
       setIsLoading(false);
     }

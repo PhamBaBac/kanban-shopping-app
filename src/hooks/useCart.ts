@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { message } from "antd";
 import { authSelector } from "@/redux/reducers/authReducer";
+import { showErrorMessage } from "@/utils/errorHandler";
 import {
   addProduct,
   changeCount,
@@ -56,7 +57,7 @@ export const useCart = ({
 
   const handleCart = async () => {
     if (!subProductSelected) {
-      message.error("Please choose a product!");
+      message.error("Vui lòng chọn phân loại / biến thể sản phẩm!");
       return;
     }
 
@@ -179,9 +180,7 @@ export const useCart = ({
       }
       setCount(1);
     } catch (error: any) {
-      if (error?.code === 1021) message.error("This item is out of stock.");
-      else if (error?.code === 1012) message.error("Product not found.");
-      else message.error(error?.message || "Add to cart failed!");
+      showErrorMessage(error, "Thêm vào giỏ hàng thất bại. Vui lòng thử lại!");
     }
   };
 

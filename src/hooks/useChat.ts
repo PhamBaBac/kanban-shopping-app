@@ -122,9 +122,9 @@ export const useChat = (): UseChatReturn => {
     try {
       await chatService.clearChatHistory();
       setMessages([]);
-      message.success("Chat history cleared");
+      message.success("Đã xóa lịch sử cuộc trò chuyện.");
     } catch (error: any) {
-      message.error("Failed to clear chat history");
+      message.error("Không thể xóa lịch sử cuộc trò chuyện.");
       console.error("Failed to clear chat history:", error);
     }
   };

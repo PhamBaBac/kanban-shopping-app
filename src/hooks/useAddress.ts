@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { message } from "antd";
 import { addressService, CreateAddressData } from "@/services";
 import { AddressModel } from "@/models/Products";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface UseAddressReturn {
   addresses: AddressModel[];
@@ -50,10 +51,10 @@ export const useAddress = (): UseAddressReturn => {
     setIsLoading(true);
     try {
       await addressService.createAddress(data);
-      message.success("Address created successfully");
+      message.success("Thêm địa chỉ thành công!");
       await fetchAddresses(); // Refresh addresses
     } catch (error: any) {
-      message.error(error.message || "Failed to create address");
+      showErrorMessage(error, "Không thể thêm địa chỉ mới!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -64,10 +65,10 @@ export const useAddress = (): UseAddressReturn => {
     setIsLoading(true);
     try {
       await addressService.updateAddress(id, data);
-      message.success("Address updated successfully");
+      message.success("Cập nhật địa chỉ thành công!");
       await fetchAddresses(); // Refresh addresses
     } catch (error: any) {
-      message.error(error.message || "Failed to update address");
+      showErrorMessage(error, "Không thể cập nhật địa chỉ!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -77,10 +78,10 @@ export const useAddress = (): UseAddressReturn => {
   const deleteAddress = async (id: string) => {
     try {
       await addressService.deleteAddress(id);
-      message.success("Address deleted successfully");
+      message.success("Xóa địa chỉ thành công!");
       await fetchAddresses(); // Refresh addresses
     } catch (error: any) {
-      message.error("Failed to delete address");
+      showErrorMessage(error, "Không thể xóa địa chỉ!");
       throw error;
     }
   };
@@ -88,10 +89,10 @@ export const useAddress = (): UseAddressReturn => {
   const setDefaultAddress = async (addressId: string) => {
     try {
       await addressService.setDefaultAddress(addressId);
-      message.success("Default address set successfully");
+      message.success("Đặt làm địa chỉ mặc định thành công!");
       await fetchAddresses(); // Refresh addresses
     } catch (error: any) {
-      message.error("Failed to set default address");
+      showErrorMessage(error, "Không thể đặt làm địa chỉ mặc định!");
       throw error;
     }
   };

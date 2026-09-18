@@ -52,9 +52,14 @@ export const userService = {
   changePassword: async (data: {
     currentPassword: string;
     newPassword: string;
+    confirmationPassword?: string;
   }): Promise<any> => {
-    const res = await handleAPI("/users/changePassword", data, "patch");
-    return res.data;
+    const payload = {
+      ...data,
+      confirmationPassword: data.confirmationPassword || data.newPassword,
+    };
+    const res: any = await handleAPI("/users/changePassword", payload, "patch");
+    return res;
   },
 
   // Bật/tắt 2FA

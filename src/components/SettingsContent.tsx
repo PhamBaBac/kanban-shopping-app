@@ -35,10 +35,10 @@ const SettingsContent = () => {
         localStorage.setItem("authData", JSON.stringify(updatedAuth));
         setIs2faEnabled(false);
 
-        message.success("Two-factor authentication disabled successfully!");
+        message.success("Đã tắt xác thực hai yếu tố (2FA) thành công!");
       } catch (error) {
         console.error("Error disabling TFA:", error);
-        message.error("Could not disable 2FA. Please try again.");
+        message.error("Không thể tắt 2FA. Vui lòng thử lại!");
       } finally {
         setIsLoading2fa(false);
       }

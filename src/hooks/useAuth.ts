@@ -5,6 +5,7 @@ import { message } from "antd";
 import { authService, LoginCredentials, SignupData } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
+import { showErrorMessage } from "@/utils/errorHandler";
 
 interface UseAuthReturn {
   isLoading: boolean;
@@ -59,6 +60,7 @@ export const useAuth = (): UseAuthReturn => {
         lastName: userInfo.lastname,
         avatar: userInfo.avatarUrl,
         role: userInfo.role,
+        provider: userInfo.provider || "LOCAL",
       };
 
       dispatch(addAuth(user));
@@ -68,7 +70,7 @@ export const useAuth = (): UseAuthReturn => {
       const { id, slug } = router.query;
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error: any) {
-      message.error("Login failed, please check your email/password.");
+      showErrorMessage(error, "Đăng nhập thất bại, vui lòng kiểm tra lại thông tin!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -79,11 +81,7 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     try {
       await authService.signup(data);
-      message.success(
-        "Registration successful! Please check your email to verify your account."
-      );
     } catch (error: any) {
-      message.error(error.message || "Registration failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -113,7 +111,7 @@ export const useAuth = (): UseAuthReturn => {
       const { id, slug } = router.query;
       router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error: any) {
-      message.error("MFA verification failed");
+      showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -152,7 +150,7 @@ export const useAuth = (): UseAuthReturn => {
         router.replace("/");
       }, 300);
     } catch (error: any) {
-      message.error("MFA verification failed");
+      showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -163,9 +161,9 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     try {
       await authService.sendVerificationCode(email);
-      message.success("Verification code sent to your email");
+      message.success("Mã xác thực đã được gửi đến email của bạn.");
     } catch (error: any) {
-      message.error(error.message || "Failed to send verification code");
+      showErrorMessage(error, "Không thể gửi mã xác thực. Vui lòng thử lại sau!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -176,9 +174,9 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     try {
       await authService.verifyEmailCode(email, code);
-      message.success("Email verified successfully");
+      message.success("Xác thực email thành công.");
     } catch (error: any) {
-      message.error(error.message || "Email verification failed");
+      showErrorMessage(error, "Xác thực email thất bại!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -193,10 +191,10 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     try {
       await authService.resetPassword(email, code, newPassword);
-      message.success("Password reset successfully");
+      message.success("Đặt lại mật khẩu thành công!");
       router.push("/auth/login");
     } catch (error: any) {
-      message.error(error.message || "Password reset failed");
+      showErrorMessage(error, "Đặt lại mật khẩu thất bại!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -209,7 +207,7 @@ export const useAuth = (): UseAuthReturn => {
       const userInfo = await authService.getOAuthUser(accessToken);
 
       if (userInfo.mfaEnabled) {
-        message.info("Please verify with MFA");
+        message.info("Vui lòng xác thực hai yếu tố (2FA)");
         return { mfaEnabled: true, userInfo };
       }
 
@@ -225,6 +223,7 @@ export const useAuth = (): UseAuthReturn => {
         lastName: userInfo.lastname,
         avatar: userInfo.avatarUrl,
         role: userInfo.role,
+        provider: userInfo.provider || "GOOGLE",
       };
 
       dispatch(addAuth(user));
@@ -236,7 +235,7 @@ export const useAuth = (): UseAuthReturn => {
       }, 300);
       return { mfaEnabled: false, userInfo };
     } catch (error: any) {
-      message.error("OAuth login failed");
+      showErrorMessage(error, "Đăng nhập bằng mạng xã hội thất bại!");
       throw error;
     } finally {
       setIsLoading(false);

@@ -3,6 +3,7 @@
 import { paymentService, orderService } from "@/services";
 import { promotionService } from "@/services";
 import { CartItemModel, removeCarts, removeSelectedItems } from "@/redux/reducers/cartReducer";
+import { showErrorMessage } from "@/utils/errorHandler";
 import { DateTime } from "@/utils/dateTime";
 import { VND } from "@/utils/handleCurrency";
 import { useRouter } from "next/router";
@@ -118,13 +119,13 @@ const CheckoutPage = () => {
           value: detail.value,
           type: detail.type,
         });
-        message.success("Code is valid!");
+        message.success("Mã khuyến mãi hợp lệ!");
       } else {
-        message.warning("Invalid, expired, or out of stock code!");
+        message.warning("Mã không hợp lệ, đã hết hạn hoặc hết lượt sử dụng!");
         setDiscountValue(undefined);
       }
     } catch (error) {
-      message.error("Could not check code. Please try again.");
+      showErrorMessage(error, "Không thể kiểm tra mã khuyến mãi. Vui lòng thử lại!");
       setDiscountValue(undefined);
     } finally {
       setIsCheckingCode(false);
@@ -140,26 +141,30 @@ const CheckoutPage = () => {
         discountValue: discountValue,
       })),
     };
-    if (method === "vnpay") {
+    if (method === "vnpay" || method === "momo") {
       setIsLoading(true);
+      const gatewayName = method === "momo" ? "MoMo" : "VNPay";
       try {
-        const res = await paymentService.createPayment(body);
+        const res = await paymentService.createPayment({
+          ...body,
+          paymentType: method.toUpperCase(),
+        });
 
         if (res?.paymentUrl) {
-          // Lưu ý: Không xóa giỏ hàng ở đây vì giao dịch VNPay chưa hoàn tất.
+          // Lưu ý: Không xóa giỏ hàng ở đây vì giao dịch chưa hoàn tất.
           // Đặt lại step về 0 trước khi chuyển hướng để nếu người dùng nhấn nút Back sẽ quay về bước giỏ hàng
           setCurrentStep(0);
           window.location.href = res.paymentUrl;
           return; // Do not proceed with order creation
         } else {
           setIsLoading(false);
-          message.error("Could not create VNPay payment link.");
+          message.error(`Không thể tạo liên kết thanh toán ${gatewayName}.`);
           return;
         }
       } catch (error) {
         setIsLoading(false);
-        console.error("VNPay error:", error);
-        message.error("An error occurred while connecting to VNPay.");
+        console.error(`${gatewayName} error:`, error);
+        message.error(`Đã xảy ra lỗi khi kết nối với cổng thanh toán ${gatewayName}.`);
         return;
       }
     }
@@ -186,28 +191,22 @@ const CheckoutPage = () => {
       console.log(error);
 
       // Handle specific error codes from backend
-      if (error?.code === 1021) {
-        message.error(
-          "Some items in your cart are out of stock. Please check your cart and try again."
+      if (error?.code === 1021 || error?.code === 5002) {
+        showErrorMessage(
+          error,
+          "Một số sản phẩm trong giỏ hàng đã hết hàng. Vui lòng kiểm tra lại giỏ hàng!"
         );
-        // Optionally refresh cart data or redirect to cart page
         router.push("/shop");
-      } else if (error?.code === 1031) {
-        message.error(
-          "Shipping address not found. Please select a valid address."
+      } else if (error?.code === 1031 || error?.code === 7001) {
+        showErrorMessage(
+          error,
+          "Không tìm thấy địa chỉ giao hàng. Vui lòng chọn địa chỉ hợp lệ!"
         );
-        setCurrentStep(0); // Go back to address selection
-      } else if (error?.code === 1022) {
-        message.error("Promotion code has already been used.");
-      } else if (error?.code === 1023) {
-        message.error("Promotion is out of stock.");
-      } else if (error?.code === 1024) {
-        message.error("Promotion has expired.");
-      } else if (error?.message) {
-        message.error(error.message);
+        setCurrentStep(0);
       } else {
-        message.error(
-          "An error occurred while processing your order. Please try again."
+        showErrorMessage(
+          error,
+          "Đã có lỗi xảy ra trong quá trình xử lý đơn hàng. Vui lòng thử lại!"
         );
       }
     } finally {

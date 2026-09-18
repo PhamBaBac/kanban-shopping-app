@@ -29,6 +29,10 @@ export const methods = [
     key: "vnpay",
     title: "VNPay",
   },
+  {
+    key: "momo",
+    title: "Ví MoMo",
+  },
 ];
 
 const PaymentMethod = (props: Props) => {
@@ -48,13 +52,13 @@ const PaymentMethod = (props: Props) => {
   };
 
   useEffect(() => {
-    if (methodSelected === "cod") {
+    if (methodSelected === "cod" || methodSelected === "vnpay" || methodSelected === "momo") {
       setIsEnableContineu(true);
     }
   }, [methodSelected]);
 
   const handlePayment = () => {
-    if (methodSelected === "cod" || methodSelected === "vnpay") {
+    if (methodSelected === "cod" || methodSelected === "vnpay" || methodSelected === "momo") {
       onContinue({ methodSelected });
     } else {
       // Perform payment
