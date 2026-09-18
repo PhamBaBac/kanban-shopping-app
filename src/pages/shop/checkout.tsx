@@ -176,12 +176,16 @@ const CheckoutPage = () => {
         ...body,
         paymentType: method,
       });
-      //nhan Ok vao order con nhan cancel vae home
       Modal.confirm({
-        title: "Order created successfully",
-        content: "Do you want to go to the order page?",
+        title: "Đặt hàng thành công!",
+        content: "Đơn hàng của bạn đã được ghi nhận. Bạn có muốn xem danh sách đơn hàng ngay không?",
+        okText: "Xem đơn hàng",
+        cancelText: "Về trang chủ",
         onOk: () => {
           router.push(`/profile?tab=orders`);
+        },
+        onCancel: () => {
+          router.push("/");
         },
       });
 

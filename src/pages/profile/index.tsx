@@ -1,7 +1,7 @@
 /** @format */
 
 import { addAuth, authSelector } from "@/redux/reducers/authReducer";
-import { Tabs, TabsProps, Typography } from "antd";
+import { Tabs, TabsProps, Typography, Skeleton, Empty, Button, Alert } from "antd";
 import { TabsPosition } from "antd/es/tabs";
 import { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa6";
@@ -77,20 +77,102 @@ const ProfilePage = () => {
   const profileTabs: TabsProps["items"] = [
     {
       key: "edit",
-      label: "Persional Infomations",
+      label: "Personal Information",
       icon: <FaUser size={14} className="text-muted" />,
       children: <ProsionalInfomation />,
     },
     {
       key: "orders",
-      label: "Orders",
+      label: `Orders ${orders.length > 0 ? `(${orders.length})` : ""}`,
       icon: <FaShoppingCart size={14} className="text-muted" />,
       children: (
-        <div className="space-y-4">
-          {loading && <div>Loading orders...</div>}
-          {error && <div className="text-red-500">Error: {error}</div>}
+        <div>
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: "12px",
+                    border: "1px solid #E5E7EB",
+                    padding: "20px",
+                  }}
+                >
+                  <Skeleton active avatar paragraph={{ rows: 2 }} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <Alert
+              type="error"
+              message="Không thể tải danh sách đơn hàng"
+              description={error}
+              showIcon
+              action={
+                <Button size="small" onClick={refetch} style={{ borderRadius: "6px" }}>
+                  Thử lại
+                </Button>
+              }
+              style={{ borderRadius: "8px", marginBottom: "16px" }}
+            />
+          )}
+
+          {!loading && !error && orders.length === 0 && (
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "12px",
+                border: "1px solid #E5E7EB",
+                padding: "60px 24px",
+                textAlign: "center",
+              }}
+            >
+              <Empty
+                description={
+                  <div style={{ marginTop: "8px" }}>
+                    <span
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontSize: "16px",
+                        fontWeight: 600,
+                        color: "#131118",
+                        display: "block",
+                      }}
+                    >
+                      Bạn chưa có đơn hàng nào
+                    </span>
+                    <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                      Hãy khám phá hàng ngàn sản phẩm chất lượng tại cửa hàng!
+                    </span>
+                  </div>
+                }
+              >
+                <Button
+                  type="primary"
+                  onClick={() => router.push("/")}
+                  style={{
+                    marginTop: "12px",
+                    background: "#131118",
+                    color: "#FFFFFF",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    height: "40px",
+                    padding: "0 24px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Khám phá ngay
+                </Button>
+              </Empty>
+            </div>
+          )}
+
           {!loading &&
             !error &&
+            orders.length > 0 &&
             orders.map((order: any, idx: number) => (
               <OrderItem
                 key={order.orderId || idx}
@@ -123,7 +205,16 @@ const ProfilePage = () => {
 
   return (
     <div className="container mt-4 mb-4">
-      <Typography.Title level={2} type="secondary">
+      <Typography.Title
+        level={2}
+        style={{
+          fontFamily: "Rubik, sans-serif",
+          fontWeight: 700,
+          color: "#131118",
+          letterSpacing: "-0.02em",
+          marginBottom: "16px",
+        }}
+      >
         My Profile
       </Typography.Title>
       <div className="mt-4">

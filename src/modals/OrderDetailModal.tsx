@@ -9,7 +9,6 @@ import {
   Avatar,
   Space,
   Tag,
-  Divider,
   Descriptions,
   Timeline,
   Spin,
@@ -22,7 +21,6 @@ import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
-  CalendarOutlined,
   CarOutlined,
   ClockCircleOutlined,
   ExportOutlined,
@@ -141,37 +139,62 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       default: return status || "Mới tạo đơn - Chờ lấy hàng";
     }
   };
-  const getOrderStatusColor = (status: string) => {
-    if (!status) return "default";
-    switch (status.toUpperCase()) {
+  const getOrderStatusBadge = (status: string) => {
+    const s = (status || "PENDING").toUpperCase();
+    switch (s) {
       case "COMPLETED":
-        return "success";
+        return {
+          bg: "#ECFDF5",
+          color: "#059669",
+          border: "#A7F3D0",
+          text: "Đã hoàn thành",
+        };
       case "PROCESSING":
-        return "processing";
+        return {
+          bg: "#EFF6FF",
+          color: "#2563EB",
+          border: "#BFDBFE",
+          text: "Đang xử lý",
+        };
       case "PENDING":
-        return "warning";
+        return {
+          bg: "#FFFBEB",
+          color: "#D97706",
+          border: "#FDE68A",
+          text: "Chờ xác nhận",
+        };
       case "CANCELLED":
-        return "error";
+        return {
+          bg: "#FEF2F2",
+          color: "#DC2626",
+          border: "#FECACA",
+          text: "Đã hủy",
+        };
       case "REFUNDED":
-        return "default";
+        return {
+          bg: "#F3F4F6",
+          color: "#4B5563",
+          border: "#E5E7EB",
+          text: "Đã hoàn tiền",
+        };
       default:
-        return "default";
+        return {
+          bg: "#F3F4F6",
+          color: "#4B5563",
+          border: "#E5E7EB",
+          text: s,
+        };
     }
-  };
-
-  const getOrderStatusText = (status: string) => {
-    if (!status) return "";
-    return status.charAt(0) + status.slice(1).toLowerCase();
   };
 
   const getPaymentTypeText = (paymentType: string) => {
     switch (paymentType?.toUpperCase()) {
       case "COD":
-        return "Cash on Delivery";
+        return "Thanh toán khi nhận hàng (COD)";
       case "CREDIT_CARD":
-        return "Credit Card";
+        return "Thẻ tín dụng / Ghi nợ";
       case "BANK_TRANSFER":
-        return "Bank Transfer";
+        return "Chuyển khoản ngân hàng";
       default:
         return paymentType;
     }
@@ -194,11 +217,9 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         }
       });
     }
-    // Bổ sung color nếu chưa có
     if (item.color && !Object.keys(res).some((k) => /màu|color/i.test(k))) {
       res["Màu sắc"] = item.color;
     }
-    // Bổ sung size nếu chưa có
     if (item.size && !Object.keys(res).some((k) => /size|kích/i.test(k))) {
       res["Size"] = item.size;
     }
@@ -213,117 +234,176 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     );
   };
 
+  const statusBadge = orderDetail ? getOrderStatusBadge(orderDetail.orderStatus) : null;
+
   return (
     <Modal
       title={
-        <Title level={4} style={{ margin: 0 }}>
-          Order Details
-        </Title>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span
+            style={{
+              fontFamily: "Rubik, sans-serif",
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "#131118",
+            }}
+          >
+            Chi tiết đơn hàng
+          </span>
+          {orderDetail && (
+            <span
+              style={{
+                fontFamily: "monospace",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#6B7280",
+                background: "#F3F4F6",
+                padding: "2px 8px",
+                borderRadius: "4px",
+              }}
+            >
+              #{orderDetail.id}
+            </span>
+          )}
+        </div>
       }
       open={visible}
       onCancel={onClose}
-      footer={null}
-      width={800}
+      footer={[
+        <Button
+          key="close"
+          onClick={onClose}
+          style={{
+            borderRadius: "8px",
+            border: "1px solid #E5E7EB",
+            fontWeight: 500,
+            cursor: "pointer",
+          }}
+        >
+          Đóng
+        </Button>,
+      ]}
+      width={820}
       centered
     >
-      {orderDetail && (
-        <div style={{ padding: "16px 0" }}>
-          {/* Order Header */}
-          <Row
-            justify="space-between"
-            align="middle"
-            style={{ marginBottom: "24px" }}
+      {orderDetail && statusBadge && (
+        <div style={{ padding: "10px 0" }}>
+          {/* Order Header Status Banner */}
+          <div
+            style={{
+              background: "#FAFAFA",
+              border: "1px solid #E5E7EB",
+              borderRadius: "10px",
+              padding: "14px 18px",
+              marginBottom: "20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px",
+            }}
           >
-            <Col>
-              <Text strong>Order ID: </Text>
-              <Text code>{orderDetail.id}</Text>
-            </Col>
-            <Col>
-              <Tag
-                color={getOrderStatusColor(orderDetail.orderStatus)}
-                style={{ fontSize: "14px", padding: "4px 12px" }}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  background: statusBadge.bg,
+                  color: statusBadge.color,
+                  border: `1px solid ${statusBadge.border}`,
+                }}
               >
-                {getOrderStatusText(orderDetail.orderStatus)}
-              </Tag>
-            </Col>
-          </Row>
+                {statusBadge.text}
+              </span>
+              <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                Ngày đặt: <strong style={{ color: "#131118" }}>{orderDetail.createdAt}</strong>
+              </span>
+            </div>
 
-          {/* Customer Information */}
-          <div style={{ marginBottom: "24px" }}>
-            <Title level={5} style={{ marginBottom: "16px" }}>
-              Customer Information
-            </Title>
-            <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Customer Name">
-                <Space>
-                  <UserOutlined />
-                  {orderDetail.userName}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Recipient Name">
-                <Space>
-                  <UserOutlined />
-                  {orderDetail.nameRecipient}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Phone Number">
-                <Space>
-                  <PhoneOutlined />
-                  {orderDetail.phoneNumber}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Email">
-                <Space>
-                  <MailOutlined />
-                  {orderDetail.email}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Delivery Address">
-                <Space>
-                  <EnvironmentOutlined />
-                  {orderDetail.address}
-                </Space>
-              </Descriptions.Item>
-            </Descriptions>
+            <div style={{ fontSize: "13px", color: "#4B5563" }}>
+              Phương thức: <strong style={{ color: "#131118" }}>{getPaymentTypeText(orderDetail.paymentType)}</strong>
+            </div>
           </div>
 
-          {/* Order Information */}
-          <div style={{ marginBottom: "24px" }}>
-            <Title level={5} style={{ marginBottom: "16px" }}>
-              Order Information
+          {/* Customer & Shipping Addresses */}
+          <div style={{ marginBottom: "20px" }}>
+            <Title
+              level={5}
+              style={{
+                fontFamily: "Rubik, sans-serif",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#131118",
+                marginBottom: "12px",
+              }}
+            >
+              Thông tin nhận hàng
             </Title>
-            <Descriptions column={2} bordered size="small">
-              <Descriptions.Item label="Order Date">
-                <Space>
-                  <CalendarOutlined />
-                  {orderDetail.createdAt}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Payment Method">
-                {getPaymentTypeText(orderDetail.paymentType)}
-              </Descriptions.Item>
-              {orderDetail.orderStatus?.toUpperCase() === "CANCELLED" &&
-                orderDetail.cancelReason && (
-                  <Descriptions.Item
-                    label="Lý do hủy đơn"
-                    span={2}
-                    labelStyle={{ color: "#ff4d4f" }}
-                  >
-                    <Text type="danger">{orderDetail.cancelReason}</Text>
+            <div
+              style={{
+                background: "#FAFAFA",
+                border: "1px solid #E5E7EB",
+                borderRadius: "10px",
+                padding: "16px",
+              }}
+            >
+              <Descriptions column={{ xs: 1, sm: 2 }} size="small">
+                <Descriptions.Item label="Người nhận">
+                  <Space>
+                    <UserOutlined style={{ color: "#131118" }} />
+                    <strong style={{ color: "#131118" }}>{orderDetail.nameRecipient || orderDetail.userName}</strong>
+                  </Space>
+                </Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  <Space>
+                    <PhoneOutlined style={{ color: "#131118" }} />
+                    <span style={{ color: "#131118" }}>{orderDetail.phoneNumber}</span>
+                  </Space>
+                </Descriptions.Item>
+                {orderDetail.email && (
+                  <Descriptions.Item label="Email">
+                    <Space>
+                      <MailOutlined style={{ color: "#131118" }} />
+                      <span style={{ color: "#4B5563" }}>{orderDetail.email}</span>
+                    </Space>
                   </Descriptions.Item>
                 )}
-            </Descriptions>
+                <Descriptions.Item label="Địa chỉ giao" span={2}>
+                  <Space align="start">
+                    <EnvironmentOutlined style={{ color: "#131118", marginTop: "3px" }} />
+                    <span style={{ color: "#131118", fontWeight: 500 }}>
+                      {orderDetail.address}
+                    </span>
+                  </Space>
+                </Descriptions.Item>
+                {orderDetail.orderStatus?.toUpperCase() === "CANCELLED" &&
+                  orderDetail.cancelReason && (
+                    <Descriptions.Item
+                      label="Lý do hủy đơn"
+                      span={2}
+                      labelStyle={{ color: "#DC2626" }}
+                    >
+                      <Text type="danger" strong>
+                        {orderDetail.cancelReason}
+                      </Text>
+                    </Descriptions.Item>
+                  )}
+              </Descriptions>
+            </div>
           </div>
 
           {/* Shipping / GHN Tracking Information */}
           {orderDetail.trackingCode ? (
             <div
               style={{
-                marginBottom: "24px",
-                padding: "20px",
-                borderRadius: "8px",
-                background: "#f0fdf4",
-                border: "1px solid #bbf7d0",
+                marginBottom: "20px",
+                padding: "18px",
+                borderRadius: "12px",
+                background: "#FAFAFA",
+                border: "1px solid #E5E7EB",
               }}
             >
               <div
@@ -332,35 +412,74 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   justifyContent: "space-between",
                   alignItems: "center",
                   flexWrap: "wrap",
-                  gap: "8px",
+                  gap: "10px",
                   marginBottom: "16px",
                 }}
               >
-                <Space align="center">
-                  <CarOutlined style={{ fontSize: "22px", color: "#16a34a" }} />
+                <Space align="center" size="middle">
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "8px",
+                      background: "#131118",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    <CarOutlined style={{ fontSize: "18px" }} />
+                  </div>
                   <div>
-                    <Title level={5} style={{ margin: 0, color: "#15803d" }}>
-                      Vận chuyển Giao Hàng Nhanh (GHN)
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                    <span
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#131118",
+                        display: "block",
+                      }}
+                    >
+                      Giao Hàng Nhanh (GHN)
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#6B7280" }}>
                       Theo dõi lộ trình giao hàng trực tiếp
-                    </Text>
+                    </span>
                   </div>
                 </Space>
-                <Space>
-                  <Tag color="green" style={{ fontSize: "13px", padding: "2px 8px" }}>
-                    Mã vận đơn: <strong>{orderDetail.trackingCode}</strong>
-                  </Tag>
+
+                <Space size="small">
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      background: "#FFFFFF",
+                      border: "1px solid #E5E7EB",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      color: "#131118",
+                    }}
+                  >
+                    Vận đơn: <strong>{orderDetail.trackingCode}</strong>
+                  </span>
                   <Button
                     size="small"
-                    type="link"
+                    type="default"
                     icon={<ExportOutlined />}
                     href={`https://tracking.ghn.dev/?order_code=${orderDetail.trackingCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ padding: 0, fontSize: "13px" }}
+                    style={{
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      border: "1px solid #E5E7EB",
+                      color: "#131118",
+                      cursor: "pointer",
+                    }}
                   >
-                    Xem trên GHN
+                    Tra cứu GHN
                   </Button>
                 </Space>
               </div>
@@ -375,11 +494,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     ? dbStatus
                     : (trkStatus || dbStatus || "ready_to_pick")
                 ).toLowerCase();
-
-                const effectiveStatusName =
-                  getShippingStatusRank(dbStatus) > getShippingStatusRank(trkStatus)
-                    ? mapShippingStatusToTitle(dbStatus)
-                    : (shippingTracking?.statusName || mapShippingStatusToTitle(effectiveStatus));
 
                 let currentStep = 0;
                 let isFailed = false;
@@ -398,7 +512,15 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 }
 
                 return (
-                  <div style={{ background: "#fff", padding: "16px", borderRadius: "8px", marginBottom: "16px", border: "1px solid #e2e8f0" }}>
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      padding: "16px",
+                      borderRadius: "8px",
+                      marginBottom: "16px",
+                      border: "1px solid #E5E7EB",
+                    }}
+                  >
                     <Steps
                       size="small"
                       current={currentStep}
@@ -414,9 +536,35 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 );
               })()}
 
-              <Descriptions column={2} size="small" style={{ marginBottom: "16px" }}>
-                <Descriptions.Item label="Trạng thái vận chuyển">
-                  <Tag color="processing" style={{ fontSize: "13px" }}>
+              <div
+                style={{
+                  background: "#FFFFFF",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #E5E7EB",
+                  marginBottom: "16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
+                <div>
+                  <span style={{ fontSize: "12px", color: "#6B7280", marginRight: "8px" }}>
+                    Trạng thái hiện tại:
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      background: "#F3F4F6",
+                      color: "#131118",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      border: "1px solid #E5E7EB",
+                    }}
+                  >
                     {(() => {
                       const trkStatus = shippingTracking?.status;
                       const dbStatus = activeOrder?.shippingStatus;
@@ -424,21 +572,19 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         ? mapShippingStatusToTitle(dbStatus)
                         : (shippingTracking?.statusName || mapShippingStatusToTitle(dbStatus || "ready_to_pick"));
                     })()}
-                  </Tag>
-                </Descriptions.Item>
+                  </span>
+                </div>
+
                 {shippingTracking?.expectedDeliveryTime && (
-                  <Descriptions.Item label="Dự kiến giao">
-                    <Space>
-                      <ClockCircleOutlined style={{ color: "#16a34a" }} />
-                      <Text strong>
-                        {new Date(shippingTracking.expectedDeliveryTime).toLocaleString(
-                          "vi-VN"
-                        )}
-                      </Text>
-                    </Space>
-                  </Descriptions.Item>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <ClockCircleOutlined style={{ color: "#131118" }} />
+                    <span style={{ fontSize: "12px", color: "#6B7280" }}>Dự kiến giao:</span>
+                    <strong style={{ fontSize: "12px", color: "#131118" }}>
+                      {new Date(shippingTracking.expectedDeliveryTime).toLocaleString("vi-VN")}
+                    </strong>
+                  </div>
                 )}
-              </Descriptions>
+              </div>
 
               {trackingLoading ? (
                 <div style={{ textAlign: "center", padding: "16px 0" }}>
@@ -447,21 +593,36 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               ) : (
                 <div
                   style={{
-                    background: "#fff",
+                    background: "#FFFFFF",
                     padding: "16px",
-                    borderRadius: "6px",
-                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    border: "1px solid #E5E7EB",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                    <Text strong style={{ fontSize: "13px" }}>
-                      Lộ trình di chuyển:
-                    </Text>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "Rubik, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        color: "#131118",
+                      }}
+                    >
+                      Lịch sử lộ trình
+                    </span>
                     <Button
                       type="text"
                       size="small"
                       icon={<SyncOutlined spin={trackingLoading} />}
                       onClick={fetchTrackingAndOrder}
+                      style={{ color: "#4B5563", fontSize: "12px", cursor: "pointer" }}
                     >
                       Làm mới
                     </Button>
@@ -499,19 +660,19 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       if (logsToRender.length === 0) {
                         return [
                           {
-                            color: "green",
+                            color: "#131118",
                             children: (
                               <div>
-                                <Text strong style={{ color: "#16a34a" }}>
+                                <Text strong style={{ color: "#131118" }}>
                                   {effectiveStatusName}
                                 </Text>
-                                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                <div style={{ fontSize: "12px", color: "#6B7280" }}>
                                   {effectiveStatus === "delivering"
                                     ? "Shipper đang trên đường giao hàng đến địa chỉ nhận."
                                     : "Đơn hàng đã được tạo thành công trên hệ thống Giao Hàng Nhanh (GHN). Shipper sẽ sớm đến lấy hàng."}
                                 </div>
                                 {activeOrder?.createdAt && (
-                                  <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                                  <div style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px" }}>
                                     {activeOrder.createdAt}
                                   </div>
                                 )}
@@ -524,19 +685,19 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       return logsToRender.map((log: any, idx: number) => {
                         const isLatest = idx === 0;
                         return {
-                          color: isLatest ? "green" : "blue",
+                          color: isLatest ? "#131118" : "#9CA3AF",
                           children: (
                             <div>
-                              <Text strong={isLatest} style={{ color: isLatest ? "#16a34a" : undefined }}>
+                              <Text strong={isLatest} style={{ color: isLatest ? "#131118" : "#4B5563" }}>
                                 {log.statusName || mapShippingStatusToTitle(log.status)}
                               </Text>
                               {log.location && (
-                                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                <div style={{ fontSize: "12px", color: "#6B7280" }}>
                                   {log.location}
                                 </div>
                               )}
                               {(log.updatedDate || log.action_at) && (
-                                <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                                <div style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px" }}>
                                   {new Date(log.updatedDate || log.action_at).toLocaleString("vi-VN")}
                                 </div>
                               )}
@@ -552,53 +713,75 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           ) : (
             <div
               style={{
-                marginBottom: "24px",
+                marginBottom: "20px",
                 padding: "16px",
-                borderRadius: "8px",
-                background: "#f8fafc",
-                border: "1px dashed #cbd5e1",
+                borderRadius: "10px",
+                background: "#FAFAFA",
+                border: "1px dashed #D1D5DB",
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
+                gap: "14px",
               }}
             >
-              <CarOutlined style={{ fontSize: "24px", color: "#94a3b8" }} />
+              <CarOutlined style={{ fontSize: "22px", color: "#9CA3AF" }} />
               <div>
-                <Text strong style={{ color: "#475569", display: "block" }}>
+                <Text strong style={{ color: "#374151", display: "block" }}>
                   Thông tin vận chuyển
                 </Text>
-                <Text type="secondary" style={{ fontSize: "13px" }}>
-                  Đơn hàng đang chờ shop chuẩn bị và bàn giao cho đơn vị vận chuyển Giao Hàng Nhanh (GHN).
+                <Text type="secondary" style={{ fontSize: "13px", color: "#6B7280" }}>
+                  Đơn hàng đang chờ cửa hàng chuẩn bị và bàn giao cho đơn vị vận chuyển Giao Hàng Nhanh (GHN).
                 </Text>
               </div>
             </div>
           )}
 
           {/* Order Items */}
-          <div style={{ marginBottom: "24px" }}>
-            <Title level={5} style={{ marginBottom: "16px" }}>
-              Order Items ({orderDetail.orderResponses.length})
+          <div style={{ marginBottom: "20px" }}>
+            <Title
+              level={5}
+              style={{
+                fontFamily: "Rubik, sans-serif",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#131118",
+                marginBottom: "12px",
+              }}
+            >
+              Danh sách sản phẩm ({orderDetail.orderResponses.length})
             </Title>
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
               {orderDetail.orderResponses.map((item, index) => (
                 <div
                   key={index}
                   style={{
-                    padding: "16px",
-                    border: "1px solid #f0f0f0",
+                    padding: "14px 16px",
+                    border: "1px solid #E5E7EB",
                     borderRadius: "8px",
-                    background: "#fafafa",
+                    background: "#FAFAFA",
                   }}
                 >
-                  <Row gutter={[16, 16]} align="middle">
+                  <Row gutter={[16, 12]} align="middle">
                     <Col>
-                      <Avatar src={item.image} size={80} shape="square" />
+                      <Avatar
+                        src={item.image}
+                        size={68}
+                        shape="square"
+                        style={{
+                          borderRadius: "8px",
+                          border: "1px solid #E5E7EB",
+                          objectFit: "cover",
+                        }}
+                      />
                     </Col>
                     <Col flex="auto">
-                      <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                      <Space direction="vertical" size={2} style={{ width: "100%" }}>
                         <Text
                           strong
                           style={{
+                            fontFamily: "Rubik, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "#131118",
                             display: "block",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -609,14 +792,14 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           {item.title}
                         </Text>
 
-                        {/* Thuộc tính linh hoạt từ subProduct */}
+                        {/* Attributes */}
                         {(() => {
                           const attrs = getItemAttributes(item);
                           const entries = Object.entries(attrs);
                           if (entries.length === 0) return null;
 
                           return (
-                            <Space wrap size={[6, 6]}>
+                            <Space wrap size={[4, 4]}>
                               {entries.map(([key, val]) => {
                                 const isColorKey = /màu|color/i.test(key);
                                 const isHexOrRgb =
@@ -632,16 +815,16 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                                       display: "inline-flex",
                                       alignItems: "center",
                                       gap: "5px",
-                                      fontSize: "12px",
-                                      background: "#f8fafc",
-                                      border: "1px solid #e2e8f0",
+                                      fontSize: "11px",
+                                      background: "#FFFFFF",
+                                      border: "1px solid #E5E7EB",
                                     }}
                                   >
                                     {isHexOrRgb && (
                                       <span
                                         style={{
-                                          width: 10,
-                                          height: 10,
+                                          width: 9,
+                                          height: 9,
                                           borderRadius: "50%",
                                           backgroundColor: val,
                                           display: "inline-block",
@@ -649,8 +832,8 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                                         }}
                                       />
                                     )}
-                                    <span style={{ color: "#64748b" }}>{key}:</span>
-                                    <span style={{ fontWeight: 600, color: "#1e293b" }}>
+                                    <span style={{ color: "#6B7280" }}>{key}:</span>
+                                    <span style={{ fontWeight: 600, color: "#131118" }}>
                                       {val}
                                     </span>
                                   </Tag>
@@ -660,16 +843,23 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                           );
                         })()}
 
-                        <Text type="secondary">
-                          Quantity: <Text strong>{item.qty}</Text>
-                        </Text>
-                        <Text type="secondary">
-                          Unit Price: {VND.format(item.price)}
+                        <Text type="secondary" style={{ fontSize: "12px", color: "#6B7280" }}>
+                          Số lượng: <strong style={{ color: "#131118" }}>{item.qty}</strong>
+                          {"  "}·{"  "}
+                          Đơn giá: {VND.format(item.price)}
                         </Text>
                       </Space>
                     </Col>
                     <Col>
-                      <Text strong style={{ fontSize: "16px" }}>
+                      <Text
+                        strong
+                        style={{
+                          fontFamily: "Rubik, sans-serif",
+                          fontSize: "15px",
+                          fontWeight: 700,
+                          color: "#131118",
+                        }}
+                      >
                         {VND.format(item.totalPrice)}
                       </Text>
                     </Col>
@@ -680,16 +870,33 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           </div>
 
           {/* Order Summary */}
-          <Divider />
-          <Row justify="end">
-            <Col>
-              <Space direction="vertical" align="end">
-                <Text strong style={{ fontSize: "18px" }}>
-                  Total Amount: {VND.format(calculateTotalAmount())}
-                </Text>
-              </Space>
-            </Col>
-          </Row>
+          <div
+            style={{
+              background: "#FAFAFA",
+              border: "1px solid #E5E7EB",
+              borderRadius: "10px",
+              padding: "16px 20px",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+              <span style={{ fontSize: "14px", color: "#4B5563" }}>
+                Tổng thanh toán:
+              </span>
+              <span
+                style={{
+                  fontFamily: "Rubik, sans-serif",
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "#131118",
+                }}
+              >
+                {VND.format(calculateTotalAmount())}
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </Modal>

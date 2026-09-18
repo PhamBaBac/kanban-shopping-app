@@ -110,54 +110,123 @@ const Reviews = (props: Props) => {
     setFileList(items);
   };
   return (
-    <div className="mb-5">
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E5E7EB",
+        borderRadius: "10px",
+        padding: "20px",
+        margin: "10px 0",
+      }}
+    >
       {hasReviewed ? (
-        <div style={{ color: "green", textAlign: "center", padding: "20px" }}>
-          Bạn đã đánh giá sản phẩm này
+        <div
+          style={{
+            color: "#059669",
+            background: "#ECFDF5",
+            border: "1px solid #A7F3D0",
+            borderRadius: "8px",
+            textAlign: "center",
+            padding: "16px",
+            fontWeight: 600,
+            fontSize: "14px",
+          }}
+        >
+          ✓ Cảm ơn bạn đã gửi đánh giá cho sản phẩm này!
         </div>
       ) : (
-        <div className="row">
-          <div className="col-sm-12 col-md-8 col-lg-6">
-            <div className="mt-4 text-center">
-              <Rate
-                disabled={isLoading}
-                count={5}
-                defaultValue={starScore}
-                onChange={(val) => setStarScore(val)}
-                style={{ fontSize: 42 }}
-              />
-            </div>
-            <div className="mt-4">
-              <Input.TextArea
-                disabled={isLoading}
-                value={comment}
-                onChange={(val) => setcomment(val.target.value)}
-                allowClear
-                rows={5}
-              />
-            </div>
-            <div className="mt-3">
-              <Upload
-                fileList={fileList}
-                onChange={handleChange}
-                accept="image/*"
-                listType="picture-card"
-                multiple
-              >
-                {fileList.length <= 4 ? "Upload" : null}
-              </Upload>
-            </div>
-            <div className="mt-3 text-right">
-              <Button
-                loading={isLoading}
-                disabled={!auth.userId || !comment}
-                type="primary"
-                size="large"
-                onClick={handleSubmitReview}
-              >
-                Submit
-              </Button>
-            </div>
+        <div style={{ maxWidth: 640 }}>
+          <div style={{ marginBottom: "16px" }}>
+            <span
+              style={{
+                fontFamily: "Rubik, sans-serif",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#131118",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Chấm điểm chất lượng sản phẩm
+            </span>
+            <Rate
+              disabled={isLoading}
+              count={5}
+              defaultValue={starScore}
+              onChange={(val) => setStarScore(val)}
+              style={{ fontSize: 28 }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#374151",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Nhận xét chi tiết
+            </span>
+            <Input.TextArea
+              disabled={isLoading}
+              value={comment}
+              onChange={(val) => setcomment(val.target.value)}
+              placeholder="Hãy chia sẻ cảm nhận của bạn về chất lượng sản phẩm, dịch vụ đóng gói và giao hàng..."
+              allowClear
+              rows={4}
+              style={{
+                borderRadius: "8px",
+                borderColor: "#E5E7EB",
+                fontSize: "14px",
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#374151",
+                display: "block",
+                marginBottom: "6px",
+              }}
+            >
+              Hình ảnh thực tế (tối đa 4 ảnh)
+            </span>
+            <Upload
+              fileList={fileList}
+              onChange={handleChange}
+              accept="image/*"
+              listType="picture-card"
+              multiple
+            >
+              {fileList.length < 4 ? "+ Tải ảnh" : null}
+            </Upload>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <Button
+              loading={isLoading}
+              disabled={!auth.userId || !comment || starScore === 0}
+              type="primary"
+              size="middle"
+              onClick={handleSubmitReview}
+              style={{
+                background: "#131118",
+                color: "#FFFFFF",
+                borderRadius: "8px",
+                fontWeight: 600,
+                padding: "0 24px",
+                height: "40px",
+                cursor: "pointer",
+              }}
+            >
+              Gửi đánh giá
+            </Button>
           </div>
         </div>
       )}

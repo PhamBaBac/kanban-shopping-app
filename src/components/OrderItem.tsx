@@ -9,16 +9,12 @@ import {
   Tag,
   Space,
   Avatar,
-  Card,
-  Divider,
   message,
   Popconfirm,
   Tooltip,
 } from "antd";
 import { VND } from "@/utils/handleCurrency";
 import {
-  DownOutlined,
-  UpOutlined,
   EyeOutlined,
   DeleteOutlined,
   CloseOutlined,
@@ -93,47 +89,71 @@ const OrderItem: React.FC<OrderItemProps> = ({
   };
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [showReview, setShowReview] = useState(false);
   const [openReviewProductId, setOpenReviewProductId] = useState<string | null>(
     null
   );
 
-  const getOrderStatusColor = (status: string) => {
-    if (!status) return "default";
-    switch (status.toUpperCase()) {
+  const getOrderStatusBadge = (status: string) => {
+    const s = (status || "PENDING").toUpperCase();
+    switch (s) {
       case "COMPLETED":
-        return "success";
+        return {
+          bg: "#ECFDF5",
+          color: "#059669",
+          border: "#A7F3D0",
+          text: "Đã hoàn thành",
+        };
       case "PROCESSING":
-        return "processing";
+        return {
+          bg: "#EFF6FF",
+          color: "#2563EB",
+          border: "#BFDBFE",
+          text: "Đang xử lý",
+        };
       case "PENDING":
-        return "warning";
+        return {
+          bg: "#FFFBEB",
+          color: "#D97706",
+          border: "#FDE68A",
+          text: "Chờ xác nhận",
+        };
       case "CANCELLED":
-        return "error";
+        return {
+          bg: "#FEF2F2",
+          color: "#DC2626",
+          border: "#FECACA",
+          text: "Đã hủy",
+        };
       case "REFUNDED":
-        return "default";
+        return {
+          bg: "#F3F4F6",
+          color: "#4B5563",
+          border: "#E5E7EB",
+          text: "Đã hoàn tiền",
+        };
       default:
-        return "default";
+        return {
+          bg: "#F3F4F6",
+          color: "#4B5563",
+          border: "#E5E7EB",
+          text: s,
+        };
     }
-  };
-
-  const getOrderStatusText = (status: string) => {
-    if (!status) return "";
-    return status.charAt(0) + status.slice(1).toLowerCase();
   };
 
   const getOrderStatusDescription = (status: string) => {
     if (!status) return "";
     switch (status.toUpperCase()) {
       case "PENDING":
-        return "Waiting for confirmation";
+        return "Đang chờ cửa hàng xác nhận";
       case "PROCESSING":
-        return "Order is being processed";
+        return "Đơn hàng đang được chuẩn bị và đóng gói";
       case "COMPLETED":
-        return "Order completed";
+        return "Đơn hàng đã được giao thành công";
       case "CANCELLED":
-        return "Order cancelled";
+        return "Đơn hàng đã bị hủy";
       case "REFUNDED":
-        return "Order refunded";
+        return "Đã hoàn tất thủ tục hoàn tiền";
       default:
         return "";
     }
@@ -145,7 +165,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
       setCancelLoading(true);
       await orderService.cancelOrder(order.orderId);
       message.success("Hủy đơn hàng thành công");
-      // Gọi callback để thông báo cho component cha
       onOrderStatusChanged?.(order.orderId, "CANCELLED");
     } catch (error: any) {
       const errMsg =
@@ -183,7 +202,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
       setDeleteLoading(true);
       await orderService.deleteOrder(order.orderId);
       message.success("Xóa đơn hàng thành công!");
-      // Gọi callback để thông báo cho component cha
       onOrderDeleted?.(order.orderId);
     } catch (error) {
       message.error("Không thể xóa đơn hàng.");
@@ -192,337 +210,384 @@ const OrderItem: React.FC<OrderItemProps> = ({
     }
   };
 
+  const statusBadge = getOrderStatusBadge(order.orderStatus);
+  const trackingCode = order.trackingCode || order.items?.[0]?.trackingCode;
+
   return (
     <>
-      <Card style={{ marginBottom: "16px" }} bodyStyle={{ padding: "16px" }}>
-        <Row
-          justify="space-between"
-          align="middle"
-          style={{ marginBottom: "12px" }}
-        ></Row>
-        {order.items.length === 1 ? (
+      <div
+        style={{
+          background: "#FFFFFF",
+          borderRadius: "12px",
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          marginBottom: "16px",
+          overflow: "hidden",
+          transition: "all 0.2s ease-in-out",
+        }}
+      >
+        {/* Card Header */}
+        <div
+          style={{
+            padding: "14px 18px",
+            borderBottom: "1px solid #F3F4F6",
+            background: "#FAFAFA",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
           <div
             style={{
-              background: "#fafafa",
-              paddingLeft: "12px",
-              paddingTop: "12px",
-              paddingBottom: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
             }}
           >
-            <Row
-              gutter={[12, 12]}
-              align="top"
+            <span
               style={{
-                minHeight: "100px",
-                display: "flex",
-                alignItems: "flex-start",
+                fontFamily: "Rubik, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                color: "#131118",
+                letterSpacing: "-0.01em",
               }}
             >
-              <Col>
-                <Avatar src={order.items[0].image} size={80} shape="square" />
-              </Col>
-              <Col flex="auto">
-                <Space direction="vertical" size="small">
-                  <Typography.Text
-                    strong
-                    style={{
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: 400,
-                    }}
-                  >
-                    {order.items[0].title}
-                  </Typography.Text>
-                  {(() => {
-                    const attrs = getItemAttributes(order.items[0]);
-                    const entries = Object.entries(attrs);
-                    if (entries.length === 0) return null;
-                    return (
-                      <Space wrap size={[4, 4]}>
-                        {entries.map(([key, val]) => (
-                          <Tag key={key} style={{ margin: 0, fontSize: "11px", padding: "0 6px" }}>
-                            {key}: {val}
-                          </Tag>
-                        ))}
-                      </Space>
-                    );
-                  })()}
-                  <Typography.Text type="secondary">
-                    Qty: {order.items[0].qty}
-                  </Typography.Text>
-                </Space>
-              </Col>
-              <Col style={{ textAlign: "right", marginRight: "10px" }}>
-                <div style={{ marginTop: "12px" }}>
-                  <Typography.Text strong>
-                    {VND.format(order.items[0].totalPrice)}
-                  </Typography.Text>
-                  <div
-                    style={{
-                      minHeight: "36px",
-                      marginTop: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    {order.orderStatus?.toLowerCase() === "completed" &&
-                      !order.items[0].isReviewed && (
-                        <Button
-                          type="primary"
-                          size="small"
-                          onClick={() =>
-                            setOpenReviewProductId(
-                              openReviewProductId ===
-                                order.items[0].subProductId
-                                ? null
-                                : order.items[0].subProductId
-                            )
-                          }
-                        >
-                          {openReviewProductId === order.items[0].subProductId
-                            ? "Hide Review"
-                            : "Write Review"}
-                        </Button>
-                      )}
-                    {order.orderStatus?.toLowerCase() === "completed" &&
-                      order.items[0].isReviewed && (
-                        <span style={{ color: "green", fontSize: "12px" }}>
-                          Bạn đã đánh giá sản phẩm này
-                        </span>
-                      )}
-                  </div>
-                </div>
-              </Col>
-            </Row>
-            {order.orderStatus?.toLowerCase() === "completed" &&
-              openReviewProductId === order.items[0].subProductId &&
-              !order.items[0].isReviewed && (
-                <div style={{ marginTop: 16 }}>
-                  <Reviews
-                    subProductId={order.items[0].subProductId}
-                    orderId={order.orderId}
-                    isReviewed={order.items[0].isReviewed}
-                  />
-                </div>
-              )}
-          </div>
-        ) : (
-          <>
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-              {order.items.map((item, index) => {
-                const isLast = index === order.items.length - 1;
-                console.log("item", item);
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      padding: "12px",
-                      paddingTop: "12px",
-                      background: "#fafafa",
-                      marginBottom: isLast ? 0 : 8,
-                    }}
-                  >
-                    <Row
-                      gutter={[12, 12]}
-                      align="top"
-                      style={{
-                        minHeight: "100px",
-                        display: "flex",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Col>
-                        <Avatar src={item.image} size={80} shape="square" />
-                      </Col>
-                      <Col flex="auto">
-                        <Space direction="vertical" size="small">
-                          <Typography.Text
-                            strong
-                            style={{
-                              display: "block",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: 400,
-                            }}
-                          >
-                            {item.title}
-                          </Typography.Text>
-                          {(() => {
-                            const attrs = getItemAttributes(item);
-                            const entries = Object.entries(attrs);
-                            if (entries.length === 0) return null;
-                            return (
-                              <Space wrap size={[4, 4]}>
-                                {entries.map(([key, val]) => (
-                                  <Tag key={key} style={{ margin: 0, fontSize: "11px", padding: "0 6px" }}>
-                                    {key}: {val}
-                                  </Tag>
-                                ))}
-                              </Space>
-                            );
-                          })()}
-                          <Typography.Text type="secondary">
-                            Qty: {item.qty}
-                          </Typography.Text>
-                        </Space>
-                      </Col>
-                      <Col style={{ textAlign: "right", marginRight: "10px" }}>
-                        <div style={{ marginTop: "12px" }}>
-                          <Typography.Text strong>
-                            {VND.format(item.totalPrice)}
-                          </Typography.Text>
-                          <div
-                            style={{
-                              minHeight: "36px",
-                              marginTop: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            {order.orderStatus?.toLowerCase() === "completed" &&
-                              !item.isReviewed && (
-                                <Button
-                                  type="primary"
-                                  size="small"
-                                  onClick={() =>
-                                    setOpenReviewProductId(
-                                      openReviewProductId === item.subProductId
-                                        ? null
-                                        : item.subProductId
-                                    )
-                                  }
-                                >
-                                  {openReviewProductId === item.subProductId
-                                    ? "Hide Review"
-                                    : "Write Review"}
-                                </Button>
-                              )}
-                            {order.orderStatus?.toLowerCase() === "completed" &&
-                              item.isReviewed && (
-                                <span
-                                  style={{ color: "green", fontSize: "12px" }}
-                                >
-                                  Bạn đã đánh giá sản phẩm này
-                                </span>
-                              )}
-                          </div>
-                        </div>
-                      </Col>
-                    </Row>
-                    {order.orderStatus?.toLowerCase() === "completed" &&
-                      openReviewProductId === item.subProductId &&
-                      !item.isReviewed && (
-                        <div style={{ marginTop: 16 }}>
-                          <Reviews
-                            subProductId={item.subProductId}
-                            orderId={order.orderId}
-                            isReviewed={item.isReviewed}
-                            onReviewed={async () => {
-                              setOpenReviewProductId(null);
-                              await onReviewSubmitted?.();
-                            }}
-                          />
-                        </div>
-                      )}
-                  </div>
-                );
-              })}
-            </Space>
-          </>
-        )}
+              Mã đơn: #{order.orderId}
+            </span>
 
-        <Row justify="space-between" style={{ marginTop: "12px" }}>
-          <Col>
-            <Space size="middle">
-              <Tag color={getOrderStatusColor(order.orderStatus)}>
-                {getOrderStatusText(order.orderStatus) || "PENDING"}
-              </Tag>
-              {(() => {
-                const code = order.trackingCode || order.items?.[0]?.trackingCode;
-                if (!code) return null;
-                return (
-                  <Tooltip title="Bấm để xem chi tiết lộ trình vận chuyển GHN">
-                    <Tag
-                      color="green"
-                      style={{
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        padding: "2px 8px",
-                      }}
-                      onClick={handleViewOrderDetails}
-                    >
-                      <CarOutlined />
-                      <span>GHN: {code}</span>
-                    </Tag>
-                  </Tooltip>
-                );
-              })()}
-              <Typography.Text type="secondary">
-                {getOrderStatusDescription(order.orderStatus)}
-              </Typography.Text>
-            </Space>
-          </Col>
-          <Space>
-            <Button
-              type="default"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={handleViewOrderDetails}
-              loading={loading}
-            >
-              View Details
-            </Button>
-
-            {order.orderStatus?.toLowerCase() === "pending" && (
-              <Popconfirm
-                title="Hủy đơn hàng"
-                description="Bạn có chắc chắn muốn hủy đơn hàng này không?"
-                onConfirm={() => updateOrderStatus()}
-                okText="Hủy đơn"
-                cancelText="Đóng"
-                okButtonProps={{ danger: true, loading: cancelLoading }}
-              >
-                <Button
-                  type="primary"
-                  danger
-                  size="small"
-                  icon={<CloseOutlined />}
-                  loading={cancelLoading}
+            {trackingCode && (
+              <Tooltip title="Bấm để xem chi tiết lộ trình vận chuyển GHN">
+                <span
+                  onClick={handleViewOrderDetails}
+                  style={{
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "3px 10px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    background: "#FFFFFF",
+                    color: "#131118",
+                    border: "1px solid #E5E7EB",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                    transition: "all 0.15s ease",
+                  }}
                 >
-                  Cancel Order
-                </Button>
-              </Popconfirm>
+                  <CarOutlined style={{ fontSize: "13px", color: "#131118" }} />
+                  <span>GHN: {trackingCode}</span>
+                </span>
+              </Tooltip>
             )}
+          </div>
 
-            {(order.orderStatus?.toLowerCase() === "cancelled" ||
-              order.orderStatus?.toLowerCase() === "refunded" ||
-              order.orderStatus?.toLowerCase() === "completed") && (
-                <Popconfirm
-                  title="Xóa đơn hàng"
-                  description="Xóa đơn hàng này khỏi lịch sử mua sắm của bạn?"
-                  onConfirm={() => handleDeleteOrder()}
-                  okText="Xóa"
-                  cancelText="Hủy"
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "3px 10px",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: 600,
+                background: statusBadge.bg,
+                color: statusBadge.color,
+                border: `1px solid ${statusBadge.border}`,
+              }}
+            >
+              {statusBadge.text}
+            </span>
+          </div>
+        </div>
+
+        {/* Card Body - Items */}
+        <div style={{ padding: "16px 18px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {order.items.map((item, index) => {
+              const attrs = getItemAttributes(item);
+              const entries = Object.entries(attrs);
+              const isItemReviewed = item.isReviewed;
+              const isReviewOpen = openReviewProductId === item.subProductId;
+
+              return (
+                <div
+                  key={item.subProductId || index}
+                  style={{
+                    background: "#FAFAFA",
+                    border: "1px solid #F3F4F6",
+                    borderRadius: "8px",
+                    padding: "12px 14px",
+                    transition: "border-color 0.2s ease",
+                  }}
                 >
-                  <Button
-                    type="primary"
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    loading={deleteLoading}
+                  <Row gutter={[16, 12]} align="middle">
+                    <Col>
+                      <Avatar
+                        src={item.image}
+                        size={72}
+                        shape="square"
+                        style={{
+                          borderRadius: "8px",
+                          border: "1px solid #E5E7EB",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Col>
+                    <Col flex="auto">
+                      <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                        <Typography.Text
+                          strong
+                          style={{
+                            fontFamily: "Rubik, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: "#131118",
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: 420,
+                          }}
+                        >
+                          {item.title}
+                        </Typography.Text>
+
+                        {entries.length > 0 && (
+                          <Space wrap size={[4, 4]}>
+                            {entries.map(([key, val]) => (
+                              <Tag
+                                key={key}
+                                style={{
+                                  margin: 0,
+                                  fontSize: "11px",
+                                  padding: "1px 8px",
+                                  borderRadius: "4px",
+                                  background: "#FFFFFF",
+                                  border: "1px solid #E5E7EB",
+                                  color: "#4B5563",
+                                }}
+                              >
+                                {key}: <strong>{val}</strong>
+                              </Tag>
+                            ))}
+                          </Space>
+                        )}
+
+                        <Typography.Text
+                          type="secondary"
+                          style={{ fontSize: "12px", color: "#6B7280" }}
+                        >
+                          Số lượng: <strong style={{ color: "#131118" }}>{item.qty}</strong>
+                        </Typography.Text>
+                      </Space>
+                    </Col>
+
+                    <Col style={{ textAlign: "right" }}>
+                      <div
+                        style={{
+                          fontFamily: "Rubik, sans-serif",
+                          fontWeight: 700,
+                          fontSize: "15px",
+                          color: "#131118",
+                        }}
+                      >
+                        {VND.format(item.totalPrice)}
+                      </div>
+
+                      {order.orderStatus?.toLowerCase() === "completed" && (
+                        <div style={{ marginTop: "8px" }}>
+                          {!isItemReviewed ? (
+                            <Button
+                              size="small"
+                              style={{
+                                borderRadius: "6px",
+                                fontSize: "12px",
+                                fontWeight: 500,
+                                background: isReviewOpen ? "#F3F4F6" : "#131118",
+                                color: isReviewOpen ? "#131118" : "#FFFFFF",
+                                border: isReviewOpen ? "1px solid #E5E7EB" : "none",
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                              }}
+                              onClick={() =>
+                                setOpenReviewProductId(
+                                  isReviewOpen ? null : item.subProductId
+                                )
+                              }
+                            >
+                              {isReviewOpen ? "Đóng đánh giá" : "Viết đánh giá"}
+                            </Button>
+                          ) : (
+                            <span
+                              style={{
+                                color: "#059669",
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              ✓ Đã đánh giá
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </Col>
+                  </Row>
+
+                  {order.orderStatus?.toLowerCase() === "completed" &&
+                    isReviewOpen &&
+                    !isItemReviewed && (
+                      <div
+                        style={{
+                          marginTop: "14px",
+                          paddingTop: "14px",
+                          borderTop: "1px dashed #E5E7EB",
+                        }}
+                      >
+                        <Reviews
+                          subProductId={item.subProductId}
+                          orderId={order.orderId}
+                          isReviewed={item.isReviewed}
+                          onReviewed={async () => {
+                            setOpenReviewProductId(null);
+                            await onReviewSubmitted?.();
+                          }}
+                        />
+                      </div>
+                    )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Card Footer: Summary & Actions */}
+          <div
+            style={{
+              marginTop: "16px",
+              paddingTop: "14px",
+              borderTop: "1px solid #F3F4F6",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            <div>
+              <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                {getOrderStatusDescription(order.orderStatus)}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                <span style={{ fontSize: "13px", color: "#4B5563" }}>
+                  Tổng thanh toán:
+                </span>
+                <span
+                  style={{
+                    fontFamily: "Rubik, sans-serif",
+                    fontSize: "17px",
+                    fontWeight: 700,
+                    color: "#131118",
+                  }}
+                >
+                  {VND.format(order.totalAmount)}
+                </span>
+              </div>
+
+              <Space size="small">
+                <Button
+                  type="default"
+                  size="middle"
+                  icon={<EyeOutlined />}
+                  onClick={handleViewOrderDetails}
+                  loading={loading}
+                  style={{
+                    borderRadius: "8px",
+                    fontWeight: 500,
+                    border: "1px solid #E5E7EB",
+                    color: "#131118",
+                    cursor: "pointer",
+                  }}
+                >
+                  Chi tiết
+                </Button>
+
+                {order.orderStatus?.toLowerCase() === "pending" && (
+                  <Popconfirm
+                    title="Hủy đơn hàng"
+                    description="Bạn có chắc chắn muốn hủy đơn hàng này không?"
+                    onConfirm={() => updateOrderStatus()}
+                    okText="Hủy đơn"
+                    cancelText="Đóng"
+                    okButtonProps={{ danger: true, loading: cancelLoading }}
                   >
-                    Delete Order
-                  </Button>
-                </Popconfirm>
-              )}
-          </Space>
-        </Row>
-      </Card>
+                    <Button
+                      type="default"
+                      danger
+                      size="middle"
+                      icon={<CloseOutlined />}
+                      loading={cancelLoading}
+                      style={{
+                        borderRadius: "8px",
+                        fontWeight: 500,
+                        background: "#FEF2F2",
+                        border: "1px solid #FECACA",
+                        color: "#DC2626",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Hủy đơn
+                    </Button>
+                  </Popconfirm>
+                )}
+
+                {(order.orderStatus?.toLowerCase() === "cancelled" ||
+                  order.orderStatus?.toLowerCase() === "refunded" ||
+                  order.orderStatus?.toLowerCase() === "completed") && (
+                  <Popconfirm
+                    title="Xóa đơn hàng"
+                    description="Xóa đơn hàng này khỏi lịch sử mua sắm của bạn?"
+                    onConfirm={() => handleDeleteOrder()}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      size="middle"
+                      icon={<DeleteOutlined />}
+                      loading={deleteLoading}
+                      style={{
+                        borderRadius: "8px",
+                        fontWeight: 500,
+                        color: "#9CA3AF",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Xóa
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Space>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <OrderDetailModal
         visible={orderDetailVisible}
