@@ -13,6 +13,7 @@ import { useCartOperations } from "@/hooks/useCartOperations";
 import { BiEdit, BiCreditCard } from "react-icons/bi";
 import { FaStar } from "react-icons/fa6";
 import { HiHome } from "react-icons/hi";
+import { IoWarningOutline } from "react-icons/io5";
 import {
   Avatar,
   Button,
@@ -454,9 +455,9 @@ const CheckoutPage = () => {
                         <Typography.Text
                           type="danger"
                           strong
-                          style={{ fontSize: "0.85rem", display: "block" }}
+                          style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                         >
-                          ⚠️ Giỏ hàng có {invalidItems.length} sản phẩm đã hết hàng hoặc bị xóa. Bạn cần xóa chúng để tiếp tục mua hàng.
+                          <IoWarningOutline size={16} /> Giỏ hàng có {invalidItems.length} sản phẩm đã hết hàng hoặc bị xóa. Bạn cần xóa chúng để tiếp tục mua hàng.
                         </Typography.Text>
                       </div>
                     )}

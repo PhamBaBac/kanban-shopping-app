@@ -211,13 +211,13 @@ const ProductItem = (props: Props) => {
       if (hasDiscount) {
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "6px 0 10px" }}>
-            <span style={{ fontSize: "1.35rem", fontWeight: 700, color: "#d32f2f" }}>
+            <span style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--color-destructive, #DC2626)" }}>
               {VND.format(selectedSubProduct.discount!)}
             </span>
             <span style={{ fontSize: "1rem", textDecoration: "line-through", color: "#999" }}>
               {VND.format(selectedSubProduct.price)}
             </span>
-            <Tag color="red" style={{ fontWeight: 600 }}>
+            <Tag color="error" style={{ fontWeight: 600 }}>
               -{Math.round(((selectedSubProduct.price - selectedSubProduct.discount!) / selectedSubProduct.price) * 100)}%
             </Tag>
           </div>
@@ -225,7 +225,7 @@ const ProductItem = (props: Props) => {
       }
       return (
         <div style={{ margin: "6px 0 10px" }}>
-          <span style={{ fontSize: "1.35rem", fontWeight: 700, color: "#d32f2f" }}>
+          <span style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--color-primary, #131118)" }}>
             {VND.format(selectedSubProduct.price)}
           </span>
         </div>
@@ -274,10 +274,10 @@ const ProductItem = (props: Props) => {
           const minPrice = Math.min(...validItemPrices);
           const maxPrice = Math.max(...validItemPrices);
           if (minPrice === maxPrice) {
-            return <strong style={{ color: "#d32f2f", whiteSpace: "nowrap" }}>{VND.format(minPrice)}</strong>;
+            return <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>{VND.format(minPrice)}</strong>;
           }
           return (
-            <strong style={{ color: "#d32f2f", whiteSpace: "nowrap" }}>
+            <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>
               {`${VND.format(minPrice)} - ${VND.format(maxPrice)}`}
             </strong>
           );
@@ -296,7 +296,7 @@ const ProductItem = (props: Props) => {
       if (maxOriginal > minEffective) {
         return (
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "nowrap", whiteSpace: "nowrap" }}>
-            <strong style={{ color: "#d32f2f" }}>{VND.format(minEffective)}</strong>
+            <strong style={{ color: "var(--color-destructive, #DC2626)" }}>{VND.format(minEffective)}</strong>
             <span
               style={{
                 textDecoration: "line-through",
@@ -309,12 +309,12 @@ const ProductItem = (props: Props) => {
           </div>
         );
       }
-      return <strong style={{ color: "#d32f2f", whiteSpace: "nowrap" }}>{VND.format(minEffective)}</strong>;
+      return <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>{VND.format(minEffective)}</strong>;
     }
 
     // Nếu các biến thể có khoảng giá khác nhau (minEffective !== maxEffective)
     return (
-      <strong style={{ color: "#d32f2f", whiteSpace: "nowrap" }}>
+      <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>
         {`${VND.format(minEffective)} - ${VND.format(maxEffective)}`}
       </strong>
     );
@@ -492,7 +492,7 @@ const ProductItem = (props: Props) => {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           {supplier && (
-            <div style={{ fontSize: "0.9rem", color: "#1677ff", fontWeight: 500, marginBottom: 2 }}>
+            <div style={{ fontSize: "0.9rem", color: "var(--color-muted-foreground, #6B7280)", fontWeight: 500, marginBottom: 2 }}>
               {supplier.name}
             </div>
           )}
@@ -560,7 +560,7 @@ const ProductItem = (props: Props) => {
                                       width: 26,
                                       height: 26,
                                       borderRadius: 5,
-                                      border: isSelected ? "2px solid #131118" : "1px solid rgba(0, 0, 0, 0.12)",
+                                      border: isSelected ? "2px solid var(--color-primary, #131118)" : "1px solid rgba(0, 0, 0, 0.12)",
                                       boxShadow: isSelected
                                         ? "0 3px 8px rgba(0, 0, 0, 0.22)"
                                         : "0 1px 3px rgba(0, 0, 0, 0.08)",

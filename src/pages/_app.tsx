@@ -22,7 +22,7 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
       document.body.style.color = "rgba(255, 255, 255, 0.85)";
     } else {
       document.body.style.backgroundColor = "#ffffff";
-      document.body.style.color = "rgba(0, 0, 0, 0.88)";
+      document.body.style.color = "#131118";
     }
   }, [mode]);
 
@@ -31,6 +31,16 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
       theme={{
         token: {
           colorPrimary: "#131118",
+          colorInfo: "#131118",
+          colorSuccess: "#10B981",
+          colorWarning: "#F59E0B",
+          colorError: "#DC2626",
+          colorLink: "#131118",
+          colorLinkHover: "#383E49",
+          fontFamily: "'Nunito Sans', sans-serif",
+          borderRadius: 8,
+          borderRadiusLG: 12,
+          borderRadiusSM: 6,
         },
         algorithm:
           mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
@@ -41,18 +51,42 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
             siderBg: "transparent",
           },
           Card: {
-            colorBgContainer: "transparent",
+            colorBgContainer: mode === "dark" ? "#1d1d1d" : "#FFFFFF",
+            colorBorderSecondary: mode === "dark" ? "#303030" : "#E5E7EB",
+            borderRadiusLG: 12,
+          },
+          Button: {
+            colorPrimary: "#131118",
+            colorPrimaryHover: "#27272A",
+            colorPrimaryActive: "#000000",
+            borderRadius: 8,
+            controlHeightLG: 44,
+          },
+          Input: {
+            colorPrimary: "#131118",
+            colorPrimaryHover: "#131118",
+            borderRadius: 8,
+            controlHeight: 40,
+            controlHeightLG: 44,
           },
           Tabs: {
             cardBg: "transparent",
+            colorPrimary: "#131118",
+            itemSelectedColor: "#131118",
+            itemHoverColor: "#383E49",
           },
           Switch: {
-            colorPrimary: "#34C759",
-            colorPrimaryHover: "#2DAF51",
+            colorPrimary: "#131118",
+            colorPrimaryHover: "#27272A",
           },
-          Input: {
-            colorPrimary: "#34C759",
-            colorPrimaryHover: "#34C759",
+          Badge: {
+            colorError: "#DC2626",
+          },
+          Checkbox: {
+            colorPrimary: "#131118",
+          },
+          Pagination: {
+            colorPrimary: "#131118",
           },
         },
       }}

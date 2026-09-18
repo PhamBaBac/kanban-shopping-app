@@ -8,6 +8,12 @@ import type { DocumentContext } from 'next/document';
 const MyDocument = () => (
 	<Html lang='vi'>
 		<Head>
+			<link rel="preconnect" href="https://fonts.googleapis.com" />
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+			<link
+				href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300..800;1,6..12,300..800&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+				rel="stylesheet"
+			/>
 			<link
 				rel='stylesheet'
 				href='https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css'

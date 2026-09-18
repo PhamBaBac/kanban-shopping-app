@@ -153,7 +153,7 @@ const HeaderComponent = () => {
             <div className="col text-right">
               <Space>
                 <Dropdown
-                  dropdownRender={() => (
+                  popupRender={() => (
                     <Card
                       className="shadow"
                       style={{
@@ -349,7 +349,7 @@ const HeaderComponent = () => {
                     </Card>
                   )}
                 >
-                  <Badge count={cart.length}>
+                  <Badge count={cart.length} color="#131118">
                     <BiCart size={24} />
                   </Badge>
                 </Dropdown>

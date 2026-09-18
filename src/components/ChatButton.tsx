@@ -99,8 +99,8 @@ const ChatButton = () => {
           borderRadius: "50%",
           border: "none",
           cursor: "pointer",
-          background: "linear-gradient(135deg, #7c3aed 0%, #db2777 100%)",
-          boxShadow: "0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(124,58,237,0.15)",
+          background: "linear-gradient(135deg, #131118 0%, #27272A 100%)",
+          boxShadow: "0 4px 20px rgba(19, 17, 24, 0.35), 0 0 0 3px rgba(19, 17, 24, 0.1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -108,12 +108,12 @@ const ChatButton = () => {
           transition: "transform 0.2s ease, box-shadow 0.2s ease",
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 28px rgba(124, 58, 237, 0.7), 0 0 0 6px rgba(124,58,237,0.2)";
+          (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(19, 17, 24, 0.5), 0 0 0 4px rgba(19, 17, 24, 0.15)";
         }}
         onMouseLeave={e => {
           (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(124, 58, 237, 0.5), 0 0 0 4px rgba(124,58,237,0.15)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(19, 17, 24, 0.35), 0 0 0 3px rgba(19, 17, 24, 0.1)";
         }}
       >
         <RiSparklingFill size={28} />
@@ -122,7 +122,7 @@ const ChatButton = () => {
       <Modal
         title={
           <Space>
-            <Avatar size="small" style={{ background: "linear-gradient(135deg, #7c3aed, #db2777)" }}>
+            <Avatar size="small" style={{ background: "linear-gradient(135deg, #131118, #27272A)" }}>
               <RiSparklingFill />
             </Avatar>
             <Text strong>Hỗ trợ khách hàng</Text>

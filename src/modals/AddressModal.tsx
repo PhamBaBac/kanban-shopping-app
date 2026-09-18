@@ -21,7 +21,6 @@ const AddressModal = (props: Props) => {
 		<Modal
 			onCancel={handleClose}
 			open={visible}
-			onClose={handleClose}
 			footer={null}>
 			<AddNewAddress
 				onSelectAddress={(val) => {

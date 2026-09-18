@@ -1,9 +1,187 @@
-* {
-  /* background-color: white;  */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300..800;1,6..12,300..800&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+:root {
+  /* Color Palette - Minimalist Monochrome (Black & White) */
+  --color-primary: #131118;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #27272A;
+  --color-on-secondary: #FFFFFF;
+  --color-accent: #131118;
+  --color-on-accent: #FFFFFF;
+  --color-background: #FFFFFF;
+  --color-foreground: #131118;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #131118;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  --color-destructive: #DC2626;
+  --color-on-destructive: #FFFFFF;
+  --color-ring: #131118;
+
+  /* Typography - MASTER.md */
+  --font-heading: 'Rubik', sans-serif;
+  --font-body: 'Nunito Sans', sans-serif;
+
+  /* Spacing Variables - MASTER.md */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Shadow Depths - MASTER.md */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="dark"] {
+  --color-primary: #FFFFFF;
+  --color-secondary: #E5E7EB;
+  --color-accent: #FFFFFF;
+  --color-background: #141414;
+  --color-foreground: rgba(255, 255, 255, 0.85);
+  --color-card: #1f1f1f;
+  --color-card-foreground: rgba(255, 255, 255, 0.85);
+  --color-muted: #262626;
+  --color-muted-foreground: #8c8c8c;
+  --color-border: #303030;
+  --color-ring: #FFFFFF;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+h1, h2, h3, h4, h5, h6,
+.ant-typography h1, .ant-typography h2, .ant-typography h3,
+.ant-typography h4, .ant-typography h5, .ant-typography h6,
+.ant-typography-title {
+  font-family: var(--font-heading) !important;
+}
+
+/* Clickable elements cursor-pointer & smooth transition */
+button,
+.ant-btn,
+.btn,
+.btn-primary,
+.btn-secondary,
+.product-item,
+.card,
+.ant-card,
+.ant-tabs-tab,
+.ant-pagination-item,
+.ant-pagination-prev,
+.ant-pagination-next,
+.ant-dropdown-menu-item,
+.ant-select-item,
+.ant-checkbox-wrapper,
+.ant-radio-wrapper,
+a,
+[role="button"],
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+button,
+.ant-btn,
+.btn,
+.product-item,
+.card,
+.ant-card,
+a {
+  transition: all 200ms ease;
+}
+
+/* Button Specs - MASTER.md */
+.btn-primary,
+.ant-btn-primary {
+  background: var(--color-primary, #131118) !important;
+  border-color: var(--color-primary, #131118) !important;
+  color: #FFFFFF !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 200ms ease !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled),
+.ant-btn-primary:hover:not(:disabled) {
+  background: #27272A !important;
+  border-color: #27272A !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active:not(:disabled),
+.ant-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: transparent !important;
+  color: var(--color-primary, #131118) !important;
+  border: 1px solid var(--color-primary, #131118) !important;
+  padding: 8px 16px;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 200ms ease !important;
+  cursor: pointer !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #F3F4F6 !important;
+  transform: translateY(-1px);
+}
+
+/* Card & Product Item Specs - MASTER.md */
+.card,
+.ant-card {
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-sm);
+  transition: all 200ms ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Input Specs - MASTER.md */
+.input,
+.ant-input,
+.ant-input-affix-wrapper {
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  transition: border-color 200ms ease, box-shadow 200ms ease !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--color-primary, #131118) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(19, 17, 24, 0.15) !important;
+}
+
+/* Modal Specs - MASTER.md */
+.ant-modal-mask {
+  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.ant-modal-content {
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-xl) !important;
 }
 
 .title-danger {
-  color: coral;
+  color: var(--color-destructive, #DC2626);
 }
 
 .section {
@@ -36,14 +214,16 @@
 
 .product-item {
   position: relative;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 12px !important;
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  transition: all 0.25s ease-in-out;
+  background-color: var(--color-card, #ffffff);
+  box-shadow: var(--shadow-sm);
+  transition: all 200ms ease;
+  cursor: pointer;
 }
 
 .product-item .button-container {
@@ -52,21 +232,22 @@
 
 .product-item:hover .button-container {
   display: block;
-  transition: 530ms;
+  transition: 200ms ease;
 }
 
 .product-item:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: #9CA3AF;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 body[data-theme="dark"] .product-item {
   border-color: #303030;
-  background-color: #141414;
+  background-color: #1f1f1f;
 }
 
 body[data-theme="dark"] .product-item:hover {
-  border-color: #434343;
+  border-color: #6B7280;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
@@ -335,7 +516,7 @@ body[data-theme="dark"] .ant-affix .container-fluid {
 }
 
 [data-theme="dark"] .social-login-btn:hover {
-  border-color: #34c759 !important;
+  border-color: #059669 !important;
 }
 
 [data-theme="dark"] .social-login-btn:hover span {

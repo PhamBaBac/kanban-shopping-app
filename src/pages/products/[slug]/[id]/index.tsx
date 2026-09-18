@@ -266,7 +266,7 @@ const ProductDetail = (props: any) => {
       }
       return (
         <Space>
-          <Title className="mt-0" style={{ fontWeight: 400, color: "#d32f2f" }} level={3}>
+          <Title className="mt-0" style={{ fontWeight: 600, color: "var(--color-primary, #131118)" }} level={3}>
             {VND.format(minPrice)}
           </Title>
           <Title
@@ -476,7 +476,7 @@ const ProductDetail = (props: any) => {
                   </Typography.Title>
                   {supplier && (
                     <div className="mt-1 mb-2">
-                      <span style={{ color: "#1677ff", fontWeight: 500, fontSize: "0.95rem" }}>
+                      <span style={{ color: "var(--color-muted-foreground, #6B7280)", fontWeight: 500, fontSize: "0.95rem" }}>
                         {supplier.name}
                       </span>
                     </div>
@@ -558,7 +558,7 @@ const ProductDetail = (props: any) => {
                                         height: 32,
                                         borderRadius: 6,
                                         border: isSelected
-                                          ? "2px solid #131118"
+                                          ? "2px solid var(--color-primary, #131118)"
                                           : "1px solid rgba(0, 0, 0, 0.12)",
                                         boxShadow: isSelected
                                           ? "0 4px 10px rgba(0, 0, 0, 0.22)"

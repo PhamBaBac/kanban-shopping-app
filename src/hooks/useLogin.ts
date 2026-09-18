@@ -39,8 +39,8 @@ export const useLogin = (): UseLoginReturn => {
     verifyEmailCode,
   } = useAuth();
 
-  const id = searchParams.get("productId");
-  const slug = searchParams.get("slug");
+  const id = searchParams?.get("productId");
+  const slug = searchParams?.get("slug");
 
   const login = async (values: { email: string; password: string }) => {
     setIsLoading(true);
