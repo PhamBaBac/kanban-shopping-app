@@ -84,12 +84,7 @@ export const useShop = ({
       setIsLoading(true);
       setError(null);
       try {
-        const [categoriesRes, filterValuesRes] = await Promise.all([
-          shopService.getCategoriesForFilter(),
-          shopService.getFilterValues(),
-        ]);
-
-        setCategories(categoriesRes);
+        const filterValuesRes = await shopService.getFilterValues();
         setFilterValues(filterValuesRes);
 
         // Fetch products with initial filters if provided

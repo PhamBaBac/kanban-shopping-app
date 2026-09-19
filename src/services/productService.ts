@@ -41,6 +41,8 @@ export interface ProductFilter {
   limit?: number;
 }
 
+const supplierCache = new Map<string, Promise<SupplierModel>>();
+
 export const productService = {
   // Lấy tất cả sản phẩm
   getAllProducts: async (filter?: ProductFilter): Promise<Product[]> => {
@@ -97,8 +99,18 @@ export const productService = {
 
   // Lấy thông tin supplier
   getSupplier: async (supplierId: string): Promise<SupplierModel> => {
-    const res = await handleAPI(`/suppliers/${supplierId}`);
-    return res.data;
+    if (!supplierId) return null as any;
+    if (supplierCache.has(supplierId)) {
+      return supplierCache.get(supplierId)!;
+    }
+    const promise = handleAPI(`/suppliers/${supplierId}`)
+      .then((res) => res.data)
+      .catch((err) => {
+        supplierCache.delete(supplierId);
+        throw err;
+      });
+    supplierCache.set(supplierId, promise);
+    return promise;
   },
 
   // Lấy tất cả reviews cho sub products

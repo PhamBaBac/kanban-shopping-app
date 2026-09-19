@@ -267,50 +267,50 @@ const HeaderComponent = () => {
                                 </>
                               }
                               description={
-                                 <div
-                                   style={{
-                                     display: "flex",
-                                     alignItems: "center",
-                                     gap: "8px",
-                                     flexWrap: "wrap",
-                                     marginTop: 2,
-                                   }}
-                                 >
-                                   {item.size && (
-                                     <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
-                                       <span style={{ color: "#333", fontWeight: 500 }}>{item.size}</span>
-                                     </Typography.Text>
-                                   )}
-                                   {item.size && item.color && <Divider type="vertical" style={{ margin: "0 4px" }} />}
-                                   {item.color && (
-                                     <div
-                                       style={{
-                                         display: "flex",
-                                         alignItems: "center",
-                                         gap: "6px",
-                                       }}
-                                     >
-                                       {/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim()) ? (
-                                         <Tooltip title={item.color}>
-                                           <div
-                                             style={{
-                                               width: 16,
-                                               height: 16,
-                                               backgroundColor: item.color,
-                                               border: "1px solid #d9d9d9",
-                                               borderRadius: 3,
-                                               display: "inline-block",
-                                             }}
-                                           />
-                                         </Tooltip>
-                                       ) : (
-                                         <Typography.Text style={{ fontSize: "0.85rem", fontWeight: 500, color: "#333" }}>
-                                           {item.color}
-                                         </Typography.Text>
-                                       )}
-                                     </div>
-                                   )}
-                                 </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    flexWrap: "wrap",
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  {item.size && (
+                                    <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
+                                      <span style={{ color: "#333", fontWeight: 500 }}>{item.size}</span>
+                                    </Typography.Text>
+                                  )}
+                                  {item.size && item.color && <Divider type="vertical" style={{ margin: "0 4px" }} />}
+                                  {item.color && (
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                      }}
+                                    >
+                                      {/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim()) ? (
+                                        <Tooltip title={item.color}>
+                                          <div
+                                            style={{
+                                              width: 16,
+                                              height: 16,
+                                              backgroundColor: item.color,
+                                              border: "1px solid #d9d9d9",
+                                              borderRadius: 3,
+                                              display: "inline-block",
+                                            }}
+                                          />
+                                        </Tooltip>
+                                      ) : (
+                                        <Typography.Text style={{ fontSize: "0.85rem", fontWeight: 500, color: "#333" }}>
+                                          {item.color}
+                                        </Typography.Text>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               }
                             />
                           </List.Item>
@@ -340,10 +340,10 @@ const HeaderComponent = () => {
                           {!auth.accessToken
                             ? "Please login to checkout"
                             : cart.length === 0
-                            ? "Your cart is empty"
-                            : hasInvalidInCart
-                            ? "Vui lòng xóa sản phẩm không khả dụng"
-                            : `Checkout (${cart.length} items)`}
+                              ? "Your cart is empty"
+                              : hasInvalidInCart
+                                ? "Vui lòng xóa sản phẩm không khả dụng"
+                                : `Checkout (${cart.length} items)`}
                         </Button>
                       </div>
                     </Card>

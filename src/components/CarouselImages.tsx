@@ -33,19 +33,38 @@ const CarouselImages = (props: Props) => {
   }, [items]);
 
   return (
-    <Carousel autoplay className="mt-4">
+    <Carousel autoplay className="mt-3">
       {images.map((groups, index) => (
-        <div key={`image${index}`}>
-          <Space key={`groups${index}`}>
-            {groups.map((item) => (
-              <a key={item.id} onClick={() => onClick(item)}>
+        <div key={`image-${index}`}>
+          <div className="d-flex gap-2 justify-content-center py-1">
+            {groups.map((item, imgIdx) => (
+              <div
+                key={`${item.id}-${imgIdx}`}
+                onClick={() => onClick(item)}
+                style={{
+                  cursor: "pointer",
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  border: "1px solid #E5E7EB",
+                  padding: 2,
+                  transition: "all 0.2s ease",
+                  backgroundColor: "#FFFFFF",
+                }}
+              >
                 <img
                   src={item.imgURL}
-                  style={{ width: 100, height: 120, objectFit: "cover" }}
+                  alt={item.title || "product thumbnail"}
+                  style={{
+                    width: 72,
+                    height: 72,
+                    objectFit: "cover",
+                    borderRadius: 6,
+                    display: "block",
+                  }}
                 />
-              </a>
+              </div>
             ))}
-          </Space>
+          </div>
         </div>
       ))}
     </Carousel>

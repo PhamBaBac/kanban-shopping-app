@@ -59,9 +59,18 @@ body {
   color: var(--color-foreground);
 }
 
-h1, h2, h3, h4, h5, h6,
-.ant-typography h1, .ant-typography h2, .ant-typography h3,
-.ant-typography h4, .ant-typography h5, .ant-typography h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.ant-typography h1,
+.ant-typography h2,
+.ant-typography h3,
+.ant-typography h4,
+.ant-typography h5,
+.ant-typography h6,
 .ant-typography-title {
   font-family: var(--font-heading) !important;
 }
@@ -541,4 +550,115 @@ body[data-theme="dark"] .ant-affix .container-fluid {
 .filter-panel .ant-collapse .ant-collapse-content-box {
   padding-left: 0 !important;
   padding-right: 0 !important;
-}
+}
+
+/* Filter Panel Category Hover */
+.filter-category-item:hover {
+  background-color: #F9FAFB;
+}
+
+/* Custom Pagination */
+.custom-pagination .ant-pagination-item {
+  border-radius: 8px !important;
+  border: 1px solid #E5E7EB !important;
+  font-family: var(--font-heading, 'Rubik', sans-serif);
+}
+
+.custom-pagination .ant-pagination-item-active {
+  background-color: #131118 !important;
+  border-color: #131118 !important;
+}
+
+.custom-pagination .ant-pagination-item-active a {
+  color: #FFFFFF !important;
+}
+
+.custom-pagination .ant-pagination-prev .ant-pagination-item-link,
+.custom-pagination .ant-pagination-next .ant-pagination-item-link {
+  border-radius: 8px !important;
+  border: 1px solid #E5E7EB !important;
+}
+
+/* Flex gap utilities for Bootstrap 4 */
+.gap-1 {
+  gap: 0.25rem !important;
+}
+
+.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.gap-3 {
+  gap: 1rem !important;
+}
+
+.gap-4 {
+  gap: 1.5rem !important;
+}
+
+.gap-5 {
+  gap: 3rem !important;
+}
+
+/* Tabs Minimalist Styling & Focus Outline Elimination */
+.ant-tabs-tab,
+.ant-tabs-tab *,
+.ant-tabs-tab-btn,
+.ant-tabs-tab-btn:focus,
+.ant-tabs-tab-btn:focus-visible,
+.ant-tabs-tab-btn:active,
+.ant-tabs-tab:focus,
+.ant-tabs-tab:focus-visible,
+.ant-tabs-tab:focus-within,
+.ant-tabs-nav,
+.ant-tabs-nav-wrap,
+.ant-tabs-nav-list,
+.ant-tabs-tab button,
+.ant-tabs-tab [role="tab"],
+.ant-tabs-tab button:focus,
+.ant-tabs-tab [role="tab"]:focus,
+.ant-tabs-tab button:focus-visible,
+.ant-tabs-tab [role="tab"]:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.ant-tabs-tab-btn {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: color 0.2s ease !important;
+  user-select: none;
+}
+
+.ant-tabs-ink-bar {
+  background: #131118 !important;
+  height: 2px !important;
+  border-radius: 2px !important;
+}
+
+.ant-tabs-tab .ant-tabs-tab-btn {
+  color: #6B7280;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #131118 !important;
+  font-weight: 600 !important;
+}
+
+.ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: #131118 !important;
+}
+
+/* Breadcrumb Styling */
+.ant-breadcrumb-separator {
+  color: #D1D5DB !important;
+}
+
+.ant-breadcrumb a:hover {
+  color: #131118 !important;
+}

@@ -664,8 +664,10 @@ const CheckoutPage = () => {
                       borderRadius: "8px 0 0 8px",
                       borderColor: "#E5E7EB",
                       fontSize: "14px",
+                      marginRight: "10px",
                     }}
                   />
+                  
                   <Button
                     loading={isCheckingCode}
                     onClick={handleCheckDiscountCode}

@@ -79,6 +79,14 @@ export const shopService = {
     return res.data || [];
   },
 
+  // Lấy chỉ nhánh danh mục (cha và các con liên quan)
+  getCategoryBranch: async (catId: string): Promise<CategoyModel[]> => {
+    const res = await handleAPI(
+      `/public/categories/branch?catId=${encodeURIComponent(catId)}`
+    );
+    return res.data || [];
+  },
+
   // Lấy filter values (colors, sizes, prices) tương ứng với catIds và search
   getFilterValues: async (
     catIds?: string[],

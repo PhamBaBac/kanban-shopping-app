@@ -449,186 +449,186 @@ const ProductItem = (props: Props) => {
         </div>
       </div>
 
-    {/* Quick View Modal */}
-    <Modal
-      open={showQuickView}
-      onCancel={(e) => {
-        e?.stopPropagation?.();
-        setShowQuickView(false);
-      }}
-      footer={null}
-      width={720}
-      destroyOnClose
-    >
-      <div
-        style={{ display: "flex", gap: 24, padding: "8px 4px" }}
-        onClick={(e) => e.stopPropagation()}
+      {/* Quick View Modal */}
+      <Modal
+        open={showQuickView}
+        onCancel={(e) => {
+          e?.stopPropagation?.();
+          setShowQuickView(false);
+        }}
+        footer={null}
+        width={720}
+        destroyOnClose
       >
-        <div style={{ width: 260, flexShrink: 0 }}>
-          <div
-            style={{
-              width: "100%",
-              height: 320,
-              background: "#f8f9fa",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-            }}
-          >
-            <img
-              src={
-                selectedSubProduct?.imgURL ||
-                (selectedSubProduct?.images && selectedSubProduct.images.length > 0
-                  ? selectedSubProduct.images[0]
-                  : null) ||
-                (item.images && item.images.length > 0 ? item.images[0] : "")
-              }
-              alt={item.title}
-              style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-            />
-          </div>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {supplier && (
-            <div style={{ fontSize: "0.9rem", color: "var(--color-muted-foreground, #6B7280)", fontWeight: 500, marginBottom: 2 }}>
-              {supplier.name}
-            </div>
-          )}
-          <Title level={4} style={{ margin: "0 0 6px 0", fontWeight: 600 }}>
-            {item.title}
-          </Title>
-
-          {renderModalPrice()}
-
-          {selectedSubProduct && (
-            <div style={{ marginBottom: 10 }}>
-              <Tag color={selectedSubProduct.stock > 0 ? "success" : "error"}>
-                {selectedSubProduct.stock > 0 ? `Còn hàng (${selectedSubProduct.stock})` : "Hết hàng"}
-              </Tag>
-            </div>
-          )}
-
-          <Paragraph
-            ellipsis={{ rows: 2, tooltip: item.description }}
-            type="secondary"
-            style={{ fontSize: "0.9rem", marginBottom: 12 }}
-          >
-            {item.description}
-          </Paragraph>
-
-          {quickViewLoading ? (
-            <div style={{ padding: "16px 0", textAlign: "center" }}>
-              <Spin />
-            </div>
-          ) : attributeKeys.length > 0 ? (
-            <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 10 }}>
-              {attributeKeys.map((key) => {
-                const values = getAvailableValuesForKey(key);
-                if (values.length === 0) return null;
-                const isColor = isColorAttribute(key, values);
-
-                return (
-                  <div key={key} style={{ marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 6, color: "#444" }}>
-                      {key}:
-                    </div>
-                    {isColor ? (
-                      <Space size={10} wrap>
-                        {values.map((colorVal) => {
-                          const isSelected = currentAttributes[key] === colorVal;
-                          const isHex = isHexColor(colorVal);
-
-                          return (
-                            <Tooltip key={colorVal} title={colorVal}>
-                              <div
-                                onClick={() => handleSelectAttribute(key, colorVal)}
-                                style={{
-                                  cursor: "pointer",
-                                  padding: 2,
-                                  borderRadius: 5,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                {isHex ? (
-                                  <div
-                                    style={{
-                                      background: colorVal,
-                                      width: 26,
-                                      height: 26,
-                                      borderRadius: 5,
-                                      border: isSelected ? "2px solid var(--color-primary, #131118)" : "1px solid rgba(0, 0, 0, 0.12)",
-                                      boxShadow: isSelected
-                                        ? "0 3px 8px rgba(0, 0, 0, 0.22)"
-                                        : "0 1px 3px rgba(0, 0, 0, 0.08)",
-                                      transform: isSelected ? "scale(1.05)" : "none",
-                                      transition: "all 0.2s ease",
-                                    }}
-                                  />
-                                ) : (
-                                  <Button
-                                    size="small"
-                                    type={isSelected ? "primary" : "default"}
-                                    style={{ borderRadius: 6 }}
-                                  >
-                                    {colorVal}
-                                  </Button>
-                                )}
-                              </div>
-                            </Tooltip>
-                          );
-                        })}
-                      </Space>
-                    ) : (
-                      <Space size={8} wrap>
-                        {values.map((val) => {
-                          const isSelected = currentAttributes[key] === val;
-                          return (
-                            <Button
-                              key={val}
-                              size="small"
-                              type={isSelected ? "primary" : "default"}
-                              onClick={() => handleSelectAttribute(key, val)}
-                              style={{
-                                borderRadius: 6,
-                                fontWeight: isSelected ? 600 : 400,
-                                height: 30,
-                                padding: "0 12px",
-                              }}
-                            >
-                              {val}
-                            </Button>
-                          );
-                        })}
-                      </Space>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <div style={{ marginTop: 18 }}>
-            <Button
-              type="primary"
-              size="large"
-              style={{ width: "100%", borderRadius: 8, height: 40, fontWeight: 500 }}
-              onClick={() => {
-                const slug = item.slug || "detail";
-                router.push(`/products/${slug}/${item.id}`);
+        <div
+          style={{ display: "flex", gap: 24, padding: "8px 4px" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ width: 260, flexShrink: 0 }}>
+            <div
+              style={{
+                width: "100%",
+                height: 320,
+                background: "#f8f9fa",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
               }}
             >
-              Xem chi tiết sản phẩm &rarr;
-            </Button>
+              <img
+                src={
+                  selectedSubProduct?.imgURL ||
+                  (selectedSubProduct?.images && selectedSubProduct.images.length > 0
+                    ? selectedSubProduct.images[0]
+                    : null) ||
+                  (item.images && item.images.length > 0 ? item.images[0] : "")
+                }
+                alt={item.title}
+                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+              />
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {supplier && (
+              <div style={{ fontSize: "0.9rem", color: "var(--color-muted-foreground, #6B7280)", fontWeight: 500, marginBottom: 2 }}>
+                {supplier.name}
+              </div>
+            )}
+            <Title level={4} style={{ margin: "0 0 6px 0", fontWeight: 600 }}>
+              {item.title}
+            </Title>
+
+            {renderModalPrice()}
+
+            {selectedSubProduct && (
+              <div style={{ marginBottom: 10 }}>
+                <Tag color={selectedSubProduct.stock > 0 ? "success" : "error"}>
+                  {selectedSubProduct.stock > 0 ? `Còn hàng (${selectedSubProduct.stock})` : "Hết hàng"}
+                </Tag>
+              </div>
+            )}
+
+            <Paragraph
+              ellipsis={{ rows: 2, tooltip: item.description }}
+              type="secondary"
+              style={{ fontSize: "0.9rem", marginBottom: 12 }}
+            >
+              {item.description}
+            </Paragraph>
+
+            {quickViewLoading ? (
+              <div style={{ padding: "16px 0", textAlign: "center" }}>
+                <Spin />
+              </div>
+            ) : attributeKeys.length > 0 ? (
+              <div style={{ borderTop: "1px solid #f0f0f0", paddingTop: 10 }}>
+                {attributeKeys.map((key) => {
+                  const values = getAvailableValuesForKey(key);
+                  if (values.length === 0) return null;
+                  const isColor = isColorAttribute(key, values);
+
+                  return (
+                    <div key={key} style={{ marginBottom: 10 }}>
+                      <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 6, color: "#444" }}>
+                        {key}:
+                      </div>
+                      {isColor ? (
+                        <Space size={10} wrap>
+                          {values.map((colorVal) => {
+                            const isSelected = currentAttributes[key] === colorVal;
+                            const isHex = isHexColor(colorVal);
+
+                            return (
+                              <Tooltip key={colorVal} title={colorVal}>
+                                <div
+                                  onClick={() => handleSelectAttribute(key, colorVal)}
+                                  style={{
+                                    cursor: "pointer",
+                                    padding: 2,
+                                    borderRadius: 5,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {isHex ? (
+                                    <div
+                                      style={{
+                                        background: colorVal,
+                                        width: 26,
+                                        height: 26,
+                                        borderRadius: 5,
+                                        border: isSelected ? "2px solid var(--color-primary, #131118)" : "1px solid rgba(0, 0, 0, 0.12)",
+                                        boxShadow: isSelected
+                                          ? "0 3px 8px rgba(0, 0, 0, 0.22)"
+                                          : "0 1px 3px rgba(0, 0, 0, 0.08)",
+                                        transform: isSelected ? "scale(1.05)" : "none",
+                                        transition: "all 0.2s ease",
+                                      }}
+                                    />
+                                  ) : (
+                                    <Button
+                                      size="small"
+                                      type={isSelected ? "primary" : "default"}
+                                      style={{ borderRadius: 6 }}
+                                    >
+                                      {colorVal}
+                                    </Button>
+                                  )}
+                                </div>
+                              </Tooltip>
+                            );
+                          })}
+                        </Space>
+                      ) : (
+                        <Space size={8} wrap>
+                          {values.map((val) => {
+                            const isSelected = currentAttributes[key] === val;
+                            return (
+                              <Button
+                                key={val}
+                                size="small"
+                                type={isSelected ? "primary" : "default"}
+                                onClick={() => handleSelectAttribute(key, val)}
+                                style={{
+                                  borderRadius: 6,
+                                  fontWeight: isSelected ? 600 : 400,
+                                  height: 30,
+                                  padding: "0 12px",
+                                }}
+                              >
+                                {val}
+                              </Button>
+                            );
+                          })}
+                        </Space>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <div style={{ marginTop: 18 }}>
+              <Button
+                type="primary"
+                size="large"
+                style={{ width: "100%", borderRadius: 8, height: 40, fontWeight: 500 }}
+                onClick={() => {
+                  const slug = item.slug || "detail";
+                  router.push(`/products/${slug}/${item.id}`);
+                }}
+              >
+                Xem chi tiết sản phẩm &rarr;
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </Modal>
-  </>
-);
+      </Modal>
+    </>
+  );
 };
 
 export default ProductItem;

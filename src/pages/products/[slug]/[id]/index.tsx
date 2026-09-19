@@ -28,6 +28,8 @@ import Link from "next/link";
 import { IoAddSharp, IoHeartOutline } from "react-icons/io5";
 import { LuMinus } from "react-icons/lu";
 import { PiCableCar } from "react-icons/pi";
+import { FiTruck, FiShield, FiRefreshCw } from "react-icons/fi";
+import { HiOutlineHome } from "react-icons/hi2";
 import { useSelector } from "react-redux";
 
 const { Text, Paragraph, Title } = Typography;
@@ -230,27 +232,71 @@ const ProductDetail = (props: any) => {
 
   const renderPrice = () => {
     if (subProductSelected) {
+      const hasDiscount =
+        subProductSelected.discount &&
+        subProductSelected.discount < subProductSelected.price;
+      const discountPercent = hasDiscount
+        ? Math.round(
+          ((subProductSelected.price - subProductSelected.discount!) /
+            subProductSelected.price) *
+          100
+        )
+        : 0;
+
       return (
-        <Space>
-          <Title className="mt-0" style={{ fontWeight: 400 }} level={3}>
+        <div
+          className="my-2"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontSize: "1.9rem",
+              fontWeight: 700,
+              color: hasDiscount ? "#DC2626" : "#131118",
+              lineHeight: 1,
+            }}
+          >
             {VND.format(
               subProductSelected.discount ?? subProductSelected.price
             )}
-          </Title>
-          {subProductSelected.discount && subProductSelected.discount < subProductSelected.price && (
-            <Title
-              type="secondary"
-              className="mt-0"
-              style={{
-                fontWeight: 300,
-                textDecoration: "line-through",
-              }}
-              level={3}
-            >
-              {VND.format(subProductSelected.price)}
-            </Title>
+          </span>
+          {hasDiscount && (
+            <>
+              <span
+                style={{
+                  fontSize: "1.1rem",
+                  color: "#9CA3AF",
+                  textDecoration: "line-through",
+                  fontWeight: 400,
+                  lineHeight: 1,
+                }}
+              >
+                {VND.format(subProductSelected.price)}
+              </span>
+              <Tag
+                color="error"
+                style={{
+                  margin: 0,
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  padding: "2px 8px",
+                  fontSize: "0.8rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  lineHeight: 1.4,
+                }}
+              >
+                -{discountPercent}%
+              </Tag>
+            </>
           )}
-        </Space>
+        </div>
       );
     }
 
@@ -259,35 +305,66 @@ const ProductDetail = (props: any) => {
       const maxPrice = Math.max(...product.price);
       if (minPrice === maxPrice) {
         return (
-          <Title className="mt-0" style={{ fontWeight: 400 }} level={3}>
-            {VND.format(minPrice)}
-          </Title>
+          <div className="my-2">
+            <span
+              style={{
+                fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                fontSize: "1.9rem",
+                fontWeight: 700,
+                color: "#131118",
+                lineHeight: 1,
+              }}
+            >
+              {VND.format(minPrice)}
+            </span>
+          </div>
         );
       }
       return (
-        <Space>
-          <Title className="mt-0" style={{ fontWeight: 600, color: "var(--color-primary, #131118)" }} level={3}>
-            {VND.format(minPrice)}
-          </Title>
-          <Title
-            type="secondary"
-            className="mt-0"
+        <div
+          className="my-2"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
             style={{
-              fontWeight: 300,
-              textDecoration: "line-through",
+              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontSize: "1.9rem",
+              fontWeight: 700,
+              color: "#131118",
+              lineHeight: 1,
             }}
-            level={3}
+          >
+            {VND.format(minPrice)}
+          </span>
+          <span style={{ color: "#9CA3AF", fontSize: "1.2rem", lineHeight: 1 }}>
+            -
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              color: "#6B7280",
+              lineHeight: 1,
+            }}
           >
             {VND.format(maxPrice)}
-          </Title>
-        </Space>
+          </span>
+        </div>
       );
     }
 
     return (
-      <Title className="mt-0" style={{ fontWeight: 400 }} level={3}>
-        Liên hệ
-      </Title>
+      <div className="my-2">
+        <span style={{ fontSize: "1.3rem", fontWeight: 600, color: "#6B7280" }}>
+          Liên hệ
+        </span>
+      </div>
     );
   };
 
@@ -298,7 +375,12 @@ const ProductDetail = (props: any) => {
           disabled
           size="large"
           type="primary"
-          style={{ minWidth: 200 }}
+          style={{
+            minWidth: 220,
+            height: 48,
+            borderRadius: 8,
+            fontWeight: 500,
+          }}
         >
           {subProducts.length === 0
             ? "Chưa có phân loại hàng"
@@ -315,20 +397,54 @@ const ProductDetail = (props: any) => {
       : subProductSelected?.stock ?? 0;
 
     return (
-      <>
-        <div className="button-groups">
-          <Button
-            onClick={() => setCount(count + 1)}
-            disabled={count >= (availableQty ?? 0)}
-            type="text"
-            icon={<IoAddSharp size={22} />}
-          />
-          <Text>{count}</Text>
+      <div className="d-flex align-items-center gap-3 flex-wrap">
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            border: "1px solid #E5E7EB",
+            borderRadius: 8,
+            backgroundColor: "#FFFFFF",
+            height: 48,
+            padding: "0 4px",
+          }}
+        >
           <Button
             onClick={() => setCount(count - 1)}
             disabled={count <= 1}
             type="text"
-            icon={<LuMinus size={22} />}
+            icon={<LuMinus size={16} />}
+            style={{
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          />
+          <span
+            style={{
+              minWidth: 40,
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "1rem",
+              color: "#131118",
+            }}
+          >
+            {count}
+          </span>
+          <Button
+            onClick={() => setCount(count + 1)}
+            disabled={count >= (availableQty ?? 0)}
+            type="text"
+            icon={<IoAddSharp size={18} />}
+            style={{
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           />
         </div>
         <Button
@@ -336,11 +452,19 @@ const ProductDetail = (props: any) => {
           onClick={handleCart}
           size="large"
           type="primary"
-          style={{ minWidth: 200 }}
+          style={{
+            minWidth: 220,
+            height: 48,
+            borderRadius: 8,
+            backgroundColor: "#131118",
+            borderColor: "#131118",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+          }}
         >
-          Add to Cart
+          {availableQty <= 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
         </Button>
-      </>
+      </div>
     );
   };
 
@@ -381,53 +505,94 @@ const ProductDetail = (props: any) => {
         description={product.description}
         url={`${appInfo.baseUrl}/public/products/${product.slug}/${product.id}`}
       />
-      <div className="container-fluid mt-3 mb-5">
+      <div className="container-fluid mt-2 mb-5">
         <div className="container">
-          <Breadcrumb
-            items={[
-              { key: "home", title: <Link href={"/"}>Home</Link> },
-              {
-                key: "shop",
-                title: (
-                  <Link
-                    href={
-                      product.categories && product.categories.length > 0
-                        ? `/shop?catId=${product.categories[product.categories.length - 1].id}`
-                        : "/shop"
-                    }
-                  >
-                    Shop
-                  </Link>
-                ),
-              },
-              ...(product.categories && product.categories.length > 0
-                ? product.categories.map((cat) => ({
+          {/* Breadcrumb Navigation */}
+          <div
+            className="py-3 mb-4 border-bottom"
+            style={{ borderColor: "#F3F4F6" }}
+          >
+            <Breadcrumb
+              items={[
+                {
+                  key: "home",
+                  title: (
+                    <Link
+                      href={"/"}
+                      className="d-flex align-items-center"
+                      style={{ color: "#6B7280", textDecoration: "none" }}
+                    >
+                      <HiOutlineHome size={15} style={{ marginRight: 6 }} />
+                      <span>Home</span>
+                    </Link>
+                  ),
+                },
+                {
+                  key: "shop",
+                  title: (
+                    <Link
+                      href={
+                        product.categories && product.categories.length > 0
+                          ? `/shop?catId=${product.categories[
+                            product.categories.length - 1
+                          ].id
+                          }`
+                          : "/shop"
+                      }
+                      style={{ color: "#6B7280", textDecoration: "none" }}
+                    >
+                      Shop
+                    </Link>
+                  ),
+                },
+                ...(product.categories && product.categories.length > 0
+                  ? product.categories.map((cat) => ({
                     key: cat.id,
-                    title: <Link href={`/shop?catId=${cat.id}`}>{cat.title}</Link>,
+                    title: (
+                      <Link
+                        href={`/shop?catId=${cat.id}`}
+                        style={{ color: "#6B7280", textDecoration: "none" }}
+                      >
+                        {cat.title}
+                      </Link>
+                    ),
                   }))
-                : []),
-              {
-                key: "product-title",
-                title: <span style={{ color: "#888" }}>{product.title}</span>,
-              },
-            ]}
-          />
+                  : []),
+                {
+                  key: "product-title",
+                  title: (
+                    <span style={{ color: "#131118", fontWeight: 600 }}>
+                      {product.title}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </div>
 
-          <div className="row mt-3">
-            <div className="col-sm-12 col-md-6">
+          <div className="row g-4">
+            {/* Left Column: Image Viewer & Gallery */}
+            <div className="col-12 col-md-6">
               <div
-                className="bg-light text-center p-4"
+                className="bg-white text-center p-4 border shadow-sm position-relative"
                 style={{
-                  borderRadius: 8,
-                  minHeight: 350,
+                  borderRadius: 14,
+                  borderColor: "#E5E7EB",
+                  minHeight: 420,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  overflow: "hidden",
                 }}
               >
                 {currentImage ? (
                   <img
-                    style={{ maxWidth: "100%", maxHeight: 400, objectFit: "contain" }}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: 420,
+                      objectFit: "contain",
+                      transition: "transform 0.3s ease",
+                    }}
                     src={currentImage}
                     alt={product.title}
                   />
@@ -436,10 +601,12 @@ const ProductDetail = (props: any) => {
                 )}
               </div>
               {subProducts.length > 0 && subProductSelected ? (
-                <CarouselImages
-                  items={carouselItems}
-                  onClick={setSubProductSelected}
-                />
+                <div className="mt-3">
+                  <CarouselImages
+                    items={carouselItems}
+                    onClick={setSubProductSelected}
+                  />
+                </div>
               ) : product.images && product.images.length > 1 ? (
                 <div
                   className="d-flex gap-2 mt-3 overflow-auto justify-content-center"
@@ -452,15 +619,17 @@ const ProductDetail = (props: any) => {
                       alt={`${product.title}-${idx}`}
                       onClick={() => setSelectedImage(img)}
                       style={{
-                        width: 70,
-                        height: 70,
+                        width: 72,
+                        height: 72,
                         objectFit: "cover",
-                        borderRadius: 6,
+                        borderRadius: 8,
                         cursor: "pointer",
                         border:
                           currentImage === img
                             ? "2px solid #131118"
-                            : "1px solid #ddd",
+                            : "1px solid #E5E7EB",
+                        padding: 2,
+                        transition: "all 0.15s ease",
                       }}
                     />
                   ))}
@@ -468,49 +637,92 @@ const ProductDetail = (props: any) => {
               ) : null}
             </div>
 
-            <div className="col">
-              <div className="row">
-                <div className="col">
-                  <Typography.Title className="m-0" level={2} style={{ fontWeight: 600 }}>
-                    {product.title}
-                  </Typography.Title>
-                  {supplier && (
-                    <div className="mt-1 mb-2">
-                      <span style={{ color: "var(--color-muted-foreground, #6B7280)", fontWeight: 500, fontSize: "0.95rem" }}>
-                        {supplier.name}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  {subProductSelected ? (
-                    <Tag
-                      color={subProductSelected.stock > 0 ? "success" : "error"}
+            {/* Right Column: Product Info & Configuration */}
+            <div className="col-12 col-md-6">
+              <div>
+                {supplier?.name && (
+                  <div
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.8px",
+                      color: "#6B7280",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {supplier.name}
+                  </div>
+                )}
+                <Typography.Title
+                  className="m-0"
+                  level={2}
+                  style={{
+                    fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                    fontWeight: 700,
+                    fontSize: "1.85rem",
+                    lineHeight: 1.3,
+                    color: "#131118",
+                  }}
+                >
+                  {product.title}
+                </Typography.Title>
+
+                <div className="d-flex align-items-center gap-3 mt-2 flex-wrap">
+                  <Space size={4}>
+                    <Rate
+                      disabled
+                      allowHalf
+                      value={averageRate}
+                      count={5}
+                      style={{ fontSize: 15 }}
+                    />
+                    <Text
+                      style={{
+                        color: "#6B7280",
+                        fontSize: "0.88rem",
+                        marginLeft: 4,
+                      }}
                     >
-                      {subProductSelected.stock > 0
-                        ? `In Stock (${instockQuantity})`
-                        : "Out of Stock"}
-                    </Tag>
-                  ) : (
-                    <Tag color="processing">
-                      {subProducts.length === 0
-                        ? "Đang cập nhật tồn kho"
-                        : "Vui lòng chọn phân loại"}
-                    </Tag>
-                  )}
+                      ({reviews.length} đánh giá)
+                    </Text>
+                  </Space>
+                  <span style={{ color: "#D1D5DB" }}>|</span>
+                  <div>
+                    {subProductSelected ? (
+                      <Tag
+                        color={
+                          subProductSelected.stock > 0 ? "success" : "error"
+                        }
+                        style={{ borderRadius: 6, fontWeight: 500 }}
+                      >
+                        {subProductSelected.stock > 0
+                          ? `Còn hàng (${instockQuantity})`
+                          : "Hết hàng"}
+                      </Tag>
+                    ) : (
+                      <Tag
+                        color="processing"
+                        style={{ borderRadius: 6, fontWeight: 500 }}
+                      >
+                        {subProducts.length === 0
+                          ? "Đang cập nhật tồn kho"
+                          : "Vui lòng chọn phân loại"}
+                      </Tag>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <Space className="mt-2">
-                <Rate disabled allowHalf value={averageRate} count={5} />
-                <Text type="secondary">({reviews.length}) reviews</Text>
-              </Space>
+                <div
+                  className="mt-3 pb-3 border-bottom"
+                  style={{ borderColor: "#F3F4F6" }}
+                >
+                  {renderPrice()}
+                </div>
 
-              <div className="mt-3">
-                {renderPrice()}
                 <Paragraph
-                  className="mt-3"
-                  style={{ textAlign: "justify", fontSize: "1rem" }}
+                  className="mt-3 text-secondary"
+                  style={{ fontSize: "0.95rem", lineHeight: 1.6 }}
                 >
                   {product.description}
                 </Paragraph>
@@ -522,31 +734,41 @@ const ProductDetail = (props: any) => {
                   const isColor = isColorAttribute(key, values);
 
                   return (
-                    <div className="mt-3" key={key}>
-                      <Paragraph
+                    <div className="mt-4" key={key}>
+                      <div
                         style={{
                           fontWeight: 600,
-                          fontSize: "1rem",
+                          fontSize: "0.92rem",
                           marginBottom: 8,
+                          color: "#131118",
                         }}
                       >
-                        {key}
-                      </Paragraph>
+                        {key}:{" "}
+                        <span style={{ fontWeight: 400, color: "#6B7280" }}>
+                          {currentAttributes[key] || "Chưa chọn"}
+                        </span>
+                      </div>
 
                       {isColor ? (
                         <Space size={12} wrap>
                           {values.map((colorVal) => {
-                            const isSelected = currentAttributes[key] === colorVal;
+                            const isSelected =
+                              currentAttributes[key] === colorVal;
                             const isHex = isHexColor(colorVal);
 
                             return (
                               <Tooltip key={colorVal} title={colorVal}>
-                                <a
-                                  onClick={() => handleSelectAttribute(key, colorVal)}
+                                <div
+                                  onClick={() =>
+                                    handleSelectAttribute(key, colorVal)
+                                  }
                                   style={{
                                     cursor: "pointer",
-                                    display: "inline-block",
                                     padding: 2,
+                                    borderRadius: 8,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
                                   }}
                                 >
                                   {isHex ? (
@@ -554,52 +776,69 @@ const ProductDetail = (props: any) => {
                                       className="color-item"
                                       style={{
                                         background: colorVal,
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: 6,
+                                        width: 34,
+                                        height: 34,
+                                        borderRadius: 8,
                                         border: isSelected
-                                          ? "2px solid var(--color-primary, #131118)"
-                                          : "1px solid rgba(0, 0, 0, 0.12)",
+                                          ? "2px solid #131118"
+                                          : "1px solid #D1D5DB",
                                         boxShadow: isSelected
-                                          ? "0 4px 10px rgba(0, 0, 0, 0.22)"
-                                          : "0 1px 3px rgba(0, 0, 0, 0.08)",
-                                        transform: isSelected ? "scale(1.05)" : "none",
-                                        transition: "all 0.2s ease",
+                                          ? "0 0 0 2px rgba(19, 17, 24, 0.25)"
+                                          : "none",
+                                        transform: isSelected
+                                          ? "scale(1.08)"
+                                          : "none",
+                                        transition: "all 0.15s ease",
                                       }}
                                     />
                                   ) : (
                                     <Button
                                       type={isSelected ? "primary" : "default"}
                                       style={{
-                                        borderRadius: 6,
+                                        borderRadius: 8,
                                         fontWeight: isSelected ? 600 : 400,
+                                        backgroundColor: isSelected
+                                          ? "#131118"
+                                          : undefined,
+                                        borderColor: isSelected
+                                          ? "#131118"
+                                          : "#E5E7EB",
+                                        height: 36,
                                       }}
                                     >
                                       {colorVal}
                                     </Button>
                                   )}
-                                </a>
+                                </div>
                               </Tooltip>
                             );
                           })}
                         </Space>
                       ) : (
-                        <Space size={8} wrap>
+                        <Space size={10} wrap>
                           {values.map((val) => {
-                            const isSelected = currentAttributes[key] === val;
+                            const isSelected =
+                              currentAttributes[key] === val;
                             return (
                               <Button
                                 key={val}
                                 type={isSelected ? "primary" : "default"}
                                 style={{
-                                  borderRadius: 6,
+                                  borderRadius: 8,
                                   fontWeight: isSelected ? 600 : 400,
-                                  borderColor: isSelected ? undefined : "#d9d9d9",
-                                  boxShadow: isSelected
-                                    ? "0 2px 4px rgba(0,0,0,0.12)"
+                                  backgroundColor: isSelected
+                                    ? "#131118"
                                     : undefined,
+                                  borderColor: isSelected
+                                    ? "#131118"
+                                    : "#E5E7EB",
+                                  color: isSelected ? "#FFFFFF" : "#374151",
+                                  height: 38,
+                                  padding: "0 16px",
                                 }}
-                                onClick={() => handleSelectAttribute(key, val)}
+                                onClick={() =>
+                                  handleSelectAttribute(key, val)
+                                }
                               >
                                 {val}
                               </Button>
@@ -611,108 +850,262 @@ const ProductDetail = (props: any) => {
                   );
                 })}
 
-                <div className="mt-5">
-                  <Space>
-                    {renderButtonGroup()}{" "}
-                    <Button size="large" icon={<IoHeartOutline size={22} />} />
-                  </Space>
+                <div className="mt-4 pt-2">
+                  <div className="d-flex align-items-center gap-3">
+                    {renderButtonGroup()}
+                    <Button
+                      size="large"
+                      icon={<IoHeartOutline size={22} />}
+                      style={{
+                        height: 48,
+                        width: 48,
+                        borderRadius: 8,
+                        borderColor: "#E5E7EB",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Trust Badges */}
+                <div
+                  className="mt-4 p-3 border"
+                  style={{
+                    borderColor: "#E5E7EB",
+                    backgroundColor: "#FAFAFA",
+                    borderRadius: 10,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: "12px 28px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <FiTruck
+                      size={18}
+                      color="#131118"
+                      style={{ marginRight: 8, flexShrink: 0 }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                        color: "#374151",
+                      }}
+                    >
+                      Giao hàng nhanh toàn quốc
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <FiShield
+                      size={18}
+                      color="#131118"
+                      style={{ marginRight: 8, flexShrink: 0 }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                        color: "#374151",
+                      }}
+                    >
+                      100% Chính hãng
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <FiRefreshCw
+                      size={16}
+                      color="#131118"
+                      style={{ marginRight: 8, flexShrink: 0 }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                        color: "#374151",
+                      }}
+                    >
+                      Đổi trả trong 7 ngày
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
+          {/* Description & Reviews Tabs */}
+          <div
+            className="mt-5 p-4 bg-white border shadow-sm"
+            style={{ borderRadius: 14, borderColor: "#E5E7EB" }}
+          >
             <Tabs
+              defaultActiveKey="1"
+              tabBarStyle={{
+                marginBottom: 20,
+                borderBottom: "1px solid #F3F4F6",
+              }}
               items={[
                 {
                   key: "1",
-                  label: "Description",
+                  label: (
+                    <span
+                      style={{
+                        fontFamily:
+                          "var(--font-heading, 'Rubik', sans-serif)",
+                        fontWeight: 600,
+                        fontSize: "1rem",
+                      }}
+                    >
+                      Mô tả sản phẩm
+                    </span>
+                  ),
                   children: (
                     <div
+                      className="py-2"
                       dangerouslySetInnerHTML={{
                         __html: product.content || product.description,
                       }}
-                      style={{ textAlign: "justify", fontSize: "1rem" }}
+                      style={{
+                        textAlign: "justify",
+                        fontSize: "0.95rem",
+                        lineHeight: 1.7,
+                        color: "#374151",
+                      }}
                     />
                   ),
                 },
                 {
                   key: "2",
-                  label: "Reviews",
+                  label: (
+                    <span
+                      style={{
+                        fontFamily:
+                          "var(--font-heading, 'Rubik', sans-serif)",
+                        fontWeight: 600,
+                        fontSize: "1rem",
+                      }}
+                    >
+                      Đánh giá ({reviews.length})
+                    </span>
+                  ),
                   children: (
-                    <div>
+                    <div className="py-2">
                       {reviews.length === 0 ? (
-                        <div>Chưa có đánh giá nào cho sản phẩm này.</div>
+                        <div className="text-muted py-4 text-center">
+                          Chưa có đánh giá nào cho sản phẩm này.
+                        </div>
                       ) : (
                         reviews.map((review) => (
                           <div
                             key={review.id}
                             style={{
-                              marginBottom: 16,
+                              marginBottom: 20,
+                              paddingBottom: 16,
+                              borderBottom: "1px solid #F3F4F6",
                               display: "flex",
                               alignItems: "flex-start",
                             }}
                           >
                             <Avatar
                               src={review.userAvatar}
-                              size={48}
-                              style={{ marginRight: 16 }}
+                              size={44}
+                              style={{
+                                marginRight: 16,
+                                border: "1px solid #E5E7EB",
+                              }}
                             />
-                            <div>
-                              <div style={{ fontWeight: "bold" }}>
-                                {review.userFirstname} {review.userLastname}
-                              </div>
-                              <Rate
-                                disabled
-                                value={review.star}
-                                style={{ fontSize: 18 }}
-                              />
-                              <div style={{ marginTop: 4, fontSize: 13 }}>
-                                <span>
-                                  Size: <b>{review.size}</b>
+                            <div style={{ flex: 1 }}>
+                              <div className="d-flex align-items-center justify-content-between">
+                                <span
+                                  style={{
+                                    fontWeight: 600,
+                                    fontSize: "0.95rem",
+                                    color: "#131118",
+                                  }}
+                                >
+                                  {review.userFirstname}{" "}
+                                  {review.userLastname}
                                 </span>
-                                <span style={{ marginLeft: 12 }}>
-                                  Color:
-                                  <span
-                                    style={{
-                                      display: "inline-block",
-                                      width: 12,
-                                      height: 12,
-                                      background: review.color,
-                                      border: "1px solid #ccc",
-                                      marginLeft: 4,
-                                      verticalAlign: "middle",
-                                      borderRadius: 3,
-                                    }}
-                                  />
+                                <span
+                                  style={{
+                                    fontSize: 12,
+                                    color: "#9CA3AF",
+                                  }}
+                                >
+                                  {new Date(
+                                    review.createdAt
+                                  ).toLocaleDateString("vi-VN")}
                                 </span>
                               </div>
-                              <div style={{ margin: "4px 0" }}>
+                              <div className="my-1">
+                                <Rate
+                                  disabled
+                                  value={review.star}
+                                  style={{ fontSize: 14 }}
+                                />
+                              </div>
+                              {(review.size || review.color) && (
+                                <div
+                                  className="d-flex align-items-center gap-2 mb-2"
+                                  style={{
+                                    fontSize: 12.5,
+                                    color: "#6B7280",
+                                  }}
+                                >
+                                  {review.size && (
+                                    <span>
+                                      Phân loại: <b>{review.size}</b>
+                                    </span>
+                                  )}
+                                  {review.color && (
+                                    <span className="d-flex align-items-center gap-1">
+                                      Màu:
+                                      <span
+                                        style={{
+                                          display: "inline-block",
+                                          width: 12,
+                                          height: 12,
+                                          background: review.color,
+                                          border: "1px solid #ccc",
+                                          borderRadius: 3,
+                                        }}
+                                      />
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              <div
+                                style={{
+                                  fontSize: "0.92rem",
+                                  color: "#374151",
+                                  lineHeight: 1.5,
+                                }}
+                              >
                                 {review.comment}
-                              </div>
-                              <div style={{ fontSize: 12, color: "#888" }}>
-                                {new Date(review.createdAt).toLocaleDateString(
-                                  "vi-VN"
-                                )}
                               </div>
 
                               {review.images &&
                                 Array.isArray(review.images) &&
                                 review.images.length > 0 && (
-                                  <div style={{ marginTop: 8 }}>
-                                    {review.images.map((img: any, idx: any) => (
-                                      <img
-                                        key={idx}
-                                        src={img}
-                                        alt="review-img"
-                                        style={{
-                                          width: 60,
-                                          marginRight: 8,
-                                          borderRadius: 4,
-                                          border: "1px solid #eee",
-                                        }}
-                                      />
-                                    ))}
+                                  <div className="d-flex gap-2 mt-2">
+                                    {review.images.map(
+                                      (img: any, idx: any) => (
+                                        <img
+                                          key={idx}
+                                          src={img}
+                                          alt="review-img"
+                                          style={{
+                                            width: 64,
+                                            height: 64,
+                                            objectFit: "cover",
+                                            borderRadius: 6,
+                                            border: "1px solid #E5E7EB",
+                                          }}
+                                        />
+                                      )
+                                    )}
                                   </div>
                                 )}
                             </div>
@@ -726,60 +1119,77 @@ const ProductDetail = (props: any) => {
             />
           </div>
 
-          {/* Có thì đưa ra, không có thì không hiển thị */}
-          {(isLoadingRelated || (relatedProducts && relatedProducts.length > 0)) && (
-            <div className="mt-5 mb-5">
-              <TabbarComponent
-                title="Related products"
-                orentation="text-start"
-                right={
-                  product.categories && product.categories.length > 0 ? (
-                    <div className="col-auto d-flex align-items-center">
-                      <Link
-                        href={`/shop?catId=${
-                          typeof product.categories[product.categories.length - 1] === "object"
-                            ? product.categories[product.categories.length - 1].id
-                            : product.categories[product.categories.length - 1]
-                        }`}
-                        style={{ fontSize: 14, color: "#1677ff", fontWeight: 500 }}
-                      >
-                        Xem tất cả &rarr;
-                      </Link>
-                    </div>
-                  ) : undefined
-                }
-              />
+          {/* Related Products */}
+          {(isLoadingRelated ||
+            (relatedProducts && relatedProducts.length > 0)) && (
+              <div className="mt-5 mb-5">
+                <TabbarComponent
+                  title="Sản phẩm liên quan"
+                  orentation="text-start"
+                  right={
+                    product.categories && product.categories.length > 0 ? (
+                      <div className="col-auto d-flex align-items-center">
+                        <Link
+                          href={`/shop?catId=${typeof product.categories[
+                              product.categories.length - 1
+                            ] === "object"
+                              ? product.categories[
+                                product.categories.length - 1
+                              ].id
+                              : product.categories[
+                              product.categories.length - 1
+                              ]
+                            }`}
+                          style={{
+                            fontSize: 14,
+                            color: "#131118",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                          }}
+                        >
+                          Xem tất cả &rarr;
+                        </Link>
+                      </div>
+                    ) : undefined
+                  }
+                />
 
-              {isLoadingRelated ? (
-                <div className="row mt-3">
-                  {[1, 2, 3, 4].map((n) => (
-                    <div
-                      className="col-sm-6 col-md-4 col-lg-3 mb-4"
-                      key={`rel-skel-${n}`}
-                    >
-                      <Card style={{ borderRadius: 8, overflow: "hidden" }}>
-                        <Skeleton.Image
-                          active
-                          style={{ width: "100%", height: 180 }}
-                        />
-                        <Skeleton
-                          active
-                          paragraph={{ rows: 2 }}
-                          style={{ marginTop: 16 }}
-                        />
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="row mt-3">
-                  {relatedProducts.slice(0, 4).map((item) => (
-                    <ProductItem item={item} key={item.id} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                {isLoadingRelated ? (
+                  <div className="row g-3 mt-2">
+                    {[1, 2, 3, 4].map((n) => (
+                      <div
+                        className="col-6 col-md-4 col-lg-3"
+                        key={`rel-skel-${n}`}
+                      >
+                        <Card
+                          style={{
+                            borderRadius: 12,
+                            overflow: "hidden",
+                            border: "1px solid #E5E7EB",
+                          }}
+                        >
+                          <Skeleton.Image
+                            active
+                            style={{ width: "100%", height: 180 }}
+                          />
+                          <Skeleton
+                            active
+                            paragraph={{ rows: 2 }}
+                            style={{ marginTop: 16 }}
+                          />
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="row g-3 mt-2">
+                    {relatedProducts.slice(0, 4).map((item) => (
+                      <ProductItem item={item} key={item.id} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
     </div>
