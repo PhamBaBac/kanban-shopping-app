@@ -241,7 +241,7 @@ const AddNewAddress = (props: Props) => {
         </Form.Item>
 
         {/* Phân cấp 2 tầng: Tỉnh/Thành phố -> Phường/Xã */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div className="address-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
           <Form.Item
             name="province"
             label="Tỉnh / Thành phố"

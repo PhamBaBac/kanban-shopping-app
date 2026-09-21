@@ -1,19 +1,29 @@
-import React from "react";
-import { Row, Col, Typography, Space, Input, Button, Divider } from "antd";
+import React, { useState } from "react";
+import { Row, Col, Typography, Input, Button, Divider, message } from "antd";
 import {
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
   ArrowRightOutlined,
 } from "@ant-design/icons";
-import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaTwitter,
+  FaYoutube,
+} from "react-icons/fa";
+import Link from "next/link";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const paymentIcons = [
   {
     src: "https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg",
     alt: "Visa",
+  },
+  {
+    src: "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg",
+    alt: "Mastercard",
   },
   {
     src: "https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg",
@@ -22,159 +32,234 @@ const paymentIcons = [
 ];
 
 const FooterComponent: React.FC = () => {
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      message.warning("Vui lòng nhập địa chỉ email của bạn!");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      message.error("Định dạng email không hợp lệ!");
+      return;
+    }
+    message.success("Cảm ơn bạn đã đăng ký nhận thông tin khuyến mãi!");
+    setEmail("");
+  };
+
   return (
-    <footer
-      style={{
-        background: "#18161C",
-        color: "#fff",
-        padding: "40px 0 0 0",
-        fontSize: 15,
-      }}
-    >
-      <div className="container">
-        <Row gutter={[32, 32]} justify="space-between">
+    <footer className="site-footer">
+      <div className="site-footer-container">
+        <Row gutter={[32, 36]} justify="space-between">
           {/* Logo & Contact */}
-          <Col xs={24} md={8}>
-            <div style={{ marginBottom: 24 }}>
-              <Title level={3} style={{ color: "#fff", margin: 0 }}>
-                <span style={{ fontWeight: 700, fontSize: 28 }}>K</span>rist
-              </Title>
+          <Col xs={24} sm={12} lg={7}>
+            <div style={{ marginBottom: 16 }}>
+              <Link href="/" style={{ textDecoration: "none", display: "inline-block" }}>
+                <img
+                  src="/images/logo.png"
+                  alt="Kanban Shop Logo"
+                  style={{
+                    width: 96,
+                    height: "auto",
+                    display: "block",
+                    filter: "brightness(0) invert(1)",
+                  }}
+                />
+              </Link>
             </div>
-            <Space direction="vertical" size={8} style={{ color: "#fff" }}>
-              <span>
-                <PhoneOutlined /> (704) 555-0127
-              </span>
-              <span>
-                <MailOutlined /> krist@example.com
-              </span>
-              <span>
-                <EnvironmentOutlined /> 3891 Ranchview Dr. Richardson,
-                California 62639
-              </span>
-            </Space>
+            <p
+              style={{
+                color: "#9ca3af",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+                marginBottom: 18,
+                maxWidth: 320,
+              }}
+            >
+              Cửa hàng thời trang & phụ kiện chất lượng cao, mang đến phong cách
+              hiện đại và sự hài lòng tuyệt đối cho bạn.
+            </p>
+            <div>
+              <div className="site-footer-contact-item">
+                <PhoneOutlined />
+                <a href="tel:07045550127">(704) 555-0127</a>
+              </div>
+              <div className="site-footer-contact-item">
+                <MailOutlined />
+                <a href="mailto:krist@example.com">krist@example.com</a>
+              </div>
+              <div className="site-footer-contact-item">
+                <EnvironmentOutlined />
+                <span>
+                  3891 Ranchview Dr. Richardson, California 62639
+                </span>
+              </div>
+            </div>
           </Col>
 
           {/* Information */}
-          <Col xs={12} md={4}>
-            <Title level={5} style={{ color: "#fff" }}>
-              Information
-            </Title>
-            <Space direction="vertical" size={8}>
-              <a href="#" style={{ color: "#fff" }}>
-                My Account
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Login
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                My Cart
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                My Wishlist
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Checkout
-              </a>
-            </Space>
+          <Col xs={12} sm={6} lg={4}>
+            <div className="site-footer-title">Thông tin</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <Link href="/profile" className="site-footer-link">
+                Tài khoản của tôi
+              </Link>
+              <Link href="/auth/login" className="site-footer-link">
+                Đăng nhập
+              </Link>
+              <Link href="/shop/checkout" className="site-footer-link">
+                Giỏ hàng
+              </Link>
+              <Link href="/shop" className="site-footer-link">
+                Tất cả sản phẩm
+              </Link>
+              <Link href="/story" className="site-footer-link">
+                Về chúng tôi
+              </Link>
+            </div>
           </Col>
 
           {/* Service */}
-          <Col xs={12} md={4}>
-            <Title level={5} style={{ color: "#fff" }}>
-              Service
-            </Title>
-            <Space direction="vertical" size={8}>
-              <a href="#" style={{ color: "#fff" }}>
-                About Us
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Careers
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Delivery Information
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Privacy Policy
-              </a>
-              <a href="#" style={{ color: "#fff" }}>
-                Terms & Conditions
-              </a>
-            </Space>
+          <Col xs={12} sm={6} lg={4}>
+            <div className="site-footer-title">Dịch vụ</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <Link href="/story" className="site-footer-link">
+                Câu chuyện thương hiệu
+              </Link>
+              <Link href="/blog" className="site-footer-link">
+                Bài viết & Xu hướng
+              </Link>
+              <Link href="/contact" className="site-footer-link">
+                Hỗ trợ & Liên hệ
+              </Link>
+              <Link href="/contact" className="site-footer-link">
+                Chính sách giao hàng
+              </Link>
+              <Link href="/contact" className="site-footer-link">
+                Điều khoản dịch vụ
+              </Link>
+            </div>
           </Col>
 
           {/* Subscribe */}
-          <Col xs={24} md={8}>
-            <Title level={5} style={{ color: "#fff" }}>
-              Subscribe
-            </Title>
-            <Text style={{ color: "#fff" }}>
-              Enter your email below to be the first to know about new
-              collections and product launches.
+          <Col xs={24} sm={12} lg={8}>
+            <div className="site-footer-title">Đăng ký nhận tin</div>
+            <Text
+              style={{
+                color: "#9ca3af",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+                display: "block",
+              }}
+            >
+              Nhập email bên dưới để nhận thông tin sớm nhất về các bộ sưu tập và
+              ưu đãi đặc quyền.
             </Text>
-            <form style={{ marginTop: 16, display: "flex", maxWidth: 340 }}>
+            <form onSubmit={handleSubscribe} className="site-footer-subscribe-form">
               <Input
                 size="large"
-                placeholder="Your Email"
-                prefix={<MailOutlined />}
-                style={{ borderRadius: "24px 0 0 24px" }}
+                placeholder="Email của bạn..."
+                prefix={<MailOutlined style={{ color: "rgba(255, 255, 255, 0.45)" }} />}
+                className="site-footer-subscribe-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               <Button
                 size="large"
                 type="primary"
                 htmlType="submit"
-                style={{
-                  borderRadius: "0 24px 24px 0",
-                  background: "#fff",
-                  color: "#18161C",
-                  border: 0,
-                }}
+                className="site-footer-subscribe-btn"
                 icon={<ArrowRightOutlined />}
+                aria-label="Đăng ký nhận tin"
               />
             </form>
           </Col>
         </Row>
 
-        <Divider style={{ background: "#2D2B34", margin: "32px 0 16px 0" }} />
+        <Divider
+          style={{
+            borderColor: "rgba(255, 255, 255, 0.1)",
+            margin: "36px 0 20px 0",
+          }}
+        />
 
-        <Row
-          align="middle"
-          justify="space-between"
-          style={{ flexWrap: "wrap" }}
-        >
-          <Col>
-            <Space size={16}>
+        {/* Bottom Bar: Responsive across all devices */}
+        <div className="site-footer-bottom">
+          <div>
+            <span style={{ fontSize: "0.85rem", color: "#9ca3af", marginRight: 10 }}>
+              Phương thức thanh toán:
+            </span>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                verticalAlign: "middle",
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
               {paymentIcons.map((icon) => (
                 <img
                   key={icon.alt}
                   src={icon.src}
                   alt={icon.alt}
                   style={{
-                    height: 28,
+                    height: 24,
                     background: "#fff",
                     borderRadius: 4,
-                    padding: 2,
+                    padding: "2px 6px",
                   }}
                 />
               ))}
-            </Space>
-          </Col>
-          <Col style={{ color: "#fff", fontSize: 14 }}>
-            ©2023 Krist All Rights are reserved
-          </Col>
-          <Col>
-            <Space size={16}>
-              <a href="#" style={{ color: "#fff", fontSize: 18 }}>
-                <FaFacebookF />
-              </a>
-              <a href="#" style={{ color: "#fff", fontSize: 18 }}>
-                <FaInstagram />
-              </a>
-              <a href="#" style={{ color: "#fff", fontSize: 18 }}>
-                <FaTwitter />
-              </a>
-            </Space>
-          </Col>
-        </Row>
+            </div>
+          </div>
+
+          <div style={{ color: "#9ca3af", fontSize: "0.85rem" }}>
+            © {new Date().getFullYear()} Krist. Tất cả các quyền được bảo lưu.
+          </div>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="site-footer-social-btn"
+              aria-label="Facebook"
+            >
+              <FaFacebookF />
+            </a>
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="site-footer-social-btn"
+              aria-label="Instagram"
+            >
+              <FaInstagram />
+            </a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="site-footer-social-btn"
+              aria-label="Twitter"
+            >
+              <FaTwitter />
+            </a>
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="site-footer-social-btn"
+              aria-label="YouTube"
+            >
+              <FaYoutube />
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );

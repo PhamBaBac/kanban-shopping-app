@@ -95,7 +95,7 @@ const PaymentMethod = (props: Props) => {
       <div style={{ marginBottom: "20px" }}>
         <h2
           style={{
-            fontFamily: "Rubik, sans-serif",
+            fontFamily: "var(--font-heading)",
             fontSize: "20px",
             fontWeight: 700,
             color: "#131118",
@@ -149,7 +149,7 @@ const PaymentMethod = (props: Props) => {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span
                         style={{
-                          fontFamily: "Rubik, sans-serif",
+                          fontFamily: "var(--font-heading)",
                           fontSize: "15px",
                           fontWeight: 600,
                           color: "#131118",

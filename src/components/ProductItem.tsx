@@ -19,6 +19,7 @@ import { userService } from "@/services/userService";
 
 interface Props {
   item: ProductModel;
+  className?: string;
 }
 
 const { Title, Text, Paragraph } = Typography;
@@ -32,6 +33,7 @@ const ProductItem = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickView, setShowQuickView] = useState(false);
   const [quickViewLoading, setQuickViewLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const ref = useRef<any>();
   const router = useRouter();
@@ -49,8 +51,18 @@ const ProductItem = (props: Props) => {
   }, [subProducts, availableSubProducts]);
 
   useEffect(() => {
-    const width = ref.current?.offsetWidth;
-    setElementWidth(width);
+    if (!ref.current) return;
+    const updateWidth = () => {
+      if (ref.current) {
+        setElementWidth(ref.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => updateWidth());
+      ro.observe(ref.current);
+      return () => ro.disconnect();
+    }
   }, []);
 
   useEffect(() => {
@@ -320,34 +332,108 @@ const ProductItem = (props: Props) => {
     );
   };
 
+  const primaryImage = useMemo(() => {
+    if (item.images && item.images.length > 0) return item.images[0];
+    const subWithImg = currentSubProducts.find((sp) => {
+      if (sp.imgURL) return true;
+      if (Array.isArray(sp.images) && sp.images.length > 0) return true;
+      return false;
+    });
+    if (subWithImg) {
+      return subWithImg.imgURL || (subWithImg.images && subWithImg.images[0]);
+    }
+    return null;
+  }, [item.images, currentSubProducts]);
+
+  const secondaryImage = useMemo(() => {
+    if (item.images && item.images.length > 1) return item.images[1];
+    // Nếu item.images chỉ có 1 hoặc 0 ảnh, tìm ảnh từ subProducts
+    const allImages: string[] = [];
+    if (item.images && item.images.length > 0) {
+      allImages.push(...item.images);
+    }
+    currentSubProducts.forEach((sp) => {
+      if (sp.imgURL && !allImages.includes(sp.imgURL)) {
+        allImages.push(sp.imgURL);
+      }
+      if (Array.isArray(sp.images)) {
+        sp.images.forEach((img: any) => {
+          const url = typeof img === "string" ? img : img?.url;
+          if (url && !allImages.includes(url)) {
+            allImages.push(url);
+          }
+        });
+      }
+    });
+    return allImages.length > 1 ? allImages[1] : null;
+  }, [item.images, currentSubProducts]);
+
+  const imageHeight = elementWidth ? elementWidth * 1.1 : 250;
+
   return (
     <>
       <div
-        className="col-sm-6 col-md-4 col-lg-3 mb-4"
+        className={props.className || "col-6 col-md-4 col-lg-3 mb-3 mb-md-4 px-2 px-sm-3"}
         key={item.id}
       >
         <div
           onClick={handleClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           ref={ref}
           className="cursor-pointer product-item"
         >
-          <div style={{ position: "relative" }}>
-            {item.images && item.images.length > 0 ? (
-              <img
-                style={{
-                  width: "100%",
-                  height: elementWidth ? elementWidth * 1.1 : 250,
-                  objectFit: "contain",
-                  padding: "8px 8px 0 8px",
-                }}
-                src={item.images[0]}
-                alt={item.title}
-              />
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: imageHeight,
+              overflow: "hidden",
+            }}
+          >
+            {primaryImage ? (
+              <>
+                <img
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    padding: "8px 8px 0 8px",
+                    transition: "opacity 0.35s ease, transform 0.35s ease",
+                    opacity: isHovered && secondaryImage ? 0 : 1,
+                    transform: isHovered && !secondaryImage ? "scale(1.04)" : "scale(1)",
+                  }}
+                  src={primaryImage}
+                  alt={item.title}
+                />
+                {secondaryImage && (
+                  <img
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      padding: "8px 8px 0 8px",
+                      transition: "opacity 0.35s ease, transform 0.35s ease",
+                      opacity: isHovered ? 1 : 0,
+                      transform: isHovered ? "scale(1.04)" : "scale(1)",
+                      pointerEvents: "none",
+                    }}
+                    src={secondaryImage}
+                    alt={`${item.title} - 2`}
+                  />
+                )}
+              </>
             ) : (
               <div
                 style={{
                   width: "100%",
-                  height: elementWidth ? elementWidth * 1.2 : 250,
+                  height: "100%",
                   backgroundColor: `#e0e0e0`,
                   display: "flex",
                   justifyContent: "center",
@@ -413,7 +499,7 @@ const ProductItem = (props: Props) => {
             </div>
           </div>
           <div
-            className="p-2"
+            className="px-2 px-sm-3 py-2"
             style={{
               display: "flex",
               flexDirection: "column",
@@ -443,7 +529,7 @@ const ProductItem = (props: Props) => {
                 textOverflow: "ellipsis",
               }}
             >
-              {isLoading ? "Loading..." : getPriceRange()}
+              {isLoading ? "Đang tải..." : getPriceRange()}
             </Paragraph>
           </div>
         </div>
@@ -458,13 +544,14 @@ const ProductItem = (props: Props) => {
         }}
         footer={null}
         width={720}
+        style={{ maxWidth: "calc(100vw - 24px)", top: 20 }}
         destroyOnClose
       >
         <div
-          style={{ display: "flex", gap: 24, padding: "8px 4px" }}
+          className="quickview-container"
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ width: 260, flexShrink: 0 }}>
+          <div className="quickview-image-col">
             <div
               style={{
                 width: "100%",

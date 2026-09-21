@@ -154,6 +154,57 @@ const ProductDetail = (props: any) => {
     return getSubProductAttributes(subProductSelected);
   }, [subProductSelected]);
 
+  const sortSizeValues = (values: string[]): string[] => {
+    // Thứ tự kích cỡ chữ tiêu chuẩn
+    const sizeOrder: Record<string, number> = {
+      XXS: 1,
+      "2XS": 1,
+      XS: 2,
+      S: 3,
+      M: 4,
+      L: 5,
+      XL: 6,
+      XXL: 7,
+      "2XL": 7,
+      XXXL: 8,
+      "3XL": 8,
+      "4XL": 9,
+      "5XL": 10,
+      FREESIZE: 99,
+      OS: 99,
+    };
+
+    return [...values].sort((a, b) => {
+      const aUpper = a.trim().toUpperCase();
+      const bUpper = b.trim().toUpperCase();
+
+      // 1. Kiểm tra kích cỡ theo bảng chuẩn (S, M, L, XL...)
+      const aRank = sizeOrder[aUpper];
+      const bRank = sizeOrder[bUpper];
+
+      if (aRank !== undefined && bRank !== undefined) {
+        return aRank - bRank;
+      }
+      if (aRank !== undefined) return -1;
+      if (bRank !== undefined) return 1;
+
+      // 2. Kiểm tra nếu là kích cỡ số (ví dụ: size giày 38, 39, 40 hoặc quần 29, 30, 31)
+      const aNum = parseFloat(aUpper);
+      const bNum = parseFloat(bUpper);
+      if (!isNaN(aNum) && !isNaN(bNum) && String(aNum) === aUpper && String(bNum) === bUpper) {
+        return aNum - bNum;
+      }
+
+      // 3. Fallback sắp xếp theo bảng chữ cái
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+    });
+  };
+
+  const isSizeAttribute = (key: string) => {
+    const k = key.trim().toLowerCase();
+    return k.includes("size") || k.includes("kích") || k.includes("cỡ");
+  };
+
   const getAvailableValuesForKey = (key: string): string[] => {
     const valuesSet = new Set<string>();
     subProducts.forEach((sp) => {
@@ -162,7 +213,11 @@ const ProductDetail = (props: any) => {
         valuesSet.add(attrs[key].trim());
       }
     });
-    return Array.from(valuesSet);
+    const list = Array.from(valuesSet);
+    if (isSizeAttribute(key)) {
+      return sortSizeValues(list);
+    }
+    return list;
   };
 
   const isHexColor = (val: string) =>
@@ -206,29 +261,56 @@ const ProductDetail = (props: any) => {
   };
 
   const carouselItems = useMemo(() => {
-    if (!subProducts || subProducts.length === 0) return [];
     const seenImgs = new Set<string>();
-    const itemsWithDistinctImages: SubProductModel[] = [];
+    const itemsList: Array<{
+      id?: string;
+      imgURL: string;
+      title?: string;
+      subProduct?: SubProductModel;
+    }> = [];
 
-    if (subProductSelected) {
-      const mainImg = subProductSelected.images?.[0] || subProductSelected.imgURL;
-      if (mainImg) {
-        seenImgs.add(mainImg);
-      }
-      itemsWithDistinctImages.push(subProductSelected);
+    // 1. Lấy tất cả ảnh từ product chính nếu có
+    if (product?.images && product.images.length > 0) {
+      product.images.forEach((img, idx) => {
+        if (img && !seenImgs.has(img)) {
+          seenImgs.add(img);
+          itemsList.push({
+            id: `prod-img-${idx}`,
+            imgURL: img,
+            title: product.title,
+          });
+        }
+      });
     }
 
-    subProducts.forEach((sp) => {
-      if (sp.id === subProductSelected?.id) return;
-      const firstImg = sp.images?.[0] || sp.imgURL;
-      if (firstImg && !seenImgs.has(firstImg)) {
-        seenImgs.add(firstImg);
-        itemsWithDistinctImages.push(sp);
-      }
-    });
+    // 2. Lấy tất cả ảnh từ subProducts nếu có
+    if (subProducts && subProducts.length > 0) {
+      subProducts.forEach((sp) => {
+        const subImgs: string[] = [];
+        if (sp.imgURL) subImgs.push(sp.imgURL);
+        if (Array.isArray(sp.images)) {
+          sp.images.forEach((img: any) => {
+            const url = typeof img === "string" ? img : img?.url;
+            if (url) subImgs.push(url);
+          });
+        }
 
-    return itemsWithDistinctImages.length > 0 ? itemsWithDistinctImages : subProducts;
-  }, [subProducts, subProductSelected]);
+        subImgs.forEach((img) => {
+          if (img && !seenImgs.has(img)) {
+            seenImgs.add(img);
+            itemsList.push({
+              id: sp.id,
+              imgURL: img,
+              title: (sp as any).title || product?.title,
+              subProduct: sp,
+            });
+          }
+        });
+      });
+    }
+
+    return itemsList;
+  }, [product?.images, product?.title, subProducts]);
 
   const renderPrice = () => {
     if (subProductSelected) {
@@ -255,7 +337,7 @@ const ProductDetail = (props: any) => {
         >
           <span
             style={{
-              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.9rem",
               fontWeight: 700,
               color: hasDiscount ? "#DC2626" : "#131118",
@@ -308,7 +390,7 @@ const ProductDetail = (props: any) => {
           <div className="my-2">
             <span
               style={{
-                fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                fontFamily: "var(--font-heading)",
                 fontSize: "1.9rem",
                 fontWeight: 700,
                 color: "#131118",
@@ -332,7 +414,7 @@ const ProductDetail = (props: any) => {
         >
           <span
             style={{
-              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.9rem",
               fontWeight: 700,
               color: "#131118",
@@ -346,7 +428,7 @@ const ProductDetail = (props: any) => {
           </span>
           <span
             style={{
-              fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+              fontFamily: "var(--font-heading)",
               fontSize: "1.5rem",
               fontWeight: 600,
               color: "#6B7280",
@@ -492,7 +574,7 @@ const ProductDetail = (props: any) => {
     return (
       <div className="container-fluid mt-3 mb-5">
         <div className="container text-center">
-          <div>Error: {error}</div>
+          <div>Lỗi: {error}</div>
         </div>
       </div>
     );
@@ -523,7 +605,7 @@ const ProductDetail = (props: any) => {
                       style={{ color: "#6B7280", textDecoration: "none" }}
                     >
                       <HiOutlineHome size={15} style={{ marginRight: 6 }} />
-                      <span>Home</span>
+                      <span>Trang chủ</span>
                     </Link>
                   ),
                 },
@@ -541,7 +623,7 @@ const ProductDetail = (props: any) => {
                       }
                       style={{ color: "#6B7280", textDecoration: "none" }}
                     >
-                      Shop
+                      Cửa hàng
                     </Link>
                   ),
                 },
@@ -600,41 +682,25 @@ const ProductDetail = (props: any) => {
                   <PiCableCar size={48} className="text-muted" />
                 )}
               </div>
-              {subProducts.length > 0 && subProductSelected ? (
+              {carouselItems.length > 1 && (
                 <div className="mt-3">
                   <CarouselImages
                     items={carouselItems}
-                    onClick={setSubProductSelected}
+                    selectedImageUrl={currentImage}
+                    onClick={(val: any) => {
+                      if (val?.subProduct) {
+                        setSelectedImage("");
+                        setSubProductSelected(val.subProduct);
+                      } else if (val?.price !== undefined) {
+                        setSelectedImage("");
+                        setSubProductSelected(val);
+                      } else if (val?.imgURL) {
+                        setSelectedImage(val.imgURL);
+                      }
+                    }}
                   />
                 </div>
-              ) : product.images && product.images.length > 1 ? (
-                <div
-                  className="d-flex gap-2 mt-3 overflow-auto justify-content-center"
-                  style={{ flexWrap: "wrap" }}
-                >
-                  {product.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`${product.title}-${idx}`}
-                      onClick={() => setSelectedImage(img)}
-                      style={{
-                        width: 72,
-                        height: 72,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                        cursor: "pointer",
-                        border:
-                          currentImage === img
-                            ? "2px solid #131118"
-                            : "1px solid #E5E7EB",
-                        padding: 2,
-                        transition: "all 0.15s ease",
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : null}
+              )}
             </div>
 
             {/* Right Column: Product Info & Configuration */}
@@ -658,7 +724,7 @@ const ProductDetail = (props: any) => {
                   className="m-0"
                   level={2}
                   style={{
-                    fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                    fontFamily: "var(--font-heading)",
                     fontWeight: 700,
                     fontSize: "1.85rem",
                     lineHeight: 1.3,
@@ -953,7 +1019,7 @@ const ProductDetail = (props: any) => {
                     <span
                       style={{
                         fontFamily:
-                          "var(--font-heading, 'Rubik', sans-serif)",
+                          "var(--font-heading)",
                         fontWeight: 600,
                         fontSize: "1rem",
                       }}
@@ -982,7 +1048,7 @@ const ProductDetail = (props: any) => {
                     <span
                       style={{
                         fontFamily:
-                          "var(--font-heading, 'Rubik', sans-serif)",
+                          "var(--font-heading)",
                         fontWeight: 600,
                         fontSize: "1rem",
                       }}

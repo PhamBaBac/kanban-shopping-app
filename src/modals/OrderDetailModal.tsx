@@ -242,7 +242,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span
             style={{
-              fontFamily: "Rubik, sans-serif",
+              fontFamily: "var(--font-heading)",
               fontSize: "17px",
               fontWeight: 700,
               color: "#131118",
@@ -333,7 +333,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <Title
               level={5}
               style={{
-                fontFamily: "Rubik, sans-serif",
+                fontFamily: "var(--font-heading)",
                 fontSize: "14px",
                 fontWeight: 600,
                 color: "#131118",
@@ -434,7 +434,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   <div>
                     <span
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "14px",
                         fontWeight: 700,
                         color: "#131118",
@@ -609,7 +609,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   >
                     <span
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontWeight: 600,
                         fontSize: "13px",
                         color: "#131118",
@@ -740,7 +740,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <Title
               level={5}
               style={{
-                fontFamily: "Rubik, sans-serif",
+                fontFamily: "var(--font-heading)",
                 fontSize: "14px",
                 fontWeight: 600,
                 color: "#131118",
@@ -778,7 +778,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         <Text
                           strong
                           style={{
-                            fontFamily: "Rubik, sans-serif",
+                            fontFamily: "var(--font-heading)",
                             fontSize: "14px",
                             fontWeight: 600,
                             color: "#131118",
@@ -854,7 +854,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                       <Text
                         strong
                         style={{
-                          fontFamily: "Rubik, sans-serif",
+                          fontFamily: "var(--font-heading)",
                           fontSize: "15px",
                           fontWeight: 700,
                           color: "#131118",
@@ -887,7 +887,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
               </span>
               <span
                 style={{
-                  fontFamily: "Rubik, sans-serif",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "20px",
                   fontWeight: 700,
                   color: "#131118",

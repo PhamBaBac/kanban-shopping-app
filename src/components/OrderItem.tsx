@@ -249,7 +249,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
           >
             <span
               style={{
-                fontFamily: "Rubik, sans-serif",
+                fontFamily: "var(--font-heading)",
                 fontWeight: 700,
                 fontSize: "14px",
                 color: "#131118",
@@ -342,7 +342,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
                         <Typography.Text
                           strong
                           style={{
-                            fontFamily: "Rubik, sans-serif",
+                            fontFamily: "var(--font-heading)",
                             fontSize: "14px",
                             fontWeight: 600,
                             color: "#131118",
@@ -389,7 +389,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
                     <Col style={{ textAlign: "right" }}>
                       <div
                         style={{
-                          fontFamily: "Rubik, sans-serif",
+                          fontFamily: "var(--font-heading)",
                           fontWeight: 700,
                           fontSize: "15px",
                           color: "#131118",
@@ -499,7 +499,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
                 </span>
                 <span
                   style={{
-                    fontFamily: "Rubik, sans-serif",
+                    fontFamily: "var(--font-heading)",
                     fontSize: "17px",
                     fontWeight: 700,
                     color: "#131118",

@@ -48,46 +48,46 @@ const SettingsContent = () => {
   const settingsItems = [
     {
       key: "appearance",
-      title: "Appearance",
-      description: "Customize how your theme looks on your device",
+      title: "Giao diện",
+      description: "Tùy chỉnh chế độ hiển thị sáng / tối trên thiết bị của bạn",
       control: (
         <Select
           value={mode}
           onChange={handleThemeChange}
-          style={{ width: 120 }}
+          style={{ width: 130 }}
         >
-          <Select.Option value="light">Light</Select.Option>
-          <Select.Option value="dark">Dark</Select.Option>
+          <Select.Option value="light">Sáng</Select.Option>
+          <Select.Option value="dark">Tối</Select.Option>
         </Select>
       ),
     },
     {
       key: "language",
-      title: "Language",
-      description: "Select your language",
+      title: "Ngôn ngữ",
+      description: "Chọn ngôn ngữ hiển thị hệ thống",
       control: (
-        <Select defaultValue="english" style={{ width: 120 }}>
+        <Select defaultValue="vietnamese" style={{ width: 130 }}>
+          <Select.Option value="vietnamese">Tiếng Việt</Select.Option>
           <Select.Option value="english">English</Select.Option>
-          <Select.Option value="vietnamese">Vietnamese</Select.Option>
         </Select>
       ),
     },
     {
       key: "push-notifications",
-      title: "Push Notifications",
-      description: "Receive push notification",
+      title: "Thông báo đẩy",
+      description: "Nhận thông báo đẩy trực tiếp từ hệ thống",
       control: <Switch defaultChecked />,
     },
     {
       key: "desktop-notification",
-      title: "Desktop Notification",
-      description: "Receive push notification in desktop",
+      title: "Thông báo trên máy tính",
+      description: "Hiển thị thông báo nổi trên màn hình máy tính",
       control: <Switch defaultChecked />,
     },
     {
       key: "email-notifications",
-      title: "Email Notifications",
-      description: "Receive email notification",
+      title: "Thông báo qua Email",
+      description: "Nhận thông báo đơn hàng và ưu đãi qua email",
       control: <Switch />,
     },
   ];
@@ -106,8 +106,8 @@ const SettingsContent = () => {
           style={{ borderBottom: "1px solid #f0f0f0", padding: "1.5rem 0" }}
         >
           <List.Item.Meta
-            title="Two-factor Authentication"
-            description="Keep your account secure by enabling 2FA via mail"
+            title="Xác thực hai yếu tố (2FA)"
+            description="Bảo vệ tài khoản an toàn hơn bằng xác thực 2 bước"
           />
         </List.Item>
 

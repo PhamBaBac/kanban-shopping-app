@@ -274,7 +274,7 @@ const CheckoutPage = () => {
               <div>
                 <h2
                   style={{
-                    fontFamily: "Rubik, sans-serif",
+                    fontFamily: "var(--font-heading)",
                     fontSize: "20px",
                     fontWeight: 700,
                     color: "#131118",
@@ -325,7 +325,7 @@ const CheckoutPage = () => {
                   <HiHome size={18} color="#131118" />
                   <span
                     style={{
-                      fontFamily: "Rubik, sans-serif",
+                      fontFamily: "var(--font-heading)",
                       fontSize: "15px",
                       fontWeight: 700,
                       color: "#131118",
@@ -364,32 +364,37 @@ const CheckoutPage = () => {
                       background: "#FAFAFA",
                       borderRadius: "8px",
                       border: "1px solid #F3F4F6",
+                      flexWrap: "wrap",
+                      gap: "8px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
                       <Avatar
                         src={item.image}
                         shape="square"
-                        size={56}
+                        size={52}
                         style={{
                           borderRadius: "6px",
                           border: "1px solid #E5E7EB",
                           objectFit: "cover",
+                          flexShrink: 0,
                         }}
                       />
-                      <div>
+                      <div style={{ minWidth: 0 }}>
                         <span
                           style={{
-                            fontFamily: "Rubik, sans-serif",
+                            fontFamily: "var(--font-heading)",
                             fontSize: "14px",
                             fontWeight: 600,
                             color: "#131118",
                             display: "block",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
                           }}
                         >
                           {item.title}
                         </span>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px", flexWrap: "wrap" }}>
                           {item.size && (
                             <span style={{ fontSize: "12px", color: "#6B7280" }}>
                               Size: <strong style={{ color: "#131118" }}>{item.size}</strong>
@@ -408,10 +413,11 @@ const CheckoutPage = () => {
                     </div>
                     <div
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "15px",
                         fontWeight: 700,
                         color: "#131118",
+                        marginLeft: "auto",
                       }}
                     >
                       {VND.format(item.price * item.count)}
@@ -445,7 +451,7 @@ const CheckoutPage = () => {
                   <HiHome size={18} color="#131118" />
                   <span
                     style={{
-                      fontFamily: "Rubik, sans-serif",
+                      fontFamily: "var(--font-heading)",
                       fontSize: "15px",
                       fontWeight: 700,
                       color: "#131118",
@@ -508,7 +514,7 @@ const CheckoutPage = () => {
                   <BiCreditCard size={18} color="#131118" />
                   <span
                     style={{
-                      fontFamily: "Rubik, sans-serif",
+                      fontFamily: "var(--font-heading)",
                       fontSize: "15px",
                       fontWeight: 700,
                       color: "#131118",
@@ -531,7 +537,7 @@ const CheckoutPage = () => {
               <div>
                 <span
                   style={{
-                    fontFamily: "Rubik, sans-serif",
+                    fontFamily: "var(--font-heading)",
                     fontSize: "14px",
                     fontWeight: 600,
                     color: "#131118",
@@ -564,22 +570,26 @@ const CheckoutPage = () => {
     : 0;
 
   return (
-    <div className="container-fluid" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "24px 0" }}>
-      <div className="container">
+    <div className="checkout-page-wrapper" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "16px 0", overflowX: "hidden" }}>
+      <div className="container px-2 px-md-3" style={{ maxWidth: "1200px" }}>
         {/* Step Indicator */}
         <div
+          className="checkout-steps-wrapper"
           style={{
             background: "#FFFFFF",
             borderRadius: "12px",
             border: "1px solid #E5E7EB",
-            padding: "20px 24px",
-            marginBottom: "24px",
+            padding: "16px 20px",
+            marginBottom: "20px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+            overflowX: "auto",
+            maxWidth: "100%",
           }}
         >
           <Steps
             current={currentStep}
-            labelPlacement="vertical"
+            responsive={false}
+            className="checkout-steps"
             onChange={(val: number) => {
               if (hasInvalidItems && val > 0) {
                 message.warning(
@@ -597,7 +607,7 @@ const CheckoutPage = () => {
                 icon: <HiHome size={18} />,
               },
               {
-                title: "2. Địa chỉ nhận",
+                title: "2. Địa chỉ",
                 icon: <BiEdit size={18} />,
               },
               {
@@ -605,35 +615,34 @@ const CheckoutPage = () => {
                 icon: <BiCreditCard size={18} />,
               },
               {
-                title: "4. Xác nhận đơn",
+                title: "4. Xác nhận",
                 icon: <FaStar size={18} />,
               },
             ]}
           />
         </div>
 
-        <div className="row">
+        <div className="row mx-0">
           {/* Main Content Area */}
-          <div className="col-sm-12 col-md-8 mb-4">
+          <div className="col-12 col-md-8 px-0 px-md-3 mb-4">
             {renderComponents()}
           </div>
 
           {/* Right Sidebar: Order Summary */}
-          <div className="col-sm-12 col-md-4">
+          <div className="col-12 col-md-4 px-0 px-md-3">
             <div
+              className="checkout-summary-card"
               style={{
                 background: "#FFFFFF",
                 borderRadius: "12px",
                 border: "1px solid #E5E7EB",
-                padding: "22px",
+                padding: "20px",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                position: "sticky",
-                top: "20px",
               }}
             >
               <h3
                 style={{
-                  fontFamily: "Rubik, sans-serif",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "17px",
                   fontWeight: 700,
                   color: "#131118",
@@ -664,7 +673,6 @@ const CheckoutPage = () => {
                       borderRadius: "8px 0 0 8px",
                       borderColor: "#E5E7EB",
                       fontSize: "14px",
-                      marginRight: "10px",
                     }}
                   />
                   
@@ -680,6 +688,7 @@ const CheckoutPage = () => {
                       borderRadius: "0 8px 8px 0",
                       fontWeight: 600,
                       cursor: !discountCode || !!discountValue ? "not-allowed" : "pointer",
+                      flexShrink: 0,
                     }}
                   >
                     Áp dụng
@@ -749,7 +758,7 @@ const CheckoutPage = () => {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                     <span
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "16px",
                         fontWeight: 700,
                         color: "#131118",
@@ -759,7 +768,7 @@ const CheckoutPage = () => {
                     </span>
                     <span
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "22px",
                         fontWeight: 700,
                         color: "#131118",

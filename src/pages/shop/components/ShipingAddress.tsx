@@ -97,7 +97,7 @@ const ShipingAddress = (props: Props) => {
       <div style={{ marginBottom: "20px" }}>
         <h2
           style={{
-            fontFamily: "Rubik, sans-serif",
+            fontFamily: "var(--font-heading)",
             fontSize: "20px",
             fontWeight: 700,
             color: "#131118",
@@ -136,7 +136,7 @@ const ShipingAddress = (props: Props) => {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
                 gap: "16px",
                 marginBottom: "24px",
               }}
@@ -174,7 +174,7 @@ const ShipingAddress = (props: Props) => {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span
                             style={{
-                              fontFamily: "Rubik, sans-serif",
+                              fontFamily: "var(--font-heading)",
                               fontSize: "15px",
                               fontWeight: 700,
                               color: "#131118",
@@ -304,18 +304,6 @@ const ShipingAddress = (props: Props) => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
         }}
       >
-        <h3
-          style={{
-            fontFamily: "Rubik, sans-serif",
-            fontSize: "16px",
-            fontWeight: 700,
-            color: "#131118",
-            marginBottom: "16px",
-          }}
-        >
-          {isEditAddress ? "Chỉnh sửa địa chỉ nhận hàng" : "Thêm địa chỉ nhận hàng mới"}
-        </h3>
-
         <AddNewAddress
           onAddnew={(val) => {
             const items = [...address];

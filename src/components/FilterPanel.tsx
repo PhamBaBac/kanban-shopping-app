@@ -20,11 +20,19 @@ import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { setFilterValues, setRootCatId } from "@/redux/reducers/filterSlice";
 import { RootState } from "@/redux/store";
+import { themeSelector } from "@/redux/reducers/themeSlice";
 import { FilterValues, shopService } from "@/services";
 import { VND } from "@/utils/handleCurrency";
+import { BsFilterLeft } from "react-icons/bs";
 
 const { Title } = Typography;
 const { useToken } = theme;
+
+interface FilterPanelProps {
+  isDrawer?: boolean;
+  onClose?: () => void;
+  totalProducts?: number;
+}
 
 // Interface cho form filter values (từ Redux)
 interface FormFilterValues {
@@ -171,7 +179,20 @@ const getAncestorIds = (targetId: string, roots: CategoyModel[]): string[] => {
   return ancestors;
 };
 
-// Tìm category node theo id hoặc slug
+// Lấy tất cả category ID có con để auto-expand toàn bộ
+const getAllParentKeys = (cats: CategoyModel[]): string[] => {
+  const keys = new Set<string>();
+  const traverse = (cat: CategoyModel) => {
+    if (cat.children && cat.children.length > 0) {
+      keys.add(String(cat.id));
+      cat.children.forEach(traverse);
+    }
+  };
+  cats.forEach(traverse);
+  return Array.from(keys);
+};
+
+// Tìm category node theo id hoặc slug hoặc title
 const findCategoryByIdOrSlug = (
   cats: CategoyModel[],
   target: string
@@ -180,7 +201,8 @@ const findCategoryByIdOrSlug = (
   for (const cat of cats) {
     if (
       String(cat.id).toLowerCase().trim() === norm ||
-      (cat.slug && String(cat.slug).toLowerCase().trim() === norm)
+      (cat.slug && String(cat.slug).toLowerCase().trim() === norm) ||
+      (cat.title && String(cat.title).toLowerCase().trim() === norm)
     ) {
       return cat;
     }
@@ -192,9 +214,15 @@ const findCategoryByIdOrSlug = (
   return null;
 };
 
-const FilterPanel = () => {
+const FilterPanel = ({
+  isDrawer = false,
+  onClose,
+  totalProducts,
+}: FilterPanelProps = {}) => {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { mode } = useSelector(themeSelector);
+  const isDark = mode === "dark";
   const filterValues = useSelector(
     (state: RootState) => state.filter.filterValues
   );
@@ -248,6 +276,7 @@ const FilterPanel = () => {
 
   const { token } = useToken();
   const [form] = Form.useForm<FormFilterValues>();
+  const watchedCatIds = Form.useWatch("catIds", form);
 
   // Tải danh mục theo ngữ cảnh: nếu có catId thì chỉ tải nhánh cha + con của nó (không gọi get all)
   useEffect(() => {
@@ -287,6 +316,7 @@ const FilterPanel = () => {
       setIsLoading(true);
       try {
         const branchRes = await shopService.getCategoryBranch(targetCatIds[0]);
+
         if (Array.isArray(branchRes) && branchRes.length > 0) {
           const hierarchicalCategories = buildHierarchy(branchRes);
           setCategories(hierarchicalCategories);
@@ -296,12 +326,10 @@ const FilterPanel = () => {
           const rootId = hierarchicalCategories[0]?.id;
           dispatch(setRootCatId(rootId));
 
-          const autoExpandKeys = getKeysToExpand(
-            hierarchicalCategories,
-            targetCatIds
-          );
+          // Tự động mở rộng toàn bộ các danh mục cha để luôn nhìn thấy đầy đủ các danh mục con
+          const allParentKeys = getAllParentKeys(hierarchicalCategories);
           setExpandedKeys((prev) =>
-            Array.from(new Set([...prev, ...autoExpandKeys]))
+            Array.from(new Set([...prev, ...allParentKeys]))
           );
         } else {
           setCategories([]);
@@ -411,6 +439,7 @@ const FilterPanel = () => {
                 flex: 1,
                 fontSize: "0.9rem",
                 fontWeight: level === 0 ? 600 : 400,
+                color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
               }}
             >
               {cat.title}
@@ -420,7 +449,12 @@ const FilterPanel = () => {
                 <Button
                   type="text"
                   size="small"
-                  style={{ width: 22, height: 22, padding: 0 }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    padding: 0,
+                    color: isDark ? "rgba(255,255,255,0.65)" : "#6B7280",
+                  }}
                   icon={isExpanded ? <MinusOutlined style={{ fontSize: 10 }} /> : <PlusOutlined style={{ fontSize: 10 }} />}
                   onClick={() => handleToggle(cat.id)}
                 />
@@ -437,30 +471,33 @@ const FilterPanel = () => {
 
   return (
     <div
-      className="filter-panel"
+      className={`filter-panel ${isDrawer ? "filter-panel-drawer" : ""}`}
       style={{
-        padding: "16px 18px",
-        backgroundColor: "#FFFFFF",
-        borderRadius: "14px",
-        border: "1px solid #E5E7EB",
-        boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
+        padding: isDrawer ? "0 4px" : "16px 18px",
+        backgroundColor: isDrawer ? "transparent" : (isDark ? "#1c1a22" : "#FFFFFF"),
+        borderRadius: isDrawer ? 0 : "14px",
+        border: isDrawer ? "none" : `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+        boxShadow: isDrawer ? "none" : (isDark ? "0 2px 8px rgba(0, 0, 0, 0.25)" : "0 1px 4px rgba(0, 0, 0, 0.04)"),
       }}
     >
-      <div
-        className="d-flex align-items-center gap-2 pb-3 mb-2 border-bottom"
-        style={{ borderColor: "#F3F4F6" }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
-            fontWeight: 600,
-            fontSize: "0.98rem",
-            color: "#131118",
-          }}
+      {!isDrawer && (
+        <div
+          className="d-flex align-items-center gap-2 pb-3 mb-2 border-bottom"
+          style={{ borderColor: isDark ? "#2b2836" : "#F3F4F6" }}
         >
-          Bộ lọc tìm kiếm
-        </span>
-      </div>
+          <BsFilterLeft size={18} color={isDark ? "#ffffff" : "#131118"} />
+          <span
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontWeight: 600,
+              fontSize: "0.98rem",
+              color: isDark ? "#ffffff" : "#131118",
+            }}
+          >
+            Bộ lọc tìm kiếm
+          </span>
+        </div>
+      )}
 
       <ConfigProvider
         theme={{
@@ -585,13 +622,13 @@ const FilterPanel = () => {
                     level={5}
                     style={{
                       marginBottom: 0,
-                      fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                      fontFamily: "var(--font-heading)",
                       fontSize: "0.92rem",
                       fontWeight: 600,
-                      color: "#131118",
+                      color: isDark ? "#ffffff" : "#131118",
                     }}
                   >
-                    Product Categories
+                    Danh mục sản phẩm
                   </Title>
                 }
                 key="1"
@@ -602,7 +639,7 @@ const FilterPanel = () => {
                   </div>
                 ) : (
                   <Form.Item name="catIds" style={{ marginBottom: 0 }}>
-                    <Checkbox.Group style={{ width: "100%" }}>
+                    <Checkbox.Group value={watchedCatIds || []} style={{ width: "100%" }}>
                       {renderCategories(categories)}
                     </Checkbox.Group>
                   </Form.Item>
@@ -612,7 +649,7 @@ const FilterPanel = () => {
 
             <Collapse.Panel
               header={
-                <Title level={5} style={{ marginBottom: 0, fontFamily: "var(--font-heading, 'Rubik', sans-serif)", fontSize: "0.92rem", fontWeight: 600, color: "#131118" }}>
+                <Title level={5} style={{ marginBottom: 0, fontFamily: "var(--font-heading)", fontSize: "0.92rem", fontWeight: 600, color: isDark ? "#ffffff" : "#131118" }}>
                   Khoảng giá
                 </Title>
               }
@@ -632,9 +669,15 @@ const FilterPanel = () => {
                     parser={(value) =>
                       (value ? Number(value.replace(/\$\s?|(,*)/g, "")) : "") as any
                     }
-                    style={{ width: "100%", borderRadius: 8 }}
+                    style={{
+                      width: "100%",
+                      borderRadius: 8,
+                      backgroundColor: isDark ? "#24222c" : "#fff",
+                      borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
+                      color: isDark ? "#fff" : "#000",
+                    }}
                   />
-                  <span style={{ color: "#888" }}>-</span>
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#888" }}>-</span>
                   <InputNumber
                     placeholder="Đến (đ)"
                     min={0}
@@ -647,20 +690,32 @@ const FilterPanel = () => {
                     parser={(value) =>
                       (value ? Number(value.replace(/\$\s?|(,*)/g, "")) : "") as any
                     }
-                    style={{ width: "100%", borderRadius: 8 }}
+                    style={{
+                      width: "100%",
+                      borderRadius: 8,
+                      backgroundColor: isDark ? "#24222c" : "#fff",
+                      borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
+                      color: isDark ? "#fff" : "#000",
+                    }}
                   />
                 </div>
 
                 <div style={{ display: "flex", gap: 8 }}>
                   <Button
                     type="primary"
-                    onClick={() => handleApplyPrice()}
+                    onClick={() => {
+                      handleApplyPrice();
+                      if (isDrawer && onClose) {
+                        onClose();
+                      }
+                    }}
                     style={{
                       flex: 1,
                       borderRadius: 8,
-                      backgroundColor: "#131118",
-                      borderColor: "#131118",
-                      fontWeight: 500,
+                      backgroundColor: isDark ? "#ffffff" : "#131118",
+                      borderColor: isDark ? "#ffffff" : "#131118",
+                      color: isDark ? "#131118" : "#ffffff",
+                      fontWeight: 600,
                     }}
                   >
                     Áp dụng
@@ -668,7 +723,12 @@ const FilterPanel = () => {
                   {filterValues.price && (
                     <Button
                       onClick={handleClearPrice}
-                      style={{ borderRadius: 8 }}
+                      style={{
+                        borderRadius: 8,
+                        borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
+                        backgroundColor: isDark ? "#24222c" : "#fff",
+                        color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                      }}
                     >
                       Xóa
                     </Button>
@@ -679,6 +739,44 @@ const FilterPanel = () => {
           </Collapse>
         </Form>
       </ConfigProvider>
+
+      {isDrawer && (
+        <div
+          style={{
+            position: "sticky",
+            bottom: -24,
+            left: -24,
+            right: -24,
+            margin: "24px -24px -24px -24px",
+            padding: "12px 20px",
+            backgroundColor: isDark ? "#16151a" : "#ffffff",
+            borderTop: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+            boxShadow: isDark
+              ? "0 -4px 12px rgba(0,0,0,0.3)"
+              : "0 -4px 12px rgba(0,0,0,0.05)",
+            zIndex: 10,
+          }}
+        >
+          <Button
+            type="primary"
+            block
+            onClick={onClose}
+            style={{
+              height: 42,
+              borderRadius: 8,
+              backgroundColor: isDark ? "#ffffff" : "#131118",
+              borderColor: isDark ? "#ffffff" : "#131118",
+              color: isDark ? "#131118" : "#ffffff",
+              fontWeight: 600,
+              fontSize: "0.95rem",
+            }}
+          >
+            {typeof totalProducts === "number"
+              ? `Xem ${totalProducts} sản phẩm`
+              : "Xem kết quả"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

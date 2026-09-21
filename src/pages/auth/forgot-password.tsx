@@ -40,9 +40,9 @@ const ForgotPassword = () => {
 
   const renderEnterEmailStep = () => (
     <>
-      <Title>Forgot Your Password?</Title>
+      <Title>Quên mật khẩu?</Title>
       <Paragraph type="secondary">
-        Enter your email and we'll send a code to verify your account.
+        Nhập email của bạn và chúng tôi sẽ gửi mã xác thực để đặt lại mật khẩu.
       </Paragraph>
       <Form
         onFinish={handleSendCode}
@@ -52,17 +52,17 @@ const ForgotPassword = () => {
       >
         <Form.Item
           name="email"
-          label="Email address"
+          label="Địa chỉ email"
           rules={[
-            { required: true, message: "Please enter your email" },
-            { type: "email", message: "Please enter a valid email" },
+            { required: true, message: "Vui lòng nhập địa chỉ email" },
+            { type: "email", message: "Email không hợp lệ" },
           ]}
         >
           <Input allowClear autoFocus />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block>
-            Send Verification Code
+            Gửi mã xác thực
           </Button>
         </Form.Item>
       </Form>
@@ -71,9 +71,9 @@ const ForgotPassword = () => {
 
   const renderVerifyCodeStep = () => (
     <>
-      <Title>Check Your Email</Title>
+      <Title>Kiểm tra email của bạn</Title>
       <Paragraph type="secondary">
-        We've sent a 6-digit code to {email}. Please enter it below.
+        Chúng tôi đã gửi mã xác thực 6 chữ số tới {email}. Vui lòng nhập mã bên dưới.
       </Paragraph>
       <Form
         onFinish={handleVerifyCode}
@@ -81,7 +81,7 @@ const ForgotPassword = () => {
         size="large"
         disabled={isLoading}
       >
-        <Form.Item label="Verification Code">
+        <Form.Item label="Mã xác thực">
           <div className="d-flex justify-content-between mb-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Input
@@ -111,7 +111,7 @@ const ForgotPassword = () => {
             disabled={otpCode.join("").length !== 6}
             block
           >
-            Verify Code
+            Xác thực mã
           </Button>
         </Form.Item>
       </Form>
@@ -120,9 +120,9 @@ const ForgotPassword = () => {
 
   const renderResetPasswordStep = () => (
     <>
-      <Title>Set New Password</Title>
+      <Title>Đặt lại mật khẩu mới</Title>
       <Paragraph type="secondary">
-        Your email has been verified. Please set your new password.
+        Email của bạn đã được xác minh. Vui lòng thiết lập mật khẩu mới.
       </Paragraph>
       <Form
         onFinish={handleResetPassword}
@@ -132,27 +132,27 @@ const ForgotPassword = () => {
       >
         <Form.Item
           name="password"
-          label="New Password"
+          label="Mật khẩu mới"
           rules={[
-            { required: true, message: "Please enter your new password" },
-            { min: 6, message: "Password must be at least 6 characters" },
+            { required: true, message: "Vui lòng nhập mật khẩu mới" },
+            { min: 6, message: "Mật khẩu tối thiểu 6 ký tự" },
           ]}
         >
           <Input.Password />
         </Form.Item>
         <Form.Item
           name="confirmPassword"
-          label="Confirm New Password"
+          label="Xác nhận mật khẩu mới"
           dependencies={["password"]}
           rules={[
-            { required: true, message: "Please confirm your new password" },
+            { required: true, message: "Vui lòng xác nhận mật khẩu mới" },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue("password") === value) {
                   return Promise.resolve();
                 }
                 return Promise.reject(
-                  new Error("The two passwords do not match!")
+                  new Error("Hai mật khẩu không trùng khớp!")
                 );
               },
             }),
@@ -162,7 +162,7 @@ const ForgotPassword = () => {
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block>
-            Reset Password
+            Đặt lại mật khẩu
           </Button>
         </Form.Item>
       </Form>
@@ -196,7 +196,7 @@ const ForgotPassword = () => {
           <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
             {renderStep()}
             <div className="text-center mt-3">
-              <Link href="/auth/login">Back to Login</Link>
+              <Link href="/auth/login">Quay lại đăng nhập</Link>
             </div>
           </div>
         </div>

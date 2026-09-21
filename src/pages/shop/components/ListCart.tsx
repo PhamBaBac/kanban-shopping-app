@@ -108,7 +108,7 @@ const ListCart = ({
             <Typography.Text
               strong
               style={{
-                fontFamily: "Rubik, sans-serif",
+                fontFamily: "var(--font-heading)",
                 fontSize: "14px",
                 fontWeight: 600,
                 color: invalid ? "#9CA3AF" : "#131118",
@@ -199,7 +199,7 @@ const ListCart = ({
       render: (price: number, item: CartItemModel) => (
         <span
           style={{
-            fontFamily: "Rubik, sans-serif",
+            fontFamily: "var(--font-heading)",
             fontSize: "14px",
             fontWeight: 600,
             color: isItemInvalid(item) ? "#9CA3AF" : "#131118",
@@ -289,7 +289,7 @@ const ListCart = ({
         ) : (
           <span
             style={{
-              fontFamily: "Rubik, sans-serif",
+              fontFamily: "var(--font-heading)",
               fontSize: "15px",
               fontWeight: 700,
               color: "#131118",
@@ -329,7 +329,7 @@ const ListCart = ({
             <div style={{ marginTop: "8px" }}>
               <span
                 style={{
-                  fontFamily: "Rubik, sans-serif",
+                  fontFamily: "var(--font-heading)",
                   fontSize: "16px",
                   fontWeight: 600,
                   color: "#131118",
@@ -370,7 +370,7 @@ const ListCart = ({
       <div style={{ marginBottom: "16px" }}>
         <h2
           style={{
-            fontFamily: "Rubik, sans-serif",
+            fontFamily: "var(--font-heading)",
             fontSize: "20px",
             fontWeight: 700,
             color: "#131118",
@@ -420,7 +420,9 @@ const ListCart = ({
         />
       )}
 
+      {/* Desktop Table View (>= 768px) */}
       <div
+        className="d-none d-md-block"
         style={{
           background: "#FFFFFF",
           borderRadius: "12px",
@@ -445,6 +447,286 @@ const ListCart = ({
             isItemInvalid(record) ? "table-row-invalid" : ""
           }
         />
+      </div>
+
+      {/* Mobile Card View (< 768px) */}
+      <div className="d-block d-md-none">
+        {/* Select All on Mobile */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#FFFFFF",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            border: "1px solid #E5E7EB",
+            marginBottom: "12px",
+          }}
+        >
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
+            <input
+              type="checkbox"
+              checked={
+                carts.filter((c) => !isItemInvalid(c)).length > 0 &&
+                carts
+                  .filter((c) => !isItemInvalid(c))
+                  .every((c) => c.id && selectedRowKeys.includes(c.id))
+              }
+              onChange={(e) => {
+                if (e.target.checked) {
+                  const validKeys = carts
+                    .filter((c) => !isItemInvalid(c) && c.id)
+                    .map((c) => c.id as React.Key);
+                  setSelectedRowKeys(validKeys);
+                } else {
+                  setSelectedRowKeys([]);
+                }
+              }}
+              style={{ width: "16px", height: "16px", accentColor: "#131118", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#131118" }}>
+              Chọn tất cả ({carts.filter((c) => !isItemInvalid(c)).length})
+            </span>
+          </label>
+          <span style={{ fontSize: "12px", color: "#6B7280" }}>
+            Đã chọn: <strong style={{ color: "#131118" }}>{selectedItems.length}</strong>
+          </span>
+        </div>
+
+        {/* List of Cart Cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {carts.map((item) => {
+            const deleted = isItemDeleted(item);
+            const soldOut = isItemSoldOut(item);
+            const invalid = deleted || soldOut;
+            const maxStock = item.stock ?? item.qty;
+            const isChecked = item.id ? selectedRowKeys.includes(item.id) : false;
+
+            return (
+              <div
+                key={item.id}
+                style={{
+                  background: "#FFFFFF",
+                  borderRadius: "12px",
+                  border: isChecked ? "1.5px solid #131118" : "1px solid #E5E7EB",
+                  padding: "14px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+                  opacity: invalid ? 0.65 : 1,
+                  position: "relative",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                  {/* Checkbox */}
+                  <div style={{ paddingTop: "2px" }}>
+                    <input
+                      type="checkbox"
+                      disabled={invalid}
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (!item.id) return;
+                        if (e.target.checked) {
+                          setSelectedRowKeys((prev) => [...prev, item.id as React.Key]);
+                        } else {
+                          setSelectedRowKeys((prev) => prev.filter((k) => k !== item.id));
+                        }
+                      }}
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        accentColor: "#131118",
+                        cursor: invalid ? "not-allowed" : "pointer",
+                      }}
+                    />
+                  </div>
+
+                  {/* Thumbnail */}
+                  <Avatar
+                    src={item.image}
+                    size={64}
+                    shape="square"
+                    style={{
+                      borderRadius: "8px",
+                      border: "1px solid #E5E7EB",
+                      flexShrink: 0,
+                      objectFit: "cover",
+                    }}
+                  />
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "6px" }}>
+                      <Typography.Text
+                        strong
+                        style={{
+                          fontFamily: "var(--font-heading)",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: invalid ? "#9CA3AF" : "#131118",
+                          textDecoration: deleted ? "line-through" : undefined,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {item.title}
+                      </Typography.Text>
+                      <ButtonRemoveCartItem item={item} />
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+                      {item.size && (
+                        <Tag
+                          style={{
+                            margin: 0,
+                            fontSize: "11px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            background: "#F3F4F6",
+                            border: "1px solid #E5E7EB",
+                            color: "#374151",
+                          }}
+                        >
+                          Size: <strong>{item.size}</strong>
+                        </Tag>
+                      )}
+                      {item.color && (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          {/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(item.color.trim()) ? (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 14,
+                                height: 14,
+                                backgroundColor: item.color,
+                                border: "1px solid #D1D5DB",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          ) : (
+                            <Tag
+                              style={{
+                                margin: 0,
+                                fontSize: "11px",
+                                padding: "1px 6px",
+                                borderRadius: "4px",
+                                background: "#F3F4F6",
+                                border: "1px solid #E5E7EB",
+                                color: "#374151",
+                              }}
+                            >
+                              Màu: <strong>{item.color}</strong>
+                            </Tag>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {deleted && (
+                      <div style={{ marginTop: "4px" }}>
+                        <Tag color="error" style={{ borderRadius: 4, fontWeight: 600, fontSize: "11px", margin: 0 }}>
+                          Đã ngừng kinh doanh
+                        </Tag>
+                      </div>
+                    )}
+
+                    {soldOut && (
+                      <div style={{ marginTop: "4px" }}>
+                        <Tag color="warning" style={{ borderRadius: 4, fontWeight: 600, fontSize: "11px", margin: 0 }}>
+                          Hết hàng
+                        </Tag>
+                      </div>
+                    )}
+
+                    {/* Price and Quantity Controller */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginTop: "12px",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            fontFamily: "var(--font-heading)",
+                            fontSize: "15px",
+                            fontWeight: 700,
+                            color: invalid ? "#9CA3AF" : "#131118",
+                          }}
+                        >
+                          {VND.format(item.price)}
+                        </span>
+                      </div>
+
+                      {/* Quantity Stepper */}
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          border: "1px solid #E5E7EB",
+                          borderRadius: "6px",
+                          overflow: "hidden",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<LuMinus size={12} />}
+                          disabled={invalid || item.count <= 1}
+                          onClick={() => dispatch(changeCount({ id: item.id, val: -1 }))}
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 0,
+                            cursor: invalid || item.count <= 1 ? "not-allowed" : "pointer",
+                          }}
+                        />
+                        <span
+                          style={{
+                            width: "32px",
+                            textAlign: "center",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            color: invalid ? "#9CA3AF" : "#131118",
+                          }}
+                        >
+                          {item.count}
+                        </span>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<MdAdd size={12} />}
+                          disabled={invalid || item.count >= maxStock}
+                          onClick={() => dispatch(changeCount({ id: item.id, val: 1 }))}
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 0,
+                            cursor: invalid || item.count >= maxStock ? "not-allowed" : "pointer",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

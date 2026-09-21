@@ -146,44 +146,44 @@ const PersionalInfomations = () => {
               onClick={() => form.submit()}
               icon={<BiEdit size={22} />}
             >
-              Save
+              Lưu thay đổi
             </Button>
           </div>
         </div>
         <div className="row">
           <div className="col">
-            <Form.Item name={"firstName"} label="First name">
+            <Form.Item name={"firstName"} label="Họ và tên đệm">
               <Input allowClear />
             </Form.Item>
           </div>
           <div className="col">
-            <Form.Item name={"lastName"} label="Last name">
+            <Form.Item name={"lastName"} label="Tên">
               <Input allowClear />
             </Form.Item>
           </div>
         </div>
         <div className="row">
           <div className="col">
-            <Form.Item name={"phoneNumber"} label="Phone number">
+            <Form.Item name={"phoneNumber"} label="Số điện thoại">
               <Input allowClear />
             </Form.Item>
           </div>
           <div className="col">
-            <Form.Item name={"email"} label="Email address">
+            <Form.Item name={"email"} label="Địa chỉ email">
               <Input allowClear />
             </Form.Item>
           </div>
         </div>
-        <Form.Item name={"address"} label="Address">
+        <Form.Item name={"address"} label="Địa chỉ">
           <Input
             allowClear
-            placeholder={address?.address || "Enter your address"}
+            placeholder={address?.address || "Nhập địa chỉ của bạn"}
             suffix={
               <FaLocationDot
                 onClick={() => setIsVisibleModalAddress(true)}
                 size={22}
                 className="text-danger m-0 cursor-pointer"
-                title="Select from saved addresses"
+                title="Chọn từ địa chỉ đã lưu"
               />
             }
           />

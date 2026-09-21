@@ -139,7 +139,7 @@ const Reviews = (props: Props) => {
           <div style={{ marginBottom: "16px" }}>
             <span
               style={{
-                fontFamily: "Rubik, sans-serif",
+                fontFamily: "var(--font-heading)",
                 fontSize: "14px",
                 fontWeight: 600,
                 color: "#131118",

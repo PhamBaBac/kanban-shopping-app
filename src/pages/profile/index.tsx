@@ -77,13 +77,13 @@ const ProfilePage = () => {
   const profileTabs: TabsProps["items"] = [
     {
       key: "edit",
-      label: "Personal Information",
+      label: "Thông tin cá nhân",
       icon: <FaUser size={14} className="text-muted" />,
       children: <ProsionalInfomation />,
     },
     {
       key: "orders",
-      label: `Orders ${orders.length > 0 ? `(${orders.length})` : ""}`,
+      label: `Đơn hàng ${orders.length > 0 ? `(${orders.length})` : ""}`,
       icon: <FaShoppingCart size={14} className="text-muted" />,
       children: (
         <div>
@@ -135,7 +135,7 @@ const ProfilePage = () => {
                   <div style={{ marginTop: "8px" }}>
                     <span
                       style={{
-                        fontFamily: "Rubik, sans-serif",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "16px",
                         fontWeight: 600,
                         color: "#131118",
@@ -189,7 +189,7 @@ const ProfilePage = () => {
       ? [
           {
             key: "change-password",
-            label: "Change Password",
+            label: "Đổi mật khẩu",
             icon: <FaLock size={14} className="text-muted" />,
             children: <ChangePassword />,
           },
@@ -197,7 +197,7 @@ const ProfilePage = () => {
       : []),
     {
       key: "settings",
-      label: "Settings",
+      label: "Cài đặt",
       icon: <FaCog size={14} className="text-muted" />,
       children: <SettingsContent />,
     },
@@ -208,14 +208,14 @@ const ProfilePage = () => {
       <Typography.Title
         level={2}
         style={{
-          fontFamily: "Rubik, sans-serif",
+          fontFamily: "var(--font-heading)",
           fontWeight: 700,
           color: "#131118",
           letterSpacing: "-0.02em",
           marginBottom: "16px",
         }}
       >
-        My Profile
+        Tài khoản của tôi
       </Typography.Title>
       <div className="mt-4">
         <Tabs

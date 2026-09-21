@@ -79,8 +79,8 @@ const Login = () => {
           <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
             {!isMfaEnabled ? (
               <>
-                <Title>Welcome</Title>
-                <Paragraph type="secondary">Please login here</Paragraph>
+                <Title>Chào mừng trở lại</Title>
+                <Paragraph type="secondary">Vui lòng đăng nhập vào tài khoản của bạn</Paragraph>
 
                 <Form
                   form={form}
@@ -92,10 +92,10 @@ const Login = () => {
                 >
                   <Form.Item
                     name="email"
-                    label="Email address"
+                    label="Địa chỉ email"
                     rules={[
-                      { required: true, message: "Please enter your email" },
-                      { type: "email", message: "Please enter a valid email" },
+                      { required: true, message: "Vui lòng nhập địa chỉ email" },
+                      { type: "email", message: "Email không hợp lệ" },
                     ]}
                   >
                     <Input
@@ -113,12 +113,12 @@ const Login = () => {
                   </Form.Item>
                   <Form.Item
                     name="password"
-                    label="Password"
+                    label="Mật khẩu"
                     rules={[
-                      { required: true, message: "Please enter your password" },
+                      { required: true, message: "Vui lòng nhập mật khẩu" },
                       {
                         min: 6,
-                        message: "Password must be at least 6 characters",
+                        message: "Mật khẩu tối thiểu 6 ký tự",
                       },
                     ]}
                   >
@@ -133,7 +133,7 @@ const Login = () => {
                   </Form.Item>
 
                   <div className="text-right">
-                    <Link href="/auth/forgot-password">Forgot Password?</Link>
+                    <Link href="/auth/forgot-password">Quên mật khẩu?</Link>
                   </div>
                   <div className="mb-4"></div>
                   <Button
@@ -143,7 +143,7 @@ const Login = () => {
                     block
                     size="large"
                   >
-                    {isLoading ? "Logging in..." : "Login"}
+                    {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
                   </Button>
                 </Form>
 
@@ -156,7 +156,7 @@ const Login = () => {
                 <Divider />
                 <div className="text-center">
                   <Link href="/auth/signup">
-                    Don't have an account? Sign Up
+                    Chưa có tài khoản? Đăng ký ngay
                   </Link>
                 </div>
               </>
@@ -167,11 +167,11 @@ const Login = () => {
                   onClick={() => setIsEmailVerificationMode(false)}
                   icon={<BsArrowLeft />}
                 >
-                  Back to OTP
+                  Quay lại nhập OTP
                 </Button>
-                <Title level={3}>Check your email</Title>
+                <Title level={3}>Kiểm tra email của bạn</Title>
                 <Paragraph>
-                  We've sent a 6-digit verification code to your email address:{" "}
+                  Chúng tôi đã gửi mã xác thực 6 chữ số đến địa chỉ email:{" "}
                   {emailMfa}.
                 </Paragraph>
                 <Form
@@ -179,7 +179,7 @@ const Login = () => {
                   layout="vertical"
                   size="large"
                 >
-                  <Form.Item label="Verification Code">
+                  <Form.Item label="Mã xác thực">
                     <Input
                       value={emailVerificationCode}
                       onChange={(e) => setEmailVerificationCode(e.target.value)}
@@ -194,20 +194,19 @@ const Login = () => {
                     block
                     size="large"
                   >
-                    Verify
+                    Xác thực
                   </Button>
                 </Form>
               </>
             ) : (
               <>
                 <Button type="link" onClick={resetMFA} icon={<BsArrowLeft />}>
-                  Back
+                  Quay lại
                 </Button>
 
-                <Title level={3}>Enter OTP</Title>
+                <Title level={3}>Nhập mã OTP</Title>
                 <Paragraph>
-                  Please open your Authentication app to retrieve the 6-digit
-                  verification code
+                  Vui lòng mở ứng dụng Authenticator để lấy mã xác thực 6 chữ số
                 </Paragraph>
 
                 <div className="d-flex justify-content-between mb-3">
@@ -244,7 +243,7 @@ const Login = () => {
                   block
                   size="large"
                 >
-                  {isLoading ? "Verifying..." : "Verify"}
+                  {isLoading ? "Đang xác thực..." : "Xác thực"}
                 </Button>
                 <Divider />
                 <div className="text-center">
@@ -253,7 +252,7 @@ const Login = () => {
                     onClick={handleSendEmailCode}
                     loading={isLoading}
                   >
-                    Can't use your authenticator? Verify by Email
+                    Không thể dùng Authenticator? Xác thực qua Email
                   </Button>
                 </div>
               </>

@@ -7,6 +7,7 @@ import { ConfigProvider, theme } from "antd";
 import type { AppProps } from "next/app";
 import { Provider, useSelector } from "react-redux";
 import { themeSelector } from "@/redux/reducers/themeSlice";
+import Head from "next/head";
 import { useEffect } from "react";
 
 const AppWrapper = ({ Component, pageProps }: AppProps) => {
@@ -27,7 +28,14 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
   }, [mode]);
 
   return (
-    <ConfigProvider
+    <>
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        />
+      </Head>
+      <ConfigProvider
       theme={{
         token: {
           colorPrimary: "#131118",
@@ -37,7 +45,7 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
           colorError: "#DC2626",
           colorLink: "#131118",
           colorLinkHover: "#383E49",
-          fontFamily: "'Nunito Sans', sans-serif",
+          fontFamily: "'Plus Jakarta Sans', 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           borderRadius: 8,
           borderRadiusLG: 12,
           borderRadiusSM: 6,
@@ -93,6 +101,7 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
     >
       <Routers Component={Component} pageProps={pageProps} />
     </ConfigProvider>
+    </>
   );
 };
 

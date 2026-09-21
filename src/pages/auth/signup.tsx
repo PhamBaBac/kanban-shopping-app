@@ -75,13 +75,13 @@ const SignUp = () => {
                   type="text"
                   icon={<BsArrowLeft size={20} className="text-muted" />}
                 >
-                  <Typography.Text>Back</Typography.Text>
+                  <Typography.Text>Quay lại</Typography.Text>
                 </Button>
 
                 <div className="mt-4">
-                  <Typography.Title level={2}>Enter OTP</Typography.Title>
+                  <Typography.Title level={2}>Nhập mã OTP</Typography.Title>
                   <Typography.Paragraph type="secondary">
-                    We have sent a code to your registered email:
+                    Chúng tôi đã gửi mã xác thực tới email:{" "}
                     <b>{signValues.email}</b>
                   </Typography.Paragraph>
                 </div>
@@ -117,16 +117,16 @@ const SignUp = () => {
                     style={{ width: "100%" }}
                     onClick={handleVerify}
                   >
-                    Verify
+                    Xác thực
                   </Button>
                   <div className="mt-2 text-center">
                     {times <= 0 ? (
                       <Button type="link" onClick={handleResendCode}>
-                        Resend
+                        Gửi lại mã
                       </Button>
                     ) : (
                       <Typography.Text type="secondary">
-                        Resend a new code in: {times}s
+                        Gửi lại mã sau: {times}s
                       </Typography.Text>
                     )}
                   </div>
@@ -134,9 +134,9 @@ const SignUp = () => {
               </>
             ) : (
               <>
-                <Typography.Title>Create new account</Typography.Title>
+                <Typography.Title>Tạo tài khoản mới</Typography.Title>
                 <Typography.Paragraph type="secondary">
-                  Please enter your details
+                  Vui lòng nhập thông tin của bạn
                 </Typography.Paragraph>
 
                 <Form
@@ -146,28 +146,45 @@ const SignUp = () => {
                   size="large"
                   disabled={isLoading}
                 >
-                  <Form.Item name="firstName" label="First Name">
+                  <Form.Item
+                    name="firstName"
+                    label="Họ và tên đệm"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập họ và tên đệm!" },
+                    ]}
+                  >
                     <Input allowClear />
                   </Form.Item>
-                  <Form.Item name="lastName" label="Last Name">
+                  <Form.Item
+                    name="lastName"
+                    label="Tên"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập tên của bạn!" },
+                    ]}
+                  >
                     <Input allowClear />
                   </Form.Item>
                   <Form.Item
                     name="email"
                     label="Email"
                     rules={[
-                      { required: true, message: "Please enter your email!" },
+                      { required: true, message: "Vui lòng nhập email!" },
+                      { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
                     <Input type="email" allowClear />
                   </Form.Item>
                   <Form.Item
                     name="password"
-                    label="Password"
+                    label="Mật khẩu"
                     rules={[
                       {
                         required: true,
-                        message: "Please enter your password!",
+                        message: "Vui lòng nhập mật khẩu!",
+                      },
+                      {
+                        min: 6,
+                        message: "Mật khẩu tối thiểu 6 ký tự!",
                       },
                     ]}
                   >
@@ -180,7 +197,7 @@ const SignUp = () => {
                     checked={isAgree}
                     onChange={(e) => setIsAgree(e.target.checked)}
                   >
-                    I agree to Terms and Conditions
+                    Tôi đồng ý với Điều khoản và Điều kiện
                   </Checkbox>
                 </div>
 
@@ -192,7 +209,7 @@ const SignUp = () => {
                     style={{ width: "100%" }}
                     onClick={() => form.submit()}
                   >
-                    Sign Up
+                    Đăng ký
                   </Button>
                 </div>
               </>

@@ -22,10 +22,11 @@ type MenuItem = Required<MenuProps>["items"][number];
 
 interface Props {
   type: "card" | "menu";
+  onItemClick?: () => void;
 }
 
 const CategoriesListCard = (props: Props) => {
-  const { type } = props;
+  const { type, onItemClick } = props;
   const { token } = useToken();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<CategoyModel[]>([]);
@@ -65,16 +66,21 @@ const CategoriesListCard = (props: Props) => {
   };
 
   if (type === "card") {
-    const isLarge = categories.length > 3;
-    const cardWidth = isLarge
-      ? Math.min(Math.max((width || 1200) * 0.72, 840), 1040)
-      : Math.min(Math.max((width || 1200) * 0.52, 640), 800);
+    const colCount = Math.min(Math.max(categories.length, 1), 5);
+    // Nếu có 5 danh mục trở lên thì ưu tiên hiển thị đủ 5 cột ngang
+    const cardWidth =
+      categories.length >= 5
+        ? Math.min(Math.max((width || 1200) * 0.9, 1100), 1320)
+        : categories.length >= 3
+        ? Math.min(Math.max((width || 1200) * 0.75, 860), 1050)
+        : Math.min(Math.max((width || 1200) * 0.55, 640), 800);
 
     return (
       <div
         className="shadow mt-2"
         style={{
           width: cardWidth,
+          maxWidth: "96vw",
           backgroundColor: token.colorBgContainer || "#FFFFFF",
           borderRadius: 14,
           border: `1px solid ${token.colorBorderSecondary || "#E5E7EB"}`,
@@ -102,10 +108,11 @@ const CategoriesListCard = (props: Props) => {
                   flex: 1,
                   padding: "24px 28px",
                   display: "grid",
-                  gridTemplateColumns: isLarge
-                    ? "repeat(auto-fill, minmax(200px, 1fr))"
-                    : "repeat(auto-fill, minmax(180px, 1fr))",
-                  gap: "24px 32px",
+                  gridTemplateColumns:
+                    categories.length >= 5
+                      ? "repeat(5, minmax(0, 1fr))"
+                      : `repeat(${colCount}, minmax(0, 1fr))`,
+                  gap: "24px 28px",
                   alignContent: "start",
                 }}
               >
@@ -125,7 +132,7 @@ const CategoriesListCard = (props: Props) => {
                           href={`/shop?catId=${item.id}`}
                           style={{
                             fontFamily:
-                              "var(--font-heading, 'Rubik', sans-serif)",
+                              "var(--font-heading)",
                             fontSize: "0.92rem",
                             fontWeight: 700,
                             letterSpacing: "0.6px",
@@ -213,8 +220,8 @@ const CategoriesListCard = (props: Props) => {
                 })}
               </div>
 
-              {/* Featured Promo Block - Only rendered if catalog is concise */}
-              {!isLarge && (
+              {/* Featured Promo Block - Only rendered if catalog is concise and under 5 categories */}
+              {categories.length < 5 && (
                 <div
                   style={{
                     width: 240,
@@ -246,7 +253,7 @@ const CategoriesListCard = (props: Props) => {
                     </span>
                     <div
                       style={{
-                        fontFamily: "var(--font-heading, 'Rubik', sans-serif)",
+                        fontFamily: "var(--font-heading)",
                         fontSize: "1.05rem",
                         fontWeight: 700,
                         lineHeight: 1.35,
@@ -291,17 +298,6 @@ const CategoriesListCard = (props: Props) => {
                     fontWeight: 500,
                   }}
                 >
-                  Tất cả sản phẩm
-                </Link>
-                <span style={{ color: "#E5E7EB" }}>|</span>
-                <Link
-                  href="/shop"
-                  style={{
-                    color: "#6B7280",
-                    textDecoration: "none",
-                    fontWeight: 500,
-                  }}
-                >
                   Hàng mới về
                 </Link>
                 <span style={{ color: "#E5E7EB" }}>|</span>
@@ -329,15 +325,24 @@ const CategoriesListCard = (props: Props) => {
 
   return (
     <Menu
-      style={{ backgroundColor: "transparent" }}
+      mode="inline"
+      style={{ backgroundColor: "transparent", border: "none" }}
       items={categories.map((item) => ({
         key: item.id,
-        label: item.title,
-        children: item.children
+        label: item.children && item.children.length > 0 ? (
+          item.title
+        ) : (
+          <Link href={`/shop?catId=${item.id}`} onClick={onItemClick}>
+            {item.title}
+          </Link>
+        ),
+        children: item.children && item.children.length > 0
           ? item.children.map((child) => ({
             key: child.id,
             label: (
-              <Link href={`/shop?catId=${child.id}`}>{child.title}</Link>
+              <Link href={`/shop?catId=${child.id}`} onClick={onItemClick}>
+                {child.title}
+              </Link>
             ),
           }))
           : undefined,
