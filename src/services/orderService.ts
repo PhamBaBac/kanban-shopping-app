@@ -12,6 +12,7 @@ export interface CreateOrderData {
   addressId: string;
   items: any[];
   paymentType: string;
+  idempotencyKey?: string;
 }
 
 export const orderService = {
@@ -27,12 +28,19 @@ export const orderService = {
     return res.data;
   },
 
-  // Tạo order mới
+  // Tạo order mới với Idempotency Key bảo vệ chống duplicate
   createOrder: async (data: CreateOrderData): Promise<any> => {
+    const idempotencyKey =
+      data.idempotencyKey ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+
     const res = await handleAPI(
       `/orders/create?paymentType=${data.paymentType}`,
       data,
-      "post"
+      "post",
+      { "Idempotency-Key": idempotencyKey }
     );
     return res.data;
   },
