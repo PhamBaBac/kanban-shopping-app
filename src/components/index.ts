@@ -10,6 +10,7 @@ import Section from "./Section";
 import TabbarComponent from "./TabbarComponent";
 import TwoFactorAuthSettings from "./TwoFactorAuthSettings";
 import SettingsContent from "./SettingsContent";
+import ChatProductCard from "./ChatProductCard";
 
 export {
   TabbarComponent,
@@ -22,4 +23,5 @@ export {
   TwoFactorAuthSettings,
   FilterPanel,
   SettingsContent,
+  ChatProductCard,
 };

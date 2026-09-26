@@ -66,6 +66,21 @@ const TransationSubProductModal = ({
     }
   };
 
+  const isSystemOrPriceAttribute = (key: string): boolean => {
+    const k = key.trim().toLowerCase();
+    return (
+      k === "discounttype" ||
+      k === "discountvalue" ||
+      k === "discountamount" ||
+      k === "discount" ||
+      k === "price" ||
+      k === "cost" ||
+      k === "stock" ||
+      k === "qty" ||
+      k === "reservedstock"
+    );
+  };
+
   const getSubProductAttributes = (sp: SubProductModel): Record<string, string> => {
     let attrs: any = sp.attributes;
     if (typeof attrs === "string") {
@@ -76,7 +91,13 @@ const TransationSubProductModal = ({
       }
     }
     if (attrs && typeof attrs === "object" && Object.keys(attrs).length > 0) {
-      return attrs;
+      const cleanAttrs: Record<string, string> = {};
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (!isSystemOrPriceAttribute(k) && v !== undefined && v !== null && String(v).trim()) {
+          cleanAttrs[k] = String(v).trim();
+        }
+      });
+      return cleanAttrs;
     }
 
     // Fallback cho sản phẩm cũ chỉ có size / color

@@ -58,7 +58,7 @@ const CreditCardPayment = ({ onPayment }: { onPayment: () => void }) => {
         </div>
       </Form>
       <div style={{ fontSize: "12px", color: "#6B7280", marginTop: "4px" }}>
-        🔒 Thông tin thanh toán của bạn được mã hóa an toàn và không bao giờ được chia sẻ với bất kỳ bên thứ ba nào.
+        Thông tin thanh toán của bạn được mã hóa an toàn và không bao giờ được chia sẻ với bất kỳ bên thứ ba nào.
       </div>
       <div className="mt-3">
         <Button

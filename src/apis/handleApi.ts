@@ -4,14 +4,14 @@ const handleAPI = async (
   url: string,
   data?: any,
   method: "post" | "put" | "get" | "delete" | "patch" = "get",
-  customHeaders?: Record<string, string> // 👈 Thêm tham số headers tùy chỉnh
+  customHeaders?: Record<string, string> // Thêm tham số headers tùy chỉnh
 ) => {
   try {
     let config: any = {
       method,
       headers: {
         "Content-Type": "application/json",
-        ...customHeaders, // 👈 Gộp thêm headers tùy chỉnh
+        ...customHeaders, // Gộp thêm headers tùy chỉnh
       },
       withCredentials: true,
       credentials: "include",

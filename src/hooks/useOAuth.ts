@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
 import { message } from "antd";
 import { useDispatch } from "react-redux";
@@ -6,75 +6,75 @@ import { authService } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
 import { useAuth } from "./useAuth";
-import { showErrorMessage } from "@/utils/errorHandler";
 
-interface UseOAuthReturn {
-  isLoading: boolean;
-  error: string | null;
-  isMfaEnabled: boolean;
-  userInfo: any;
-  verifyMFA: (code: string) => Promise<void>;
-  otpCode: string[];
-  setOtpCode: (code: string[]) => void;
-}
-
-export const useOAuth = (): UseOAuthReturn => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isMfaEnabled, setIsMfaEnabled] = useState(false);
-  const [userInfo, setUserInfo] = useState<any>(null);
+export const useOAuth = () => {
+  const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
+  const [isMfaModalVisible, setIsMfaModalVisible] = useState(false);
+  const [mfaData, setMfaData] = useState<{ email: string; token: string } | null>(null);
   const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
-  const [accessToken, setAccessToken] = useState<string>("");
-  const hasFetchedRef = useRef(false);
+  const hasProcessedRef = useRef(false);
 
   const router = useRouter();
   const dispatch = useDispatch();
   const { verifyMFAAuth } = useAuth();
 
+  const stripCodeFromUrl = useCallback(() => {
+    try {
+      if (typeof window !== "undefined") {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      if (router.isReady) {
+        router.replace(router.pathname, undefined, { shallow: true });
+      }
+    } catch (e) {
+      if (typeof window !== "undefined") {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, [router]);
+
+  // Tự động dọn dẹp ?code= ngay khi Next.js router sẵn sàng
   useEffect(() => {
-    // BE mới redirect về FE với ?code= (exchange code 1 lần, TTL 60s)
-    const { code } = router.query;
+    if (router.isReady && router.query.code) {
+      stripCodeFromUrl();
+    }
+  }, [router.isReady, router.query.code, stripCodeFromUrl]);
 
-    if (!code || hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-    const processOAuth = async () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get("code") || (router.query.code as string);
+
+    if (!code || hasProcessedRef.current) return;
+    hasProcessedRef.current = true;
+
+    // Làm sạch URL lập tức
+    stripCodeFromUrl();
+
+    const processCode = async () => {
+      setIsOAuthProcessing(true);
       try {
-        // React StrictMode (Next.js dev) chạy effect 2 lần.
-        // Nếu auth đã được lưu từ lần chạy đầu, redirect luôn thay vì gọi API lại
-        // (exchange code là one-time use — đã bị xóa khỏi Redis sau lần dùng đầu tiên)
-        const existingAuth = localStorage.getItem(localDataNames.authData);
-        if (existingAuth) {
-          setIsLoading(false);
-          router.replace("/");
-          return;
-        }
-
-        // Đổi exchange code lấy { accessToken, userId, mfaEnabled }
-        const authData = await authService.exchangeOAuthToken(code as string);
-
+        const authData = await authService.exchangeOAuthToken(code);
         const token = authData.accessToken;
-        setAccessToken(token);
 
         if (authData.mfaEnabled) {
-          // Lấy userInfo để có email cho verifyMFAAuth
           const user = await authService.getOAuthUser(token);
-          setUserInfo(user);
-          setIsMfaEnabled(true);
-          message.info("Please verify with MFA");
+          setMfaData({ email: user.email, token });
+          setIsMfaModalVisible(true);
+          message.info("Vui lòng nhập mã xác thực OTP 2 bước");
           return;
         }
 
-        // Không có MFA → lấy userInfo và lưu vào redux/localStorage
         const user = await authService.getOAuthUser(token);
         const userData = {
           accessToken: token,
           userId: user.id,
           mfaEnabled: user.mfaEnabled,
           email: user.email,
-          firstName: user.firstname,
-          lastName: user.lastname,
-          avatar: user.avatarUrl,
+          firstName: user.firstname || user.firstName || "",
+          lastName: user.lastname || user.lastName || "",
+          avatar: user.avatarUrl || user.avatar || user.picture || "",
           role: user.role,
           provider: user.provider || "GOOGLE",
         };
@@ -83,51 +83,66 @@ export const useOAuth = (): UseOAuthReturn => {
         localStorage.setItem(localDataNames.authData, JSON.stringify(userData));
         localStorage.removeItem("sessionId");
 
-        message.success("Đăng nhập thành công!");
-        setTimeout(() => {
-          router.replace("/");
-        }, 300);
-      } catch (err) {
-        console.error("OAuth callback error:", err);
-        // Fallback: nếu auth đã được lưu (do StrictMode double-invoke)
-        const existingAuth = localStorage.getItem(localDataNames.authData);
-        if (existingAuth) {
-          router.replace("/");
-          return;
+        try {
+          await authService.syncRedisCart(user.id);
+        } catch (e) {
+          // ignore
         }
-        setError("Đăng nhập thất bại! Liên kết có thể đã hết hạn. Vui lòng thử lại!");
+
+        message.success("Đăng nhập thành công!");
+      } catch (err: any) {
+        console.error("OAuth exchange error:", err);
+        message.error(err?.message || "Đăng nhập thất bại hoặc liên kết đã hết hạn!");
       } finally {
-        setIsLoading(false);
+        setIsOAuthProcessing(false);
+        stripCodeFromUrl();
       }
     };
 
-    processOAuth();
-  }, [router.query]);
+    processCode();
+  }, [dispatch, router.query.code, stripCodeFromUrl]);
 
-  const verifyMFA = async (code: string) => {
-    if (code.length !== 6) {
+  const handleVerifyMfa = async (codeStr: string) => {
+    if (!mfaData || codeStr.length !== 6) {
       message.error("Mã OTP phải bao gồm đúng 6 chữ số!");
       return;
     }
 
-    setIsLoading(true);
+    setIsOAuthProcessing(true);
     try {
-      await verifyMFAAuth(userInfo.email, code, accessToken);
-      message.success("Xác thực thành công!");
-    } catch (error) {
-      showErrorMessage(error, "Mã xác thực OTP không chính xác!");
+      await verifyMFAAuth(mfaData.email, codeStr, mfaData.token);
+      const user = await authService.getOAuthUser(mfaData.token);
+      const userData = {
+        accessToken: mfaData.token,
+        userId: user.id,
+        mfaEnabled: true,
+        email: user.email,
+        firstName: user.firstname || user.firstName || "",
+        lastName: user.lastname || user.lastName || "",
+        avatar: user.avatarUrl || user.avatar || user.picture || "",
+        role: user.role,
+        provider: user.provider || "GOOGLE",
+      };
+
+      dispatch(addAuth(userData));
+      localStorage.setItem(localDataNames.authData, JSON.stringify(userData));
+      localStorage.removeItem("sessionId");
+
+      setIsMfaModalVisible(false);
+      message.success("Xác thực và đăng nhập thành công!");
+    } catch (error: any) {
+      message.error("Mã xác thực OTP không chính xác!");
     } finally {
-      setIsLoading(false);
+      setIsOAuthProcessing(false);
     }
   };
 
   return {
-    isLoading,
-    error,
-    isMfaEnabled,
-    userInfo,
-    verifyMFA,
+    isOAuthProcessing,
+    isMfaModalVisible,
+    setIsMfaModalVisible,
     otpCode,
     setOtpCode,
+    handleVerifyMfa,
   };
 };

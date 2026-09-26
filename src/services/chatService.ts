@@ -10,6 +10,12 @@ export interface ChatHistoryItem {
   createdAt: string;
 }
 
+export interface AiChatResponseData {
+  message: string;
+  aiCreatedAt: string;
+  products?: any[];
+}
+
 export const chatService = {
   // Lấy chat history
   getChatHistory: async (): Promise<ChatHistoryItem[]> => {

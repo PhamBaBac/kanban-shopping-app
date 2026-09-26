@@ -10,6 +10,7 @@ export { addressService } from "./addressService";
 export { userService } from "./userService";
 export { reviewService } from "./reviewService";
 export { chatService } from "./chatService";
+export { supportService } from "./supportService";
 
 // Export types
 export type { AuthUser, LoginCredentials, SignupData } from "./authService";
@@ -24,3 +25,4 @@ export type {
 } from "./userService";
 export type { CreateReviewData } from "./reviewService";
 export type { ChatMessage, ChatHistoryItem } from "./chatService";
+export type { SupportMessage, SendMessageRequest } from "./supportService";

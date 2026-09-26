@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { message } from "antd";
 import { chatService, ChatMessage, ChatHistoryItem } from "@/services";
 
-interface Message {
+export interface Message {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
   isLoading?: boolean;
+  products?: any[];
 }
 
 interface UseChatReturn {
@@ -84,6 +85,7 @@ export const useChat = (): UseChatReturn => {
           timestamp: response.aiCreatedAt
             ? new Date(response.aiCreatedAt)
             : new Date(),
+          products: response.products || [],
         };
         // Thay thế message AI tạm thời bằng message thật
         setMessages((prev) => {

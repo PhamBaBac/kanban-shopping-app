@@ -13,6 +13,7 @@ export { useAuth } from "./useAuth";
 export { useOrders } from "./useOrders";
 export { useAddress } from "./useAddress";
 export { useChat } from "./useChat";
+export { useChatMessage } from "./useChatMessage";
 
 // Auth specific hooks
 export { useLogin } from "./useLogin";

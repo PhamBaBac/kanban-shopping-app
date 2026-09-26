@@ -112,6 +112,21 @@ const ProductItem = (props: Props) => {
     }
   };
 
+  const isSystemOrPriceAttribute = (key: string): boolean => {
+    const k = key.trim().toLowerCase();
+    return (
+      k === "discounttype" ||
+      k === "discountvalue" ||
+      k === "discountamount" ||
+      k === "discount" ||
+      k === "price" ||
+      k === "cost" ||
+      k === "stock" ||
+      k === "qty" ||
+      k === "reservedstock"
+    );
+  };
+
   const getSubProductAttributes = (sp: SubProductModel): Record<string, string> => {
     let attrs: any = sp.attributes;
     if (typeof attrs === "string") {
@@ -122,7 +137,13 @@ const ProductItem = (props: Props) => {
       }
     }
     if (attrs && typeof attrs === "object" && Object.keys(attrs).length > 0) {
-      return attrs;
+      const cleanAttrs: Record<string, string> = {};
+      Object.entries(attrs).forEach(([k, v]) => {
+        if (!isSystemOrPriceAttribute(k) && v !== undefined && v !== null && String(v).trim()) {
+          cleanAttrs[k] = String(v).trim();
+        }
+      });
+      return cleanAttrs;
     }
     const fallback: Record<string, string> = {};
     if (sp.color) fallback["Màu sắc"] = sp.color;

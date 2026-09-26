@@ -8,6 +8,7 @@ import type { DocumentContext } from 'next/document';
 const MyDocument = () => (
 	<Html lang='vi'>
 		<Head>
+			<meta name="referrer" content="no-referrer" />
 			<link rel="preconnect" href="https://fonts.googleapis.com" />
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			<link

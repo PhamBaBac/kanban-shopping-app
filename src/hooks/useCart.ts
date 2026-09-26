@@ -95,10 +95,25 @@ export const useCart = ({
     }
 
     // Resolve size / specs
+    const isSystemAttr = (k: string) => {
+      const lower = k.trim().toLowerCase();
+      return (
+        lower === "discounttype" ||
+        lower === "discountvalue" ||
+        lower === "discountamount" ||
+        lower === "discount" ||
+        lower === "price" ||
+        lower === "cost" ||
+        lower === "stock" ||
+        lower === "qty"
+      );
+    };
+
     const nonColorList: string[] = [];
     for (const [key, val] of Object.entries(attrs)) {
       const lowerKey = key.trim().toLowerCase();
       if (
+        !isSystemAttr(key) &&
         !lowerKey.includes("màu") &&
         !lowerKey.includes("color") &&
         !lowerKey.includes("colour")

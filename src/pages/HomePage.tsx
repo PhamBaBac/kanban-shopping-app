@@ -1,6 +1,5 @@
 import { ProductItem } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
-import ChatButton from "@/components/ChatButton";
 import { CategoyModel, ProductModel } from "@/models/Products";
 import { PromotionModel } from "@/models/PromotionModel";
 import { Carousel, message } from "antd";
@@ -653,7 +652,6 @@ const HomePage = (props: Props) => {
           </div>
         </section>
       </div>
-      <ChatButton />
     </>
   );
 };

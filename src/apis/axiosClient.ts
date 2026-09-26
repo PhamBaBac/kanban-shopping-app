@@ -24,7 +24,7 @@ const getAuthData = () => {
 
 const getAccessToken = () => {
   const authData = getAuthData();
-  return authData?.accessToken || ""; // ✅ dùng đúng key accessToken
+  return authData?.accessToken || ""; // dùng đúng key accessToken
 };
 
 let isRefreshing = false;
@@ -143,7 +143,10 @@ axiosClient.interceptors.response.use(
       return Promise.reject(formatRejectedError(error));
     }
 
-    const isLoginRequest = originalRequest.url?.includes("/auth/authenticate");
+    const isLoginRequest =
+      originalRequest.url?.includes("/auth/authenticate") ||
+      originalRequest.url?.includes("/auth/exchange-token") ||
+      originalRequest.url?.includes("/auth/login");
     const isRefreshRequest = originalRequest.url?.includes(
       "/auth/refresh-token"
     );

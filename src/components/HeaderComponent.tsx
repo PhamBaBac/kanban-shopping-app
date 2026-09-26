@@ -61,6 +61,11 @@ const HeaderComponent = () => {
     useState(false);
   const [productSeleted, setProductSeleted] = useState<CartItemModel>();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { token } = useToken();
   const auth = useSelector(authSelector);
@@ -595,21 +600,47 @@ const HeaderComponent = () => {
             />
 
             {/* User Profile / Login Button */}
-            {auth.accessToken && auth.userId ? (
+            {!isMounted ? (
+              <div style={{ width: 34, height: 34 }} />
+            ) : auth.accessToken && auth.userId ? (
               <Dropdown
                 placement="bottomRight"
                 overlayStyle={{ minWidth: 200 }}
                 menu={{ items: userMenuItems }}
               >
                 <Avatar
-                  src={auth.avatar}
-                  icon={!auth.avatar && <FaUser size={14} />}
+                  src={
+                    auth.avatar ? (
+                      <img
+                        src={auth.avatar}
+                        alt={userDisplayName}
+                        referrerPolicy="no-referrer"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    ) : undefined
+                  }
+                  icon={<FaUser size={15} />}
                   size={34}
                   style={{
                     cursor: "pointer",
-                    backgroundColor: auth.avatar ? "transparent" : token.colorPrimary,
+                    backgroundColor: token.colorPrimary,
+                    color: "#ffffff",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                    fontWeight: 600,
                   }}
-                />
+                >
+                  {auth.firstName || auth.lastName ? (
+                    `${auth.firstName?.[0] || ""}${auth.lastName?.[0] || ""}`.trim().toUpperCase()
+                  ) : auth.email ? (
+                    auth.email[0].toUpperCase()
+                  ) : null}
+                </Avatar>
               </Dropdown>
             ) : (
               <Button
@@ -664,10 +695,37 @@ const HeaderComponent = () => {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <Avatar
-                    src={auth.avatar}
-                    icon={!auth.avatar && <FaUser size={16} />}
+                    src={
+                      auth.avatar ? (
+                        <img
+                          src={auth.avatar}
+                          alt={userDisplayName}
+                          referrerPolicy="no-referrer"
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      ) : undefined
+                    }
+                    icon={<FaUser size={18} />}
                     size={42}
-                  />
+                    style={{
+                      backgroundColor: token.colorPrimary,
+                      color: "#ffffff",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: `1px solid ${token.colorBorderSecondary}`,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {auth.firstName || auth.lastName ? (
+                      `${auth.firstName?.[0] || ""}${auth.lastName?.[0] || ""}`.trim().toUpperCase()
+                    ) : auth.email ? (
+                      auth.email[0].toUpperCase()
+                    ) : null}
+                  </Avatar>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Typography.Text
                       strong
