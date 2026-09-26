@@ -58,11 +58,49 @@ const ProductDetail = (props: any) => {
     product,
   });
 
+  const getSubProductImage = (sp?: SubProductModel | null): string => {
+    if (!sp) return "";
+    if (sp.imgURL && typeof sp.imgURL === "string" && sp.imgURL.trim()) {
+      return sp.imgURL.trim();
+    }
+    let imgs: any = sp.images;
+    if (typeof imgs === "string") {
+      try {
+        imgs = JSON.parse(imgs);
+      } catch (e) {
+        if (imgs.startsWith("http") || imgs.startsWith("/")) {
+          return imgs.trim();
+        }
+      }
+    }
+    if (Array.isArray(imgs) && imgs.length > 0) {
+      for (const img of imgs) {
+        if (typeof img === "string" && img.trim()) return img.trim();
+        if (img && typeof img === "object" && img.url && typeof img.url === "string") {
+          return img.url.trim();
+        }
+      }
+    }
+    return "";
+  };
+
   useEffect(() => {
-    if (subProductSelected?.imgURL) {
-      setSelectedImage(subProductSelected.imgURL);
-    } else if (subProductSelected?.images && subProductSelected.images.length > 0) {
-      setSelectedImage(subProductSelected.images[0]);
+    if (!subProductSelected) return;
+    const subImgs: string[] = [];
+    if (subProductSelected.imgURL) subImgs.push(subProductSelected.imgURL);
+    if (Array.isArray(subProductSelected.images)) {
+      subProductSelected.images.forEach((img: any) => {
+        const u = typeof img === "string" ? img : img?.url;
+        if (u) subImgs.push(u);
+      });
+    }
+    // Nếu ảnh hiện tại đang xem đã thuộc về subProduct này (ví dụ user vừa click một ảnh chi tiết trong carousel), giữ nguyên ảnh đó
+    if (selectedImage && subImgs.includes(selectedImage)) {
+      return;
+    }
+    const subImg = getSubProductImage(subProductSelected);
+    if (subImg) {
+      setSelectedImage(subImg);
     } else if (product?.images && product.images.length > 0) {
       setSelectedImage(product.images[0]);
     }
@@ -98,8 +136,7 @@ const ProductDetail = (props: any) => {
 
   const currentImage =
     selectedImage ||
-    subProductSelected?.imgURL ||
-    subProductSelected?.images?.[0] ||
+    getSubProductImage(subProductSelected) ||
     product?.images?.[0] ||
     "";
 
@@ -127,16 +164,34 @@ const ProductDetail = (props: any) => {
         attrs = null;
       }
     }
+    const cleanAttrs: Record<string, string> = {};
     if (attrs && typeof attrs === "object" && Object.keys(attrs).length > 0) {
-      const cleanAttrs: Record<string, string> = {};
       Object.entries(attrs).forEach(([k, v]) => {
         if (!isSystemOrPriceAttribute(k) && v !== undefined && v !== null && String(v).trim()) {
           cleanAttrs[k] = String(v).trim();
         }
       });
-      return cleanAttrs;
     }
-    return {};
+
+    // Fallback: nếu attributes chưa có key màu sắc nhưng sp.color có giá trị
+    const hasColorKey = Object.keys(cleanAttrs).some((k) => {
+      const lower = k.trim().toLowerCase();
+      return lower.includes("màu") || lower.includes("color") || lower.includes("colour");
+    });
+    if (!hasColorKey && sp.color && sp.color.trim()) {
+      cleanAttrs["Màu sắc"] = sp.color.trim();
+    }
+
+    // Fallback: nếu attributes chưa có key kích cỡ/size nhưng sp.size có giá trị
+    const hasSizeKey = Object.keys(cleanAttrs).some((k) => {
+      const lower = k.trim().toLowerCase();
+      return lower.includes("size") || lower.includes("kích") || lower.includes("cỡ");
+    });
+    if (!hasSizeKey && sp.size && sp.size.trim()) {
+      cleanAttrs["Kích cỡ"] = sp.size.trim();
+    }
+
+    return cleanAttrs;
   };
 
   const getAttributeOrder = (key: string): number => {
@@ -244,15 +299,60 @@ const ProductDetail = (props: any) => {
   const isHexColor = (val: string) =>
     /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(val?.trim());
 
-  const isColorAttribute = (key: string, values: string[]) => {
-    const isNamedColor = /^(color|colour|màu|màu sắc)$/i.test(key.trim());
-    return isNamedColor && values.some((v) => isHexColor(v));
+  const isColorAttribute = (key: string, values?: string[]) => {
+    const k = key.trim().toLowerCase();
+    const isNamedColor =
+      k === "color" ||
+      k === "colour" ||
+      k === "màu" ||
+      k === "màu sắc" ||
+      k.includes("màu") ||
+      k.includes("color") ||
+      k.includes("colour");
+    return isNamedColor || (values ? values.some((v) => isHexColor(v)) : false);
+  };
+
+  const getColorThumbnail = (key: string, colorVal: string): string => {
+    // 1. Kiểm tra subProductSelected nếu đang chọn màu này
+    if (subProductSelected) {
+      const currentAttrs = getSubProductAttributes(subProductSelected);
+      const isMatch =
+        currentAttrs[key] === colorVal ||
+        (isColorAttribute(key) && subProductSelected.color === colorVal);
+      if (isMatch) {
+        const img = getSubProductImage(subProductSelected);
+        if (img) return img;
+      }
+    }
+
+    // 2. Tìm subProduct có màu này và có ảnh riêng
+    for (const sp of subProducts) {
+      const attrs = getSubProductAttributes(sp);
+      const isMatch =
+        attrs[key] === colorVal ||
+        (isColorAttribute(key) && sp.color === colorVal);
+      if (isMatch) {
+        const img = getSubProductImage(sp);
+        if (img) return img;
+      }
+    }
+
+    // 3. Fallback sang ảnh đại diện chung của sản phẩm
+    if (product?.images && product.images.length > 0) {
+      return product.images[0];
+    }
+
+    return "";
   };
 
   const handleSelectAttribute = (targetKey: string, targetValue: string) => {
+    const isTargetColor = isColorAttribute(targetKey);
     const matchingCandidates = subProducts.filter((sp) => {
       const attrs = getSubProductAttributes(sp);
-      return attrs[targetKey] === targetValue;
+      return (
+        attrs[targetKey] === targetValue ||
+        (isTargetColor && sp.color === targetValue)
+      );
     });
 
     if (matchingCandidates.length === 0) return;
@@ -267,7 +367,9 @@ const ProductDetail = (props: any) => {
         if (
           otherKey !== targetKey &&
           currentAttributes[otherKey] &&
-          attrs[otherKey] === currentAttributes[otherKey]
+          (attrs[otherKey] === currentAttributes[otherKey] ||
+            (isColorAttribute(otherKey) &&
+              sp.color === currentAttributes[otherKey]))
         ) {
           score++;
         }
@@ -709,14 +811,21 @@ const ProductDetail = (props: any) => {
                     items={carouselItems}
                     selectedImageUrl={currentImage}
                     onClick={(val: any) => {
+                      const url =
+                        val?.imgURL ||
+                        (typeof val === "string" ? val : "") ||
+                        val?.subProduct?.imgURL;
+
+                      if (url) {
+                        setSelectedImage(
+                          typeof url === "string" ? url : url?.url || ""
+                        );
+                      }
+
                       if (val?.subProduct) {
-                        setSelectedImage("");
                         setSubProductSelected(val.subProduct);
-                      } else if (val?.price !== undefined) {
-                        setSelectedImage("");
+                      } else if (val?.price !== undefined && val?.id) {
                         setSubProductSelected(val);
-                      } else if (val?.imgURL) {
-                        setSelectedImage(val.imgURL);
                       }
                     }}
                   />
@@ -819,119 +928,183 @@ const ProductDetail = (props: any) => {
                   if (values.length === 0) return null;
 
                   const isColor = isColorAttribute(key, values);
+                  const selectedVal =
+                    currentAttributes[key] ||
+                    (isColor ? subProductSelected?.color : "") ||
+                    "";
+                  // Màu sắc thì 1 cái vẫn hiện ảnh đại diện hình tròn, các thuộc tính khác chỉ hiện nút nếu có từ 2 lựa chọn trở lên
+                  const showOptionsBelow = isColor || values.length > 1;
 
                   return (
-                    <div className="mt-4" key={key}>
+                    <div className={showOptionsBelow ? "mt-4" : "mt-3"} key={key}>
                       <div
                         style={{
-                          fontWeight: 600,
-                          fontSize: "0.92rem",
-                          marginBottom: 8,
+                          fontSize: "0.95rem",
+                          marginBottom: showOptionsBelow ? 10 : 0,
                           color: "#131118",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
                         }}
                       >
-                        {key}:{" "}
-                        <span style={{ fontWeight: 400, color: "#6B7280" }}>
-                          {currentAttributes[key] || "Chưa chọn"}
+                        <span style={{ fontWeight: 500, color: "#131118" }}>
+                          {key}:
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            color: "#131118",
+                          }}
+                        >
+                          {selectedVal || values[0] || "Chưa chọn"}
                         </span>
                       </div>
 
-                      {isColor ? (
-                        <Space size={12} wrap>
-                          {values.map((colorVal) => {
-                            const isSelected =
-                              currentAttributes[key] === colorVal;
-                            const isHex = isHexColor(colorVal);
+                      {showOptionsBelow && (
+                        isColor ? (
+                          <Space size={12} wrap>
+                            {values.map((colorVal) => {
+                              const isSelected =
+                                selectedVal === colorVal ||
+                                currentAttributes[key] === colorVal ||
+                                subProductSelected?.color === colorVal;
+                              const isHex = isHexColor(colorVal);
+                              const thumbnailUrl = getColorThumbnail(
+                                key,
+                                colorVal
+                              );
 
-                            return (
-                              <Tooltip key={colorVal} title={colorVal}>
-                                <div
-                                  onClick={() =>
-                                    handleSelectAttribute(key, colorVal)
-                                  }
-                                  style={{
-                                    cursor: "pointer",
-                                    padding: 2,
-                                    borderRadius: 8,
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {isHex ? (
+                              return (
+                                <Tooltip key={colorVal} title={colorVal}>
+                                  <div
+                                    onClick={() =>
+                                      handleSelectAttribute(key, colorVal)
+                                    }
+                                    role="button"
+                                    tabIndex={0}
+                                    style={{
+                                      cursor: "pointer",
+                                      width: 44,
+                                      height: 44,
+                                      borderRadius: "50%",
+                                      border: isSelected
+                                        ? "2px solid #131118"
+                                        : "1.5px solid #E5E7EB",
+                                      padding: 2,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      backgroundColor: "#FFFFFF",
+                                      boxShadow: isSelected
+                                        ? "0 0 0 1px rgba(19, 17, 24, 0.15)"
+                                        : "none",
+                                      transition: "all 0.2s ease",
+                                      transform: isSelected
+                                        ? "scale(1.05)"
+                                        : "scale(1)",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.borderColor =
+                                          "#9CA3AF";
+                                        e.currentTarget.style.transform =
+                                          "scale(1.05)";
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.borderColor =
+                                          "#E5E7EB";
+                                      e.currentTarget.style.transform =
+                                        "scale(1)";
+                                      }
+                                    }}
+                                  >
                                     <div
-                                      className="color-item"
                                       style={{
-                                        background: colorVal,
-                                        width: 34,
-                                        height: 34,
-                                        borderRadius: 8,
-                                        border: isSelected
-                                          ? "2px solid #131118"
-                                          : "1px solid #D1D5DB",
-                                        boxShadow: isSelected
-                                          ? "0 0 0 2px rgba(19, 17, 24, 0.25)"
-                                          : "none",
-                                        transform: isSelected
-                                          ? "scale(1.08)"
-                                          : "none",
-                                        transition: "all 0.15s ease",
-                                      }}
-                                    />
-                                  ) : (
-                                    <Button
-                                      type={isSelected ? "primary" : "default"}
-                                      style={{
-                                        borderRadius: 8,
-                                        fontWeight: isSelected ? 600 : 400,
-                                        backgroundColor: isSelected
-                                          ? "#131118"
-                                          : undefined,
-                                        borderColor: isSelected
-                                          ? "#131118"
-                                          : "#E5E7EB",
-                                        height: 36,
+                                        width: "100%",
+                                        height: "100%",
+                                        borderRadius: "50%",
+                                        overflow: "hidden",
+                                        backgroundColor: "#F9FAFB",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
                                       }}
                                     >
-                                      {colorVal}
-                                    </Button>
-                                  )}
-                                </div>
-                              </Tooltip>
-                            );
-                          })}
-                        </Space>
-                      ) : (
-                        <Space size={10} wrap>
-                          {values.map((val) => {
-                            const isSelected =
-                              currentAttributes[key] === val;
-                            return (
-                              <Button
-                                key={val}
-                                type={isSelected ? "primary" : "default"}
-                                style={{
-                                  borderRadius: 8,
-                                  fontWeight: isSelected ? 600 : 400,
-                                  backgroundColor: isSelected
-                                    ? "#131118"
-                                    : undefined,
-                                  borderColor: isSelected
-                                    ? "#131118"
-                                    : "#E5E7EB",
-                                  color: isSelected ? "#FFFFFF" : "#374151",
-                                  height: 38,
-                                  padding: "0 16px",
-                                }}
-                                onClick={() =>
-                                  handleSelectAttribute(key, val)
-                                }
-                              >
-                                {val}
-                              </Button>
-                            );
-                          })}
-                        </Space>
+                                      {thumbnailUrl ? (
+                                        <img
+                                          src={thumbnailUrl}
+                                          alt={colorVal}
+                                          style={{
+                                            width: "90%",
+                                            height: "90%",
+                                            objectFit: "contain",
+                                          }}
+                                        />
+                                      ) : isHex ? (
+                                        <div
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            borderRadius: "50%",
+                                            backgroundColor: colorVal,
+                                          }}
+                                        />
+                                      ) : (
+                                        <span
+                                          style={{
+                                            fontSize: "0.75rem",
+                                            fontWeight: 600,
+                                            color: "#374151",
+                                            textAlign: "center",
+                                            padding: "0 2px",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                          }}
+                                        >
+                                          {colorVal}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Tooltip>
+                              );
+                            })}
+                          </Space>
+                        ) : (
+                          <Space size={10} wrap>
+                            {values.map((val) => {
+                              const isSelected =
+                                currentAttributes[key] === val;
+                              return (
+                                <Button
+                                  key={val}
+                                  type={isSelected ? "primary" : "default"}
+                                  style={{
+                                    borderRadius: 8,
+                                    fontWeight: isSelected ? 600 : 400,
+                                    backgroundColor: isSelected
+                                      ? "#131118"
+                                      : undefined,
+                                    borderColor: isSelected
+                                      ? "#131118"
+                                      : "#E5E7EB",
+                                    color: isSelected ? "#FFFFFF" : "#374151",
+                                    height: 38,
+                                    padding: "0 16px",
+                                  }}
+                                  onClick={() =>
+                                    handleSelectAttribute(key, val)
+                                  }
+                                >
+                                  {val}
+                                </Button>
+                              );
+                            })}
+                          </Space>
+                        )
                       )}
                     </div>
                   );
@@ -1148,17 +1321,21 @@ const ProductDetail = (props: any) => {
                                   )}
                                   {review.color && (
                                     <span className="d-flex align-items-center gap-1">
-                                      Màu:
-                                      <span
-                                        style={{
-                                          display: "inline-block",
-                                          width: 12,
-                                          height: 12,
-                                          background: review.color,
-                                          border: "1px solid #ccc",
-                                          borderRadius: 3,
-                                        }}
-                                      />
+                                      Màu:{" "}
+                                      {isHexColor(review.color) ? (
+                                        <span
+                                          style={{
+                                            display: "inline-block",
+                                            width: 12,
+                                            height: 12,
+                                            background: review.color,
+                                            border: "1px solid #ccc",
+                                            borderRadius: 3,
+                                          }}
+                                        />
+                                      ) : (
+                                        <b>{review.color}</b>
+                                      )}
                                     </span>
                                   )}
                                 </div>

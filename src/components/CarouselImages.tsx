@@ -31,38 +31,39 @@ const CarouselImages = (props: Props) => {
         vals.push(item);
       } else if (Array.isArray(item.images) && item.images.length > 0) {
         // Nếu item là SubProductModel có mảng images
-        item.images.forEach((img: string) => {
-          vals.push({
-            id: item.id,
-            imgURL: img,
-            title: item.title,
-            subProduct: item,
-          });
+        item.images.forEach((img: any) => {
+          const url = typeof img === "string" ? img : img?.url;
+          if (url) {
+            vals.push({
+              id: item.id,
+              imgURL: url,
+              title: item.title,
+              subProduct: item,
+            });
+          }
         });
       }
     });
 
-    const nums = Math.ceil(vals.length / 6);
     const imageGroups: CarouselImageItem[][] = [];
-    Array.from({ length: nums }).forEach(() => {
-      const group: CarouselImageItem[] = vals.splice(0, 6);
-      imageGroups.push(group);
-    });
+    for (let i = 0; i < vals.length; i += 6) {
+      imageGroups.push(vals.slice(i, i + 6));
+    }
 
     setImages(imageGroups);
   }, [items]);
 
   return (
-    <Carousel autoplay className="mt-3">
+    <Carousel dots={images.length > 1} className="mt-3">
       {images.map((groups, index) => (
         <div key={`image-${index}`}>
-          <div className="d-flex gap-2 justify-content-center py-1">
+          <div className="d-flex gap-2 justify-content-center py-1 flex-wrap">
             {groups.map((item, imgIdx) => {
               const isSelected = selectedImageUrl === item.imgURL;
               return (
                 <div
                   key={`${item.id || "img"}-${imgIdx}`}
-                  onClick={() => onClick(item.subProduct || item)}
+                  onClick={() => onClick(item)}
                   style={{
                     cursor: "pointer",
                     borderRadius: 8,
