@@ -14,10 +14,8 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
   const { mode } = useSelector(themeSelector);
 
   useEffect(() => {
-    // Set the data-theme attribute on the body tag
     document.body.setAttribute("data-theme", mode);
 
-    // Apply background and text color directly to the body
     if (mode === "dark") {
       document.body.style.backgroundColor = "#141414";
       document.body.style.color = "rgba(255, 255, 255, 0.85)";

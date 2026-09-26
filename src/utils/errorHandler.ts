@@ -6,13 +6,11 @@ import { message } from "antd";
  * Bản đồ mã lỗi hệ thống sang tiếng Việt chuẩn
  */
 export const ERROR_CODE_MAP: Record<number, string> = {
-  // 1xxx - Hệ thống
   1001: "Khóa hoặc trường dữ liệu không hợp lệ.",
   1002: "Dữ liệu đầu vào không hợp lệ.",
   1003: "Đã xảy ra lỗi không xác định.",
   1999: "Lỗi hệ thống chưa được phân loại. Vui lòng thử lại sau.",
 
-  // 2xxx - Tài khoản & Xác thực
   2001: "Không tìm thấy thông tin tài khoản.",
   2002: "Tài khoản hoặc email này đã tồn tại trên hệ thống.",
   2003: "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
@@ -36,14 +34,12 @@ export const ERROR_CODE_MAP: Record<number, string> = {
   2021: "Tài khoản này được đăng nhập bằng mạng xã hội (Google/GitHub). Vui lòng sử dụng nút Đăng nhập mạng xã hội.",
   2022: "Tài khoản mạng xã hội không có mật khẩu nội bộ. Vui lòng quản lý bảo mật trên tài khoản mạng xã hội của bạn.",
 
-  // 3xxx - Sản phẩm & Danh mục
   3001: "Không tìm thấy sản phẩm yêu cầu.",
   3002: "Không tìm thấy biến thể sản phẩm.",
   3003: "Không tìm thấy danh mục sản phẩm.",
   3004: "Không tìm thấy thông tin nhà cung cấp.",
   3005: "Đường dẫn sản phẩm không hợp lệ.",
 
-  // 4xxx - Khuyến mãi
   4001: "Mã khuyến mãi không tồn tại.",
   4002: "Mã khuyến mãi này đã được sử dụng.",
   4003: "Mã khuyến mãi đã hết lượt sử dụng.",
@@ -51,21 +47,18 @@ export const ERROR_CODE_MAP: Record<number, string> = {
   4005: "Loại khuyến mãi không hợp lệ.",
   4006: "Giá trị khuyến mãi không hợp lệ.",
 
-  // 5xxx - Đơn hàng & Giỏ hàng
   5001: "Không tìm thấy giỏ hàng của bạn.",
   5002: "Số lượng sản phẩm trong kho không đủ đáp ứng.",
   5003: "Không tìm thấy thông tin hóa đơn.",
   5004: "Không thể hủy đơn hàng ở trạng thái hiện tại.",
   5005: "Trạng thái đơn hàng không hợp lệ.",
 
-  // 6xxx - Đánh giá & Tin nhắn
   6001: "Nội dung tin nhắn quá dài. Vui lòng rút gọn lại.",
   6002: "Không tìm thấy lịch sử cuộc trò chuyện.",
   6003: "Bạn chỉ có thể đánh giá sau khi đơn hàng đã hoàn thành.",
   6004: "Bạn đã gửi đánh giá cho đơn hàng này rồi.",
   6005: "Đánh giá bị từ chối do vi phạm quy tắc cộng đồng.",
 
-  // 7xxx - Địa chỉ
   7001: "Không tìm thấy thông tin địa chỉ.",
 };
 
@@ -73,7 +66,6 @@ export const ERROR_CODE_MAP: Record<number, string> = {
  * Từ điển chuyển đổi các cụm từ tiếng Anh sang tiếng Việt thân thiện
  */
 export const ENGLISH_TO_VIETNAMESE_MAP: Record<string, string> = {
-  // Xác thực & Tài khoản
   "wrong password": "Mật khẩu hiện tại không chính xác. Vui lòng kiểm tra lại!",
   "passwords do not match": "Mật khẩu mới và xác nhận mật khẩu không khớp!",
   "user not found": "Không tìm thấy thông tin tài khoản!",
@@ -95,7 +87,6 @@ export const ENGLISH_TO_VIETNAMESE_MAP: Record<string, string> = {
   "mfa verification failed": "Xác thực hai yếu tố (2FA) thất bại!",
   "tfa is not enabled": "Xác thực hai yếu tố chưa được kích hoạt.",
 
-  // Giỏ hàng & Sản phẩm
   "please choose a product!": "Vui lòng chọn sản phẩm!",
   "this item is out of stock.": "Sản phẩm này hiện tại đã hết hàng!",
   "product not found.": "Không tìm thấy sản phẩm!",
@@ -106,14 +97,12 @@ export const ENGLISH_TO_VIETNAMESE_MAP: Record<string, string> = {
   "promotion is out of stock.": "Mã khuyến mãi đã hết lượt sử dụng!",
   "promotion has expired.": "Mã khuyến mãi đã hết hạn sử dụng!",
 
-  // Địa chỉ & Dịch vụ
   "failed to create address": "Không thể thêm địa chỉ mới. Vui lòng thử lại!",
   "failed to update address": "Không thể cập nhật địa chỉ. Vui lòng thử lại!",
   "failed to delete address": "Không thể xóa địa chỉ. Vui lòng thử lại!",
   "failed to set default address": "Không thể đặt làm địa chỉ mặc định!",
   "failed to clear chat history": "Không thể xóa lịch sử cuộc trò chuyện!",
 
-  // Lỗi mạng & HTTP
   "network error": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối Internet!",
   "request failed with status code 401": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!",
   "request failed with status code 403": "Bạn không có quyền truy cập vào tài nguyên này!",
@@ -130,13 +119,11 @@ export function getErrorMessage(
 ): string {
   if (!error) return fallbackMessage;
 
-  // 1. Kiểm tra mã code chuẩn (Backend ApiResponse: { code: 2011, message: ... })
   const code = error?.code || error?.response?.data?.code;
   if (typeof code === "number" && ERROR_CODE_MAP[code]) {
     return ERROR_CODE_MAP[code];
   }
 
-  // 2. Lấy chuỗi thông báo thô
   let rawMsg = "";
   if (typeof error === "string") {
     rawMsg = error;
@@ -152,25 +139,21 @@ export function getErrorMessage(
 
   const normalized = rawMsg.trim().toLowerCase();
 
-  // 3. Đối chiếu trong từ điển tiếng Anh sang tiếng Việt
   if (ENGLISH_TO_VIETNAMESE_MAP[normalized]) {
     return ENGLISH_TO_VIETNAMESE_MAP[normalized];
   }
 
-  // Đối chiếu từng phần
   for (const [key, vnText] of Object.entries(ENGLISH_TO_VIETNAMESE_MAP)) {
     if (normalized.includes(key)) {
       return vnText;
     }
   }
 
-  // 4. Nếu chuỗi đã chứa tiếng Việt (có dấu) hoặc là thông điệp hợp lệ từ Backend
   const hasVietnameseAccent = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(rawMsg);
   if (hasVietnameseAccent) {
     return rawMsg;
   }
 
-  // 5. Trả về fallback
   return fallbackMessage;
 }
 

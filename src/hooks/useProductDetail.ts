@@ -28,7 +28,6 @@ export const useProductDetail = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch sub products
   useEffect(() => {
     const fetchSubProducts = async () => {
       if (!product?.id) return;
@@ -40,7 +39,6 @@ export const useProductDetail = ({
         );
         setSubProducts(subProductsData || []);
 
-        // Fetch reviews for all sub products
         const subProductIds = (subProductsData || []).map(
           (item: SubProductModel) => item.id
         );
@@ -59,7 +57,6 @@ export const useProductDetail = ({
     fetchSubProducts();
   }, [product?.id]);
 
-  // Fetch supplier info
   useEffect(() => {
     const fetchSupplier = async () => {
       if (!product?.supplierId) return;
@@ -78,7 +75,6 @@ export const useProductDetail = ({
     fetchSupplier();
   }, [product?.supplierId]);
 
-  // Set initial sub product selected
   useEffect(() => {
     if (subProducts && subProducts.length > 0) {
       setSubProductSelected({

@@ -49,7 +49,6 @@ const CheckoutPage = () => {
   const auth = useSelector(authSelector);
   const { getCartInDatabase, getRedisCart } = useCartOperations();
 
-  // Đồng bộ giỏ hàng mới nhất khi vào trang checkout
   useEffect(() => {
     if (auth.userId) {
       getCartInDatabase();
@@ -58,7 +57,6 @@ const CheckoutPage = () => {
     }
   }, [auth.userId]);
 
-  // Xử lý khi quay lại trang bằng nút Back trình duyệt (BFCache)
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       setCurrentStep(0);
@@ -76,7 +74,6 @@ const CheckoutPage = () => {
     };
   }, [auth.userId]);
 
-  // Xử lý khi quay lại từ trang kết quả thanh toán VNPay
   useEffect(() => {
     if (router.query.from_payment) {
       setCurrentStep(0);
@@ -148,11 +145,9 @@ const CheckoutPage = () => {
         });
 
         if (res?.paymentUrl) {
-          // Lưu ý: Không xóa giỏ hàng ở đây vì giao dịch chưa hoàn tất.
-          // Đặt lại step về 0 trước khi chuyển hướng để nếu người dùng nhấn nút Back sẽ quay về bước giỏ hàng
           setCurrentStep(0);
           window.location.href = res.paymentUrl;
-          return; // Do not proceed with order creation
+          return;
         } else {
           setIsLoading(false);
           message.error(`Không thể tạo liên kết thanh toán ${gatewayName}.`);
@@ -185,13 +180,11 @@ const CheckoutPage = () => {
         },
       });
 
-      // Chỉ xóa các sản phẩm đã chọn mua khỏi giỏ hàng
       const selectedSubProductIds = selectedItems.map((item) => item.subProductId);
       dispatch(removeSelectedItems(selectedSubProductIds));
     } catch (error: any) {
       console.log(error);
 
-      // Handle specific error codes from backend
       if (error?.code === 1021 || error?.code === 5002) {
         showErrorMessage(
           error,

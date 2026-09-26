@@ -29,25 +29,21 @@ export interface CreateAddressData {
 }
 
 export const addressService = {
-  // Lấy tất cả địa chỉ của user
   getAddresses: async (): Promise<AddressModel[]> => {
     const res = await handleAPI("/addresses/all");
     return res.data || [];
   },
 
-  // Lấy địa chỉ theo ID
   getAddressById: async (id: string): Promise<AddressModel> => {
     const res = await handleAPI(`/addresses/${id}`);
     return res.data;
   },
 
-  // Tạo địa chỉ mới
   createAddress: async (data: CreateAddressData): Promise<AddressModel> => {
     const res = await handleAPI("/addresses/create", data, "post");
     return res.data;
   },
 
-  // Cập nhật địa chỉ
   updateAddress: async (
     id: string,
     data: CreateAddressData
@@ -60,19 +56,16 @@ export const addressService = {
     return res.data;
   },
 
-  // Xóa địa chỉ
   deleteAddress: async (id: string): Promise<any> => {
     const res = await handleAPI(`/addresses/${id}`, {}, "delete");
     return res.data;
   },
 
-  // Đặt địa chỉ làm mặc định
   setDefaultAddress: async (id: string): Promise<any> => {
     const res = await handleAPI(`/addresses/${id}/set-default`, {}, "patch");
     return res.data;
   },
 
-  // Lấy danh sách tỉnh/thành phố từ OpenAPI v2
   getProvinces: async (): Promise<AdministrativeUnit[]> => {
     if (cache.provinces.length > 0) {
       return cache.provinces;
@@ -99,7 +92,6 @@ export const addressService = {
     }
   },
 
-  // Lấy danh sách quận/huyện theo tỉnh từ OpenAPI
   getDistricts: async (provinceId: string): Promise<AdministrativeUnit[]> => {
     try {
       const res = await axios.get(
@@ -118,7 +110,6 @@ export const addressService = {
     }
   },
 
-  // Lấy danh sách phường/xã theo mã quận/huyện
   getWards: async (districtCode: string): Promise<AdministrativeUnit[]> => {
     if (!districtCode) return [];
     const cacheKey = String(districtCode);
@@ -147,7 +138,6 @@ export const addressService = {
     }
   },
 
-  // Lấy danh sách phường/xã/thị trấn trực tiếp theo tỉnh/thành phố (Mô hình chính quyền 2 cấp: Tỉnh -> Xã/Phường)
   getWardsByProvince: async (
     provinceCode: string
   ): Promise<AdministrativeUnit[]> => {
@@ -157,14 +147,12 @@ export const addressService = {
       return cache.wards.get(cacheKey)!;
     }
     try {
-      // v2 hỗ trợ wards trực tiếp dưới province qua depth=2
       let res = await axios.get(
         `${VIETNAM_PROVINCES_API}/p/${provinceCode}?depth=2`
       );
       let directWards: any[] = res.data?.wards || [];
       let districts: any[] = res.data?.districts || [];
 
-      // Nếu không có direct wards và không có districts, thử depth=3
       if (directWards.length === 0 && districts.length === 0) {
         res = await axios.get(
           `${VIETNAM_PROVINCES_API}/p/${provinceCode}?depth=3`
@@ -198,7 +186,6 @@ export const addressService = {
         });
       }
 
-      // Sắp xếp theo tên Phường/Xã
       allWards.sort((a, b) =>
         (a.name || a.label).localeCompare(b.name || b.label, "vi")
       );

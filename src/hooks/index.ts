@@ -15,7 +15,6 @@ export { useAddress } from "./useAddress";
 export { useChat } from "./useChat";
 export { useChatMessage } from "./useChatMessage";
 
-// Auth specific hooks
 export { useLogin } from "./useLogin";
 export { useSignup } from "./useSignup";
 export { useForgotPassword } from "./useForgotPassword";

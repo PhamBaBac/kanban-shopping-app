@@ -41,9 +41,6 @@ const TwoFactorAuthSettings = ({ onSuccess, onCancel }: Props) => {
      const res = await userService.enable2FA(auth.email, verificationCode);
 
       if (res) {
-        // const updated = { ...res, email: auth.email };
-        // dispatch(addAuth(updated));
-        // localStorage.setItem("authData", JSON.stringify(updated));
         message.success("Đã bật xác thực hai yếu tố (2FA) thành công!");
         handleClose();
         if (onSuccess) onSuccess();

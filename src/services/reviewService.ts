@@ -11,13 +11,11 @@ export interface CreateReviewData {
 }
 
 export const reviewService = {
-  // Tạo review
   createReview: async (data: CreateReviewData): Promise<any> => {
     const res = await handleAPI("/ai/comments", data, "post");
     return res.data;
   },
 
-  // Upload review images
   uploadReviewImages: async (files: File[]): Promise<string[]> => {
     const uploadPromises = files.map((file) => uploadFile(file));
     return await Promise.all(uploadPromises);

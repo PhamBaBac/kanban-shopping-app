@@ -32,7 +32,6 @@ export const useShop = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dùng requestRef để chống race condition khi chuyển danh mục nhanh
   const requestRef = useRef(0);
 
   const fetchProducts = useCallback(async (filters: ShopFilters) => {
@@ -41,7 +40,6 @@ export const useShop = ({
     setError(null);
     try {
       const result = await shopService.getProductsByFilter(filters);
-      // Chỉ cập nhật dữ liệu nếu đây là request mới nhất
       if (currentReq === requestRef.current) {
         setProducts(result.data);
         setTotalItems(result.totalElements);
@@ -87,7 +85,6 @@ export const useShop = ({
         const filterValuesRes = await shopService.getFilterValues();
         setFilterValues(filterValuesRes);
 
-        // Fetch products with initial filters if provided
         if (initialFilters) {
           await fetchProducts(initialFilters);
         }

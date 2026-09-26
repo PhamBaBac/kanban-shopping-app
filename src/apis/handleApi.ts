@@ -4,7 +4,7 @@ const handleAPI = async (
   url: string,
   data?: any,
   method: "post" | "put" | "get" | "delete" | "patch" = "get",
-  customHeaders?: Record<string, string> // Thêm tham số headers tùy chỉnh
+  customHeaders?: Record<string, string>
 ) => {
   try {
     let config: any = {

@@ -38,12 +38,10 @@ export const useCart = ({
   const cart: CartItemModel[] = useSelector(cartSelector);
   const dispatch = useDispatch();
 
-  // Reset count when sub product changes
   useEffect(() => {
     setCount(1);
   }, [subProductSelected]);
 
-  // Calculate available quantity
   useEffect(() => {
     const item = cart.find((el) => el.subProductId === subProductSelected?.id);
     if (subProductSelected) {
@@ -64,7 +62,6 @@ export const useCart = ({
     const isLoggedIn = auth.userId && auth.accessToken;
     const sessionId = getOrCreateSessionId();
 
-    // Parse attributes from subProductSelected
     let attrs: Record<string, any> = {};
     if (subProductSelected.attributes) {
       if (typeof subProductSelected.attributes === "string") {
@@ -78,7 +75,6 @@ export const useCart = ({
       }
     }
 
-    // Resolve color
     let resolvedColor = subProductSelected.color || "";
     if (!resolvedColor) {
       for (const [key, val] of Object.entries(attrs)) {
@@ -94,7 +90,6 @@ export const useCart = ({
       }
     }
 
-    // Resolve size / specs
     const isSystemAttr = (k: string) => {
       const lower = k.trim().toLowerCase();
       return (
@@ -154,7 +149,6 @@ export const useCart = ({
 
     try {
       if (index !== -1 && cart[index]) {
-        // Update existing cart item
         if (isLoggedIn && cart[index].id) {
           await cartService.updateCartItem(cart[index].id!, value);
           dispatch(
@@ -165,7 +159,6 @@ export const useCart = ({
             })
           );
         } else if (!isLoggedIn) {
-          // For non-logged in users, update Redis cart
           await cartService.updateRedisCartItem(
             sessionId,
             cart[index].subProductId,
@@ -180,7 +173,6 @@ export const useCart = ({
           );
         }
       } else {
-        // Add new cart item
         if (isLoggedIn) {
           const res = await cartService.addToCart(value);
           if (res?.id) {

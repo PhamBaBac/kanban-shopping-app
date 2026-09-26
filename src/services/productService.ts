@@ -44,19 +44,16 @@ export interface ProductFilter {
 const supplierCache = new Map<string, Promise<SupplierModel>>();
 
 export const productService = {
-  // Lấy tất cả sản phẩm
   getAllProducts: async (filter?: ProductFilter): Promise<Product[]> => {
     const res = await handleAPI("/products", filter);
     return res.data || [];
   },
 
-  // Lấy sản phẩm theo ID
   getProductById: async (id: string): Promise<Product> => {
     const res = await handleAPI(`/products/${id}`);
     return res.data;
   },
 
-  // Lấy chi tiết sản phẩm theo slug và id
   getProductDetail: async (slug: string, id: string): Promise<ProductModel> => {
     const decodedSlug = decodeURIComponent(slug);
     const url = `/public/products/${decodedSlug}/${id}`;
@@ -70,7 +67,6 @@ export const productService = {
     }
   },
 
-  // Lấy sub products theo product ID
   getSubProductsByProductId: async (
     productId: string
   ): Promise<SubProductModel[]> => {
@@ -80,7 +76,6 @@ export const productService = {
     return res.data || [];
   },
 
-  // Lấy sản phẩm theo category
   getProductsByCategory: async (categoryId: string): Promise<ProductModel[]> => {
     try {
       const res = await handleAPI(`/public/products/category/${categoryId}`);
@@ -91,13 +86,11 @@ export const productService = {
     }
   },
 
-  // Tìm kiếm sản phẩm
   searchProducts: async (query: string): Promise<Product[]> => {
     const res = await handleAPI(`/products/search?q=${query}`);
     return res.data || [];
   },
 
-  // Lấy thông tin supplier
   getSupplier: async (supplierId: string): Promise<SupplierModel> => {
     if (!supplierId) return null as any;
     if (supplierCache.has(supplierId)) {
@@ -113,7 +106,6 @@ export const productService = {
     return promise;
   },
 
-  // Lấy tất cả reviews cho sub products
   getReviews: async (subProductIds: string[]): Promise<any[]> => {
     if (subProductIds.length === 0) return [];
 
@@ -125,19 +117,16 @@ export const productService = {
     return res.data || [];
   },
 
-  // Lấy filter values
   getFilterValues: async (): Promise<any> => {
     const res = await handleAPI("/subProducts/get-filter-values");
     return res.data;
   },
 
-  // Lấy categories
   getCategories: async (): Promise<any[]> => {
     const res = await handleAPI("/public/categories/all");
     return res.data || [];
   },
 
-  // Lấy sản phẩm liên quan (AI phân tích)
   getRelatedProducts: async (
     productId: string,
     limit: number = 4

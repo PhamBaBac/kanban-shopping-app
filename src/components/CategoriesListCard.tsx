@@ -67,7 +67,6 @@ const CategoriesListCard = (props: Props) => {
 
   if (type === "card") {
     const colCount = Math.min(Math.max(categories.length, 1), 5);
-    // Nếu có 5 danh mục trở lên thì ưu tiên hiển thị đủ 5 cột ngang
     const cardWidth =
       categories.length >= 5
         ? Math.min(Math.max((width || 1200) * 0.9, 1100), 1320)

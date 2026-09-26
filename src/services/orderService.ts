@@ -16,19 +16,16 @@ export interface CreateOrderData {
 }
 
 export const orderService = {
-  // Lấy danh sách orders
   getOrders: async (): Promise<OrderItem[]> => {
     const res = await handleAPI("/orders/listOrders");
     return res.data || [];
   },
 
-  // Lấy chi tiết order
   getOrderDetail: async (orderId: string): Promise<any> => {
     const res = await handleAPI(`/orders/${orderId}`, {}, "get");
     return res.data;
   },
 
-  // Tạo order mới với Idempotency Key bảo vệ chống duplicate
   createOrder: async (data: CreateOrderData): Promise<any> => {
     const idempotencyKey =
       data.idempotencyKey ||
@@ -45,25 +42,21 @@ export const orderService = {
     return res.data;
   },
 
-  // Hủy order
   cancelOrder: async (orderId: string): Promise<any> => {
     const res = await handleAPI(`/orders/${orderId}/cancel`, {}, "patch");
     return res.data;
   },
 
-  // Xóa order
   deleteOrder: async (orderId: string): Promise<any> => {
     const res = await handleAPI(`/orders/${orderId}`, {}, "delete");
     return res.data;
   },
 
-  // Tra cứu vận đơn GHN theo trackingCode
   getTrackingByCode: async (trackingCode: string): Promise<any> => {
     const res: any = await handleAPI(`/shipping/tracking/${trackingCode}`, {}, "get");
     return res?.data !== undefined ? res.data : res;
   },
 
-  // Tra cứu vận đơn GHN theo orderId
   getOrderTracking: async (orderId: string): Promise<any> => {
     const res: any = await handleAPI(`/shipping/order/${orderId}`, {}, "get");
     return res?.data !== undefined ? res.data : res;

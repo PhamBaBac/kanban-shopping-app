@@ -39,13 +39,11 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Lấy ảnh hiển thị
   const image =
     !imageError && product.images && product.images.length > 0
       ? product.images[0]
       : null;
 
-  // Tính toán giá và giảm giá
   const subProducts = product.subProducts || [];
   let minPrice = Infinity;
   let minDiscount = Infinity;

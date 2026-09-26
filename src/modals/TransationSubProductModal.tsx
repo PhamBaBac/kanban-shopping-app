@@ -54,7 +54,6 @@ const TransationSubProductModal = ({
       }));
       setSubProducts(updated);
 
-      // Mặc định chọn biến thể hiện tại trong giỏ hàng
       const current =
         updated.find((sp: any) => sp.id === productSelected.subProductId) ||
         updated[0];
@@ -100,7 +99,6 @@ const TransationSubProductModal = ({
       return cleanAttrs;
     }
 
-    // Fallback cho sản phẩm cũ chỉ có size / color
     const fallback: Record<string, string> = {};
     if (sp.size) fallback["Size"] = sp.size;
     if (sp.color) fallback["Màu sắc"] = sp.color;
@@ -192,7 +190,6 @@ const TransationSubProductModal = ({
   const handleChangeSubProduct = async () => {
     if (!itemSelected) return;
 
-    // Nếu chọn đúng biến thể hiện tại thì không cần gọi API
     if (itemSelected.id === productSelected.subProductId) {
       message.info("Bạn đang chọn biến thể hiện tại.");
       onClose();
@@ -218,7 +215,6 @@ const TransationSubProductModal = ({
 
     const attrs = getSubProductAttributes(item);
 
-    // Tìm màu sắc
     let resolvedColor = item.color || "";
     if (!resolvedColor) {
       for (const [k, v] of Object.entries(attrs)) {
@@ -230,7 +226,6 @@ const TransationSubProductModal = ({
       }
     }
 
-    // Tổng hợp tất cả các thuộc tính không phải màu sắc (Dung lượng, RAM, Size, v.v.)
     const nonColorList: string[] = [];
     for (const [k, v] of Object.entries(attrs)) {
       const lowerK = k.trim().toLowerCase();
@@ -264,7 +259,6 @@ const TransationSubProductModal = ({
       if (auth.userId) {
         await cartService.updateCartItem(productSelected.id!, updatedItem);
 
-        // Đồng bộ lại giỏ hàng từ server để tránh conflict / duplicate items
         try {
           const freshCart = await cartService.getCart();
           if (freshCart && Array.isArray(freshCart)) {
@@ -288,7 +282,6 @@ const TransationSubProductModal = ({
           updatedItem
         );
 
-        // Đồng bộ lại giỏ hàng từ Redis
         try {
           const freshCart = await cartService.getRedisCart(sessionId);
           if (freshCart && Array.isArray(freshCart)) {
@@ -311,14 +304,12 @@ const TransationSubProductModal = ({
   };
 
   const fallbackLocalUpdate = (updatedItem: CartItemModel) => {
-    // Xóa item cũ
     dispatch(
       removeProduct({
         id: productSelected.id,
         subProductId: productSelected.subProductId,
       })
     );
-    // Thêm item mới (cartReducer sẽ tự merge nếu subProductId đã tồn tại)
     dispatch(addProduct(updatedItem));
   };
 

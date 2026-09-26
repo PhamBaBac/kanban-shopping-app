@@ -41,7 +41,6 @@ export const useCartValidation = () => {
     setIsValidating(true);
 
     try {
-      // Nhóm theo productId để giảm số lượng request gọi API
       const productIds = Array.from(
         new Set(
           carts
@@ -78,7 +77,6 @@ export const useCartValidation = () => {
         if (item.productId && productResults[item.productId]) {
           const res = productResults[item.productId];
           if (!res.success) {
-            // Sản phẩm đã bị xóa hoặc không tìm thấy
             isDeleted = true;
             stock = 0;
             qty = 0;
@@ -87,7 +85,6 @@ export const useCartValidation = () => {
               (sp: any) => sp.id === item.subProductId
             );
             if (!matchedSub) {
-              // Biến thể (subProduct) đã bị xóa
               isDeleted = true;
               stock = 0;
               qty = 0;

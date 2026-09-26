@@ -42,7 +42,6 @@ const ProductDetail = (props: any) => {
   const [relatedProducts, setRelatedProducts] = useState<ProductModel[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(true);
 
-  // Custom hooks for data management
   const {
     subProducts,
     supplier,
@@ -94,7 +93,6 @@ const ProductDetail = (props: any) => {
         if (u) subImgs.push(u);
       });
     }
-    // Nếu ảnh hiện tại đang xem đã thuộc về subProduct này (ví dụ user vừa click một ảnh chi tiết trong carousel), giữ nguyên ảnh đó
     if (selectedImage && subImgs.includes(selectedImage)) {
       return;
     }
@@ -106,7 +104,6 @@ const ProductDetail = (props: any) => {
     }
   }, [subProductSelected, product]);
 
-  // AI Related Products (< 5 sản phẩm)
   useEffect(() => {
     if (!product?.id) return;
     let isMounted = true;
@@ -114,7 +111,6 @@ const ProductDetail = (props: any) => {
 
     const fetchRelated = async () => {
       try {
-        // Gọi API AI phân tích sản phẩm liên quan từ backend (dựa trên thể loại và tiêu đề)
         const aiProducts = await productService.getRelatedProducts(product.id, 4);
         if (isMounted) {
           setRelatedProducts(aiProducts || []);
@@ -173,7 +169,6 @@ const ProductDetail = (props: any) => {
       });
     }
 
-    // Fallback: nếu attributes chưa có key màu sắc nhưng sp.color có giá trị
     const hasColorKey = Object.keys(cleanAttrs).some((k) => {
       const lower = k.trim().toLowerCase();
       return lower.includes("màu") || lower.includes("color") || lower.includes("colour");
@@ -182,7 +177,6 @@ const ProductDetail = (props: any) => {
       cleanAttrs["Màu sắc"] = sp.color.trim();
     }
 
-    // Fallback: nếu attributes chưa có key kích cỡ/size nhưng sp.size có giá trị
     const hasSizeKey = Object.keys(cleanAttrs).some((k) => {
       const lower = k.trim().toLowerCase();
       return lower.includes("size") || lower.includes("kích") || lower.includes("cỡ");
@@ -196,9 +190,7 @@ const ProductDetail = (props: any) => {
 
   const getAttributeOrder = (key: string): number => {
     const k = key.trim().toLowerCase();
-    // 1. Màu sắc
     if (k.includes("màu") || k.includes("color") || k.includes("colour")) return 1;
-    // 2. Dung lượng / Bộ nhớ / Kích cỡ / Size / Storage
     if (
       k.includes("dung lượng") ||
       k.includes("bộ nhớ") ||
@@ -206,11 +198,8 @@ const ProductDetail = (props: any) => {
       k.includes("kích") ||
       k.includes("size")
     ) return 2;
-    // 3. Phiên bản
     if (k.includes("phiên bản") || k.includes("version")) return 3;
-    // 4. RAM
     if (k.includes("ram")) return 4;
-    // 5. Thuộc tính khác
     return 10;
   };
 
@@ -231,7 +220,6 @@ const ProductDetail = (props: any) => {
   }, [subProductSelected]);
 
   const sortSizeValues = (values: string[]): string[] => {
-    // Thứ tự kích cỡ chữ tiêu chuẩn
     const sizeOrder: Record<string, number> = {
       XXS: 1,
       "2XS": 1,
@@ -254,7 +242,6 @@ const ProductDetail = (props: any) => {
       const aUpper = a.trim().toUpperCase();
       const bUpper = b.trim().toUpperCase();
 
-      // 1. Kiểm tra kích cỡ theo bảng chuẩn (S, M, L, XL...)
       const aRank = sizeOrder[aUpper];
       const bRank = sizeOrder[bUpper];
 
@@ -264,14 +251,12 @@ const ProductDetail = (props: any) => {
       if (aRank !== undefined) return -1;
       if (bRank !== undefined) return 1;
 
-      // 2. Kiểm tra nếu là kích cỡ số (ví dụ: size giày 38, 39, 40 hoặc quần 29, 30, 31)
       const aNum = parseFloat(aUpper);
       const bNum = parseFloat(bUpper);
       if (!isNaN(aNum) && !isNaN(bNum) && String(aNum) === aUpper && String(bNum) === bUpper) {
         return aNum - bNum;
       }
 
-      // 3. Fallback sắp xếp theo bảng chữ cái
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
     });
   };
@@ -313,7 +298,6 @@ const ProductDetail = (props: any) => {
   };
 
   const getColorThumbnail = (key: string, colorVal: string): string => {
-    // 1. Kiểm tra subProductSelected nếu đang chọn màu này
     if (subProductSelected) {
       const currentAttrs = getSubProductAttributes(subProductSelected);
       const isMatch =
@@ -325,7 +309,6 @@ const ProductDetail = (props: any) => {
       }
     }
 
-    // 2. Tìm subProduct có màu này và có ảnh riêng
     for (const sp of subProducts) {
       const attrs = getSubProductAttributes(sp);
       const isMatch =
@@ -337,7 +320,6 @@ const ProductDetail = (props: any) => {
       }
     }
 
-    // 3. Fallback sang ảnh đại diện chung của sản phẩm
     if (product?.images && product.images.length > 0) {
       return product.images[0];
     }
@@ -392,7 +374,6 @@ const ProductDetail = (props: any) => {
       subProduct?: SubProductModel;
     }> = [];
 
-    // 1. Lấy tất cả ảnh từ product chính nếu có
     if (product?.images && product.images.length > 0) {
       product.images.forEach((img, idx) => {
         if (img && !seenImgs.has(img)) {
@@ -406,7 +387,6 @@ const ProductDetail = (props: any) => {
       });
     }
 
-    // 2. Lấy tất cả ảnh từ subProducts nếu có
     if (subProducts && subProducts.length > 0) {
       subProducts.forEach((sp) => {
         const subImgs: string[] = [];
@@ -932,7 +912,6 @@ const ProductDetail = (props: any) => {
                     currentAttributes[key] ||
                     (isColor ? subProductSelected?.color : "") ||
                     "";
-                  // Màu sắc thì 1 cái vẫn hiện ảnh đại diện hình tròn, các thuộc tính khác chỉ hiện nút nếu có từ 2 lựa chọn trở lên
                   const showOptionsBelow = isColor || values.length > 1;
 
                   return (

@@ -27,7 +27,6 @@ export interface SignupData {
 }
 
 export const authService = {
-  // Đăng nhập
   login: async (credentials: LoginCredentials): Promise<any> => {
     const sessionId = getOrCreateSessionId();
     const res = await handleAPI("/auth/authenticate", credentials, "post", {
@@ -36,13 +35,11 @@ export const authService = {
     return res.data;
   },
 
-  // Lấy thông tin user hiện tại
   getCurrentUser: async (): Promise<any> => {
     const res = await handleAPI("/users/me");
     return res.data;
   },
 
-  // Đăng ký
   signup: async (data: SignupData): Promise<any> => {
     const payload = {
       ...data,
@@ -52,13 +49,11 @@ export const authService = {
     return res.data;
   },
 
-  // Gửi mã xác thực email
   sendVerificationCode: async (email: string): Promise<any> => {
     const res = await handleAPI("/auth/send-code-email", { email }, "post");
     return res.data;
   },
 
-  // Xác thực mã email
   verifyEmailCode: async (email: string, code: string): Promise<any> => {
     const res = await handleAPI(
       "/auth/verify-code-email",
@@ -68,7 +63,6 @@ export const authService = {
     return res.data;
   },
 
-  // Reset password
   resetPassword: async (
     email: string,
     code: string,
@@ -86,13 +80,11 @@ export const authService = {
     return res.data;
   },
 
-  // Xác thực MFA
   verifyMFA: async (email: string, code: string): Promise<any> => {
     const res = await handleAPI("/auth/enable-tfa", { email, code }, "post");
     return res.data;
   },
 
-  // Xác thực MFA cho OAuth
   verifyMFAAuth: async (
     email: string,
     code: string,
@@ -104,7 +96,6 @@ export const authService = {
     return res.data;
   },
 
-  // OAuth callback - lấy user info
   getOAuthUser: async (accessToken: string): Promise<any> => {
     const res = await handleAPI("/users/me", undefined, "get", {
       Authorization: `Bearer ${accessToken}`,
@@ -112,7 +103,6 @@ export const authService = {
     return res.data;
   },
 
-  // Sync Redis cart to database
   syncRedisCart: async (userId: string): Promise<any> => {
     const sessionId = getOrCreateSessionId();
     const res = await handleAPI(
@@ -126,13 +116,11 @@ export const authService = {
     return res.data;
   },
 
-  // Disable 2FA
   disable2FA: async (email: string): Promise<any> => {
     const res = await handleAPI(`/users/disable-tfa?email=${email}`, {}, "put");
     return res.data;
   },
 
-  // Exchange OAuth2 one-time code for accessToken
   exchangeOAuthToken: async (code: string): Promise<any> => {
     const sessionId = getOrCreateSessionId();
     const res = await handleAPI("/auth/exchange-token", { code }, "post", {

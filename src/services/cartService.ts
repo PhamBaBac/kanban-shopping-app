@@ -27,31 +27,26 @@ export interface UpdateCartItemData {
 }
 
 export const cartService = {
-  // Lấy cart từ database
   getCart: async (): Promise<CartItem[]> => {
     const res = await handleAPI("/carts");
     return res.data || [];
   },
 
-  // Lấy cart từ Redis
   getRedisCart: async (sessionId: string): Promise<CartItem[]> => {
     const res = await handleAPI(`/redisCarts?sessionId=${sessionId}`);
     return res.data || [];
   },
 
-  // Lấy cart theo ID
   getCartById: async (cartId: string): Promise<CartItem[]> => {
     const res = await handleAPI(`/carts/${cartId}`);
     return res.data || [];
   },
 
-  // Thêm sản phẩm vào cart
   addToCart: async (data: CartItem): Promise<any> => {
     const res = await handleAPI("/carts/add", data, "post");
     return res.data;
   },
 
-  // Thêm sản phẩm vào Redis cart
   addToRedisCart: async (sessionId: string, data: CartItem): Promise<any> => {
     const res = await handleAPI(
       `/redisCarts?sessionId=${sessionId}`,
@@ -61,7 +56,6 @@ export const cartService = {
     return res.data;
   },
 
-  // Cập nhật cart item
   updateCartItem: async (
     id: string,
     data: UpdateCartItemData
@@ -70,7 +64,6 @@ export const cartService = {
     return res.data;
   },
 
-  // Cập nhật Redis cart item
   updateRedisCartItem: async (
     sessionId: string,
     currentSubProductId: string,
@@ -84,13 +77,11 @@ export const cartService = {
     return res.data;
   },
 
-  // Xóa sản phẩm khỏi cart
   removeFromCart: async (id: string): Promise<any> => {
     const res = await handleAPI(`/carts/remove?id=${id}`, {}, "delete");
     return res.data;
   },
 
-  // Xóa sản phẩm khỏi Redis cart
   removeFromRedisCart: async (
     sessionId: string,
     subProductId: string
@@ -103,13 +94,11 @@ export const cartService = {
     return res.data;
   },
 
-  // Xóa toàn bộ cart
   clearCart: async (): Promise<any> => {
     const res = await handleAPI("/carts", {}, "delete");
     return res.data;
   },
 
-  // Xóa toàn bộ Redis cart
   clearRedisCart: async (sessionId: string): Promise<any> => {
     const res = await handleAPI(
       `/redisCarts?sessionId=${sessionId}`,

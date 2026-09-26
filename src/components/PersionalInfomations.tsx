@@ -24,7 +24,6 @@ const PersionalInfomations = () => {
 
   useEffect(() => {
     form.setFieldsValue(auth);
-    // Khởi tạo avatarList với avatar hiện tại nếu có
     if (auth.avatar) {
       setAvatarList([
         {
@@ -35,7 +34,6 @@ const PersionalInfomations = () => {
         } as UploadFile,
       ]);
     }
-    // Lấy địa chỉ từ API
     getAddress();
   }, [auth.avatar]);
 
@@ -46,7 +44,6 @@ const PersionalInfomations = () => {
         const defaultAddress =
           res.find((addr: AddressModel) => addr.isDefault) || res[0];
         setAddress(defaultAddress);
-        // Cập nhật form với địa chỉ mặc định
         form.setFieldValue("address", defaultAddress.address);
         form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
       }
@@ -87,7 +84,6 @@ const PersionalInfomations = () => {
         name: `${data.firstName} ${data.lastName}`,
       });
 
-      // Cập nhật avatar trong state nếu có avatar mới
       const updatedAuth = { ...auth, ...res };
       if (data.photoURL) {
         updatedAuth.avatar = data.photoURL;
@@ -193,7 +189,6 @@ const PersionalInfomations = () => {
       <AddressModal
         onAddAddress={(val) => {
           form.setFieldValue("address", val);
-          // Cập nhật lại danh sách địa chỉ sau khi thêm mới
           getAddress();
         }}
         visible={isVisibleModalAddress}

@@ -34,7 +34,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
 
   const conversationId = userId ? `user_${userId}` : "";
 
-  // 1. Tải lịch sử tin nhắn
   const loadHistory = useCallback(async () => {
     if (!conversationId) return;
     setLoadingHistory(true);
@@ -48,7 +47,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
     }
   }, [conversationId]);
 
-  // 2. Đánh dấu đã đọc
   const markAsRead = useCallback(async () => {
     if (!conversationId) return;
     setUnreadCount(0);
@@ -59,17 +57,14 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
     }
   }, [conversationId]);
 
-  // Khi người dùng mở hộp thoại chat, tự động reset unreadCount và gọi markAsRead
   useEffect(() => {
     if (isChatOpen && conversationId) {
       markAsRead();
     }
   }, [isChatOpen, conversationId, markAsRead]);
 
-  // 3. Khởi tạo Socket.IO kết nối
   useEffect(() => {
     if (!userId) {
-      // Nếu chưa đăng nhập thì ngắt kết nối nếu có
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -86,7 +81,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
 
     socket.on("connect", () => {
       setIsConnected(true);
-      // Join vào room trò chuyện riêng của khách hàng: "conversation_user_{userId}"
       socket.emit("join_conversation", {
         conversationId,
         userId,
@@ -97,15 +91,12 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
       setIsConnected(false);
     });
 
-    // Lắng nghe tin nhắn mới từ nhân viên / admin
     socket.on("receive_message", (receivedMsg: SupportMessage) => {
       if (receivedMsg.conversationId === conversationId) {
         setMessages((prev) => {
-          // Tránh duplicate nếu ID đã tồn tại
           if (receivedMsg.id && prev.some((m) => m.id === receivedMsg.id)) {
             return prev;
           }
-          // Thay thế tin nhắn optimistic tạm thời nếu trùng content và sender
           const optIndex = prev.findIndex(
             (m) =>
               !m.id &&
@@ -120,7 +111,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
           return [...prev, receivedMsg];
         });
 
-        // Nếu tin nhắn là từ nhân viên và người dùng đang không mở cửa sổ chat
         if (receivedMsg.role !== "USER") {
           setIsStaffTyping(false);
           if (!isChatOpenRef.current) {
@@ -130,9 +120,7 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
       }
     });
 
-    // Lắng nghe sự kiện nhân viên đang soạn tin
     socket.on("user_typing", (data: { conversationId: string; isTyping: boolean; senderId?: string; role?: string }) => {
-      // Bỏ qua nếu sự kiện do chính khách hàng này gõ
       if (data.senderId && data.senderId === userId) return;
       if (data.role && data.role === "USER") return;
 
@@ -150,7 +138,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
     };
   }, [userId, accessToken, conversationId, loadHistory]);
 
-  // 4. Gửi tin nhắn
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
@@ -166,7 +153,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
         content: trimmed,
       };
 
-      // Optimistic update
       const optimisticMsg: SupportMessage = {
         ...payload,
         conversationId,
@@ -175,11 +161,9 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
       };
       setMessages((prev) => [...prev, optimisticMsg]);
 
-      // Emit qua Socket
       if (socketRef.current && isConnected) {
         socketRef.current.emit("send_message", payload);
       } else {
-        // Fallback qua REST API nếu Socket tạm mất kết nối
         try {
           const saved = await supportService.sendMessage(payload);
           if (saved) {
@@ -197,7 +181,6 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
     [conversationId, userId, username, avatar, isConnected]
   );
 
-  // 5. Báo trạng thái người dùng đang gõ
   const sendTyping = useCallback(
     (isTyping: boolean) => {
       if (!socketRef.current || !conversationId) return;

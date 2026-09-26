@@ -1,6 +1,5 @@
 /** @format */
 
-// @ts-ignore
 import { utils, writeFileXLSX } from 'xlsx';
 
 export const hanldExportExcel = async (data: any[], name?: string) => {

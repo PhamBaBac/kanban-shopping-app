@@ -26,11 +26,9 @@ const CarouselImages = (props: Props) => {
     const vals: CarouselImageItem[] = [];
 
     items.forEach((item: any) => {
-      // Nếu item là CarouselImageItem có sẵn imgURL
       if (item.imgURL && typeof item.imgURL === "string") {
         vals.push(item);
       } else if (Array.isArray(item.images) && item.images.length > 0) {
-        // Nếu item là SubProductModel có mảng images
         item.images.forEach((img: any) => {
           const url = typeof img === "string" ? img : img?.url;
           if (url) {

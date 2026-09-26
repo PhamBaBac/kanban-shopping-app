@@ -33,7 +33,6 @@ export const useOAuth = () => {
     }
   }, [router]);
 
-  // Tự động dọn dẹp ?code= ngay khi Next.js router sẵn sàng
   useEffect(() => {
     if (router.isReady && router.query.code) {
       stripCodeFromUrl();
@@ -49,7 +48,6 @@ export const useOAuth = () => {
     if (!code || hasProcessedRef.current) return;
     hasProcessedRef.current = true;
 
-    // Làm sạch URL lập tức
     stripCodeFromUrl();
 
     const processCode = async () => {

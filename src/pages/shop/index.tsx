@@ -45,8 +45,6 @@ const ShopPageContent = () => {
   const filterValues = useSelector(
     (state: RootState) => state.filter.filterValues
   );
-  // rootCatId: danh mục gốc (root parent) của context hiện tại
-  // Được FilterPanel set khi load branch, dùng để "Xóa bộ lọc" không bị mất danh mục
   const rootCatId = useSelector((state: RootState) => state.filter.rootCatId);
   const { mode } = useSelector(themeSelector);
   const isDark = mode === "dark";
@@ -57,7 +55,6 @@ const ShopPageContent = () => {
   const [priceDropdownOpen, setPriceDropdownOpen] = useState(false);
   const lastFiltersRef = useRef<string>("");
 
-  // Use shop hook
   const { products, totalItems, isLoading, error, fetchProducts } = useShop();
 
   const handleRemovePriceFilter = () => {
@@ -81,9 +78,6 @@ const ShopPageContent = () => {
   };
 
   const handleClearAllFilters = () => {
-    // Giữ lại category hiện tại / danh mục ban đầu (không xóa category),
-    // chỉ xóa khoảng giá, màu sắc, kích thước, tìm kiếm.
-    // Tránh trường hợp load toàn bộ sản phẩm mọi danh mục hoặc đổi sang danh mục khác.
     const activeCatId =
       (router.query.catId as string) ||
       (filterValues.catIds && filterValues.catIds.length > 0
@@ -108,7 +102,6 @@ const ShopPageContent = () => {
         );
       }
     } else {
-      // Nếu không có danh mục thì tự động gán danh mục mặc định / nổi bật
       shopService.getCategoriesForFilter().then((cats) => {
         const defaultCat = findDefaultOrFeaturedCategory(cats);
         const defaultId = defaultCat?.id || (defaultCat as any)?._id;
@@ -143,8 +136,6 @@ const ShopPageContent = () => {
   );
   const hasActiveFilters = hasActivePrice || hasActiveSearch;
 
-  // 0. Khi người dùng truy cập trực tiếp URL /shop (không có tham số catId, không có search và chưa chọn danh mục nào):
-  // Gán catId bằng ID của danh mục đầu tiên (hoặc "Nổi bật / Bán chạy")
   useEffect(() => {
     if (!isReady) return;
 
@@ -156,7 +147,6 @@ const ShopPageContent = () => {
       Boolean(rawCatId) ||
       Boolean(filterValues.catIds && filterValues.catIds.length > 0);
 
-    // Nếu đang tìm kiếm thì không ép redirect vào category mặc định
     if (hasSearch) {
       setIsRedirecting(false);
       return;
@@ -189,7 +179,6 @@ const ShopPageContent = () => {
     }
   }, [isReady, query.catId]);
 
-  // 1. Khi router sẵn sàng (load trang / refresh F5), đọc query từ URL đưa vào Redux
   useEffect(() => {
     if (!isReady) return;
 
@@ -215,11 +204,9 @@ const ShopPageContent = () => {
     setPage(1);
   }, [isReady, query.catId, query.search, query.q, dispatch]);
 
-  // 2. Fetch sản phẩm theo filterValues khi router đã sẵn sàng
   useEffect(() => {
     if (!isReady) return;
 
-    // Luôn ưu tiên catId từ URL query nếu có để tránh stale state từ Redux khi click danh mục mới
     const rawCatId = query.catId;
     const catIdsFromUrl = Array.isArray(rawCatId)
       ? rawCatId
@@ -236,7 +223,6 @@ const ShopPageContent = () => {
           ? filterValues.catIds
           : [];
 
-    // Tuyệt đối không gọi fetch all products nếu chưa có category nào và không có search
     const hasSearch = Boolean(
       String(query.search || query.q || filterValues.search || "").trim()
     );
@@ -249,33 +235,27 @@ const ShopPageContent = () => {
       return;
     }
 
-    // Build filters from filterValues
     const filters: any = {
       page,
       pageSize: 12,
     };
 
-    // Map search
     if (filterValues.search && filterValues.search.trim()) {
       filters.search = filterValues.search.trim();
     }
 
-    // Map category IDs (nếu đang tìm kiếm thì không giới hạn bởi category)
     if (!filters.search && catIdsToFilter.length > 0) {
       filters.catIds = catIdsToFilter;
     }
 
-    // Map price range
     if (filterValues.price && filterValues.price.length === 2) {
       filters.price = filterValues.price;
     }
 
-    // Map colors
     if (filterValues.colors && filterValues.colors.length > 0) {
       filters.colors = filterValues.colors;
     }
 
-    // Map sizes (clean up spaces)
     if (filterValues.sizes && filterValues.sizes.length > 0) {
       filters.sizes = filterValues.sizes.map((v: string) =>
         v.replace(/\s+/g, "")
@@ -288,7 +268,7 @@ const ShopPageContent = () => {
     }
     lastFiltersRef.current = filtersStr;
 
-    console.log("Sending filters:", filters); // Debug log
+    console.log("Sending filters:", filters);
     fetchProducts(filters);
   }, [filterValues, page, isReady, query.catId, query.search, query.q]);
 
@@ -296,7 +276,6 @@ const ShopPageContent = () => {
     String(query.search || query.q || filterValues.search || "").trim()
   );
 
-  // Hiển thị trạng thái đang tải / chuyển hướng đến danh mục mặc định khi chưa có catId (chỉ áp dụng khi không có search)
   if (
     !isReady ||
     isRedirecting ||
@@ -729,7 +708,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const rawCatId = query.catId;
   const rawSearch = query.search || query.q;
 
-  // Nếu người dùng truy cập trực tiếp vào URL /shop mà không có catId và không có từ khóa tìm kiếm
   if (!rawCatId && !rawSearch) {
     try {
       const res = await axios.get(

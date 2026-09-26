@@ -7,7 +7,6 @@ interface ThemeState {
   mode: ThemeMode;
 }
 
-// Function to get the initial theme from localStorage or system preference
 const getInitialTheme = (): ThemeMode => {
   if (typeof window !== "undefined") {
     const savedTheme = localStorage.getItem("themeMode") as ThemeMode;
@@ -19,7 +18,7 @@ const getInitialTheme = (): ThemeMode => {
     //   return 'dark';
     // }
   }
-  return "light"; // Default theme
+  return "light";
 };
 
 const initialState: ThemeState = {

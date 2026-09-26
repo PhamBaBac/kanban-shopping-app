@@ -19,14 +19,12 @@ export interface ShopFilters {
 }
 
 export const shopService = {
-  // Lấy sản phẩm theo filter
   getProductsByFilter: async (
     filters: ShopFilters
   ): Promise<{
     data: ProductModel[];
     totalElements: number;
   }> => {
-    // Build query parameters
     const params = new URLSearchParams();
 
     if (filters.search && filters.search.trim()) {
@@ -63,23 +61,21 @@ export const shopService = {
       queryString ? `?${queryString}` : ""
     }`;
 
-    console.log("API URL:", url); // Debug: check URL
+    console.log("API URL:", url);
 
     const res = await handleAPI(url, undefined, "post");
-    console.log("API Response:", res); // Debug: check API response
+    console.log("API Response:", res);
     return {
       data: res.data?.data || [],
       totalElements: res.data?.totalElements || 0,
     };
   },
 
-  // Lấy tất cả categories cho filter
   getCategoriesForFilter: async (): Promise<CategoyModel[]> => {
     const res = await handleAPI("/public/categories/all");
     return res.data || [];
   },
 
-  // Lấy chỉ nhánh danh mục (cha và các con liên quan)
   getCategoryBranch: async (catId: string): Promise<CategoyModel[]> => {
     const res = await handleAPI(
       `/public/categories/branch?catId=${encodeURIComponent(catId)}`
@@ -87,7 +83,6 @@ export const shopService = {
     return res.data || [];
   },
 
-  // Lấy filter values (colors, sizes, prices) tương ứng với catIds và search
   getFilterValues: async (
     catIds?: string[],
     search?: string
@@ -106,7 +101,6 @@ export const shopService = {
     return res.data || { colors: [], sizes: [], prices: [] };
   },
 
-  // Tìm kiếm sản phẩm
   searchProducts: async (query: string): Promise<ProductModel[]> => {
     const res = await handleAPI(
       `/public/products/search?q=${encodeURIComponent(query)}`

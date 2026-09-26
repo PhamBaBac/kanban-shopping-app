@@ -12,7 +12,7 @@ const baseURL = `http://localhost:8080/api/v1`;
 const getAuthData = () => {
   try {
     if (typeof window === "undefined") {
-      return null; // Server-side rendering
+      return null;
     }
     const res = localStorage.getItem(localDataNames.authData);
     if (res) return JSON.parse(res);
@@ -24,7 +24,7 @@ const getAuthData = () => {
 
 const getAccessToken = () => {
   const authData = getAuthData();
-  return authData?.accessToken || ""; // dùng đúng key accessToken
+  return authData?.accessToken || "";
 };
 
 let isRefreshing = false;
@@ -64,7 +64,6 @@ const refreshToken = async (): Promise<string | null> => {
 
     const newToken = response.data.accessToken;
 
-    // Only update localStorage and Redux store on client-side
     if (typeof window !== "undefined") {
       const currentAuthData = getAuthData();
 
@@ -84,7 +83,6 @@ const refreshToken = async (): Promise<string | null> => {
     processQueue(null, newToken);
     return newToken;
   } catch (error) {
-    // Only clear auth on client-side
     if (typeof window !== "undefined") {
       localStorage.removeItem(localDataNames.authData);
       store.dispatch(removeAuth({}));
@@ -138,7 +136,6 @@ axiosClient.interceptors.response.use(
       };
     };
 
-    // Check if originalRequest exists and has url property
     if (!originalRequest || !originalRequest.url) {
       return Promise.reject(formatRejectedError(error));
     }

@@ -50,7 +50,6 @@ const Routers = ({ Component, pageProps }: any) => {
   }, [auth.accessToken, path]);
 
   const getData = () => {
-    // 1. Phục hồi giỏ hàng từ localStorage ngay khi tải trang (tránh mất giỏ hàng khi reload)
     const savedCart = getSavedCartFromStorage();
     if (savedCart && savedCart.length > 0) {
       dispatch(syncProducts(savedCart));
@@ -72,7 +71,6 @@ const Routers = ({ Component, pageProps }: any) => {
       }
     }
 
-    // Chỉ gọi Redis cart khi người dùng chưa đăng nhập
     const cartId = localStorage.getItem("cartId");
     if (cartId) {
       fetchCartById(cartId);

@@ -63,7 +63,6 @@ const ChatButton: React.FC = () => {
     "Khách hàng";
   const currentAvatar = auth?.avatar || "";
 
-  // 1. Hook Live Support CSKH (Socket.IO kết nối trực tiếp admin)
   const {
     messages: liveMessages,
     loadingHistory: liveLoading,
@@ -81,7 +80,6 @@ const ChatButton: React.FC = () => {
     isChatOpen: isOpen && activeTab === "live",
   });
 
-  // 2. Hook AI Shopping Assistant
   const {
     messages: aiMessages,
     isLoading: aiLoading,
@@ -92,7 +90,6 @@ const ChatButton: React.FC = () => {
   const liveEndRef = useRef<HTMLDivElement>(null);
   const aiEndRef = useRef<HTMLDivElement>(null);
 
-  // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
     if (activeTab === "live") {
       liveEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,7 +109,6 @@ const ChatButton: React.FC = () => {
     }
   };
 
-  // Xử lý gửi tin nhắn Live Support
   const handleSendLive = (customText?: string) => {
     const textToSend = (customText || liveInput).trim();
     if (!textToSend) return;
@@ -140,7 +136,6 @@ const ChatButton: React.FC = () => {
     }
   };
 
-  // Xử lý gửi tin nhắn AI
   const handleSendAi = (customText?: string) => {
     const textToSend = (customText || aiInput).trim();
     if (!textToSend || aiLoading) return;
@@ -465,7 +460,6 @@ const ChatButton: React.FC = () => {
               }}
             >
               {!currentUserId ? (
-                // Nếu chưa đăng nhập
                 <div
                   style={{
                     flex: 1,
@@ -531,7 +525,6 @@ const ChatButton: React.FC = () => {
                   </Button>
                 </div>
               ) : (
-                // Giao diện chat trực tiếp với nhân viên
                 <>
                   <div
                     style={{

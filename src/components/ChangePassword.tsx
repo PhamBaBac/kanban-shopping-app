@@ -89,13 +89,10 @@ const ChangePassword = () => {
         confirmationPassword: values.confirmPassword,
       });
 
-      // 1. Hiển thị thông báo toast thành công tức thì
       message.success("Đổi mật khẩu thành công!");
 
-      // 2. Reset các ô nhập mật khẩu
       form.resetFields();
 
-      // 3. Hiển thị hộp thoại xác nhận đăng xuất hoặc ở lại
       Modal.confirm({
         title: "Đổi mật khẩu thành công",
         icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,

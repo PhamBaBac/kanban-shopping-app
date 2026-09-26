@@ -74,7 +74,6 @@ const ShipingAddress = (props: Props) => {
   };
 
   const handleDeliverAddress = () => {
-    // Check if there are any addresses
     if (address.length === 0) {
       message.warning(
         "Bạn chưa có địa chỉ nào. Vui lòng tạo địa chỉ mới trước khi tiếp tục."
@@ -82,13 +81,11 @@ const ShipingAddress = (props: Props) => {
       return;
     }
 
-    // Check if an address is selected
     if (!addressSelected) {
       message.warning("Vui lòng chọn một địa chỉ giao hàng để tiếp tục.");
       return;
     }
 
-    // If both conditions are met, proceed with address selection
     onSelectAddress(addressSelected);
   };
 

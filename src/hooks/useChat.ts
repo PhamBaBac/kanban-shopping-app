@@ -63,7 +63,6 @@ export const useChat = (): UseChatReturn => {
       timestamp: new Date(),
     };
 
-    // Thêm message AI tạm thời với isLoading: true
     const aiLoadingMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: "Đang nhập...",
@@ -73,7 +72,6 @@ export const useChat = (): UseChatReturn => {
     };
 
     setMessages((prev) => [...prev, userMessage, aiLoadingMessage]);
-    // Không setIsLoading(true) nữa
 
     try {
       const response = await chatService.sendMessage({ message: text });
@@ -88,7 +86,6 @@ export const useChat = (): UseChatReturn => {
             : new Date(),
           products: response.products || [],
         };
-        // Thay thế message AI tạm thời bằng message thật
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last && last.isLoading) {

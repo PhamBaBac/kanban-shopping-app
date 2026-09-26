@@ -34,7 +34,6 @@ interface FilterPanelProps {
   totalProducts?: number;
 }
 
-// Interface cho form filter values (từ Redux)
 interface FormFilterValues {
   catIds?: string[];
   price?: [number, number];
@@ -48,7 +47,6 @@ const buildHierarchy = (list: CategoyModel[]): CategoyModel[] => {
   const map = new Map<string, CategoyModel>();
   const roots: CategoyModel[] = [];
 
-  // Lọc trùng lặp theo ID
   const uniqueList: CategoyModel[] = [];
   const seenIds = new Set<string>();
   for (const item of list) {
@@ -78,7 +76,6 @@ const buildHierarchy = (list: CategoyModel[]): CategoyModel[] => {
   return roots;
 };
 
-// Kiểm tra nếu 1 category node hoặc descendant của nó khớp với targetIds
 const categoryTreeMatches = (
   cat: CategoyModel,
   targetIds: string[]
@@ -104,7 +101,6 @@ const categoryTreeMatches = (
   return false;
 };
 
-// Tìm tất cả các key cần auto-expand (ancestor + category có children)
 const getKeysToExpand = (
   cats: CategoyModel[],
   targetIds: string[]
@@ -137,7 +133,6 @@ const getKeysToExpand = (
   return Array.from(keys);
 };
 
-// Tìm danh mục cha cao nhất (root parent) của một category bất kỳ
 const findRootParent = (
   catId: string | undefined,
   rootCats: CategoyModel[]
@@ -148,7 +143,6 @@ const findRootParent = (
   );
 };
 
-// Lấy tất cả ID danh mục con cháu
 const getDescendantIds = (cat: CategoyModel): string[] => {
   let ids: string[] = [];
   if (cat.children && cat.children.length > 0) {
@@ -160,7 +154,6 @@ const getDescendantIds = (cat: CategoyModel): string[] => {
   return ids;
 };
 
-// Lấy tất cả ID tổ tiên của 1 category ID
 const getAncestorIds = (targetId: string, roots: CategoyModel[]): string[] => {
   const ancestors: string[] = [];
   const find = (cat: CategoyModel, path: string[]): boolean => {
@@ -179,7 +172,6 @@ const getAncestorIds = (targetId: string, roots: CategoyModel[]): string[] => {
   return ancestors;
 };
 
-// Lấy tất cả category ID có con để auto-expand toàn bộ
 const getAllParentKeys = (cats: CategoyModel[]): string[] => {
   const keys = new Set<string>();
   const traverse = (cat: CategoyModel) => {
@@ -192,7 +184,6 @@ const getAllParentKeys = (cats: CategoyModel[]): string[] => {
   return Array.from(keys);
 };
 
-// Tìm category node theo id hoặc slug hoặc title
 const findCategoryByIdOrSlug = (
   cats: CategoyModel[],
   target: string
@@ -278,7 +269,6 @@ const FilterPanel = ({
   const [form] = Form.useForm<FormFilterValues>();
   const watchedCatIds = Form.useWatch("catIds", form);
 
-  // Tải danh mục theo ngữ cảnh: nếu có catId thì chỉ tải nhánh cha + con của nó (không gọi get all)
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -297,7 +287,6 @@ const FilterPanel = ({
       return;
     }
 
-    // Nếu TẤT CẢ các targetCatIds đã nằm trong cây categories hiện tại thì KHÔNG tải lại!
     const currentCats = categoriesRef.current;
     const allAlreadyLoaded =
       currentCats.length > 0 &&
@@ -322,11 +311,9 @@ const FilterPanel = ({
           setCategories(hierarchicalCategories);
           categoriesRef.current = hierarchicalCategories;
 
-          // Lưu root parent ID vào Redux để "Xóa tất cả bộ lọc" biết nên quay về đâu
           const rootId = hierarchicalCategories[0]?.id;
           dispatch(setRootCatId(rootId));
 
-          // Tự động mở rộng toàn bộ các danh mục cha để luôn nhìn thấy đầy đủ các danh mục con
           const allParentKeys = getAllParentKeys(hierarchicalCategories);
           setExpandedKeys((prev) =>
             Array.from(new Set([...prev, ...allParentKeys]))
@@ -349,7 +336,6 @@ const FilterPanel = ({
     loadCategories();
   }, [router.isReady, router.query.catId]);
 
-  // Tải filter values tương ứng khi category hoặc search thay đổi
   useEffect(() => {
     const fetchDynamicFilters = async () => {
       try {
@@ -367,14 +353,11 @@ const FilterPanel = ({
 
   const displayedCategories = categories;
 
-  // Effect đồng bộ checkbox đã chọn: ưu tiên router.query.catId (luôn có ngay từ URL)
-  // thay vì filterValues.catIds (có thể lag so với Redux dispatch)
   useEffect(() => {
     if (!router.isReady) return;
 
     const rawCatId = router.query.catId;
 
-    // Xác định IDs cần pre-check: URL catId là nguồn chính xác nhất
     const activeIds: string[] = rawCatId
       ? Array.isArray(rawCatId)
         ? rawCatId
@@ -385,18 +368,15 @@ const FilterPanel = ({
         ? filterValues.catIds
         : [];
 
-    // Map bất kỳ slug hoặc id nào về đúng cat.id để Checkbox.Group bind chính xác
     const resolvedActiveIds = activeIds.map((val) => {
       const node = findCategoryByIdOrSlug(categories, val);
       return node ? String(node.id) : String(val);
     });
 
-    // Pre-check checkbox đúng với danh mục đã chọn
     form.setFieldsValue({
       catIds: resolvedActiveIds,
     });
 
-    // Auto-expand để danh mục được chọn luôn hiển thị
     if (resolvedActiveIds.length > 0 && categories.length > 0) {
       const autoExpandKeys = getKeysToExpand(categories, resolvedActiveIds);
       setExpandedKeys((prev) =>
@@ -513,11 +493,9 @@ const FilterPanel = ({
           form={form}
           onValuesChange={(_, allValues) => {
             if (router && router.isReady) {
-              // Đọc từ form (chính xác ngay lập tức) thay vì Redux (có thể lag)
               const prevCatIds: string[] = (form.getFieldValue("catIds") || []).map(String);
               let nextCatIds: string[] = (allValues.catIds || []).map((id: any) => String(id));
 
-              // Tìm ID vừa mới được click thêm vào
               const addedId = nextCatIds.find((id) => !prevCatIds.includes(id));
 
 
@@ -538,18 +516,15 @@ const FilterPanel = ({
                   const descendants = getDescendantIds(addedNode);
                   const ancestors = getAncestorIds(addedId, categories);
 
-                  // Nếu vừa tích thằng cha: bỏ tích các con cháu của nó để tránh trùng lặp
                   if (descendants.length > 0) {
                     nextCatIds = nextCatIds.filter((id) => !descendants.includes(id));
                   }
-                  // Nếu vừa tích thằng con: bỏ tích các tổ tiên để thu hẹp kết quả về đúng thằng con
                   if (ancestors.length > 0) {
                     nextCatIds = nextCatIds.filter((id) => !ancestors.includes(id));
                   }
                 }
               }
 
-              // Cập nhật giá trị vào form để hiển thị chính xác
               form.setFieldsValue({
                 ...allValues,
                 catIds: nextCatIds,
@@ -563,7 +538,6 @@ const FilterPanel = ({
                     : nextCatIds;
                 dispatch(setFilterValues({ ...filterValues, catIds: nextCatIds }));
               } else {
-                // Khi người dùng bỏ tích hết:
                 const rawCurrent =
                   router.query.catId ||
                   (filterValues.catIds && filterValues.catIds[0]);

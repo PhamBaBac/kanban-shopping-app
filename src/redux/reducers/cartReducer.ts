@@ -16,7 +16,7 @@ export interface CartItemModel {
   productId: string | null;
   image: string;
   slug: string;
-  id: string | null; // Can be null if not logged in
+  id: string | null;
   addressId?: string;
   discountValue?: DiscountValue;
 }
@@ -65,7 +65,6 @@ const cartSlice = createSlice({
       const item: CartItemModel = action.payload;
       const items = [...state.data];
 
-      // Cart items represent unique subProductId
       const index = items.findIndex(
         (el) => el.subProductId === item.subProductId
       );

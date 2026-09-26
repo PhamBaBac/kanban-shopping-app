@@ -39,7 +39,6 @@ const Login = () => {
     newOtp[index] = val;
     setOtpCode(newOtp);
 
-    // Focus next input
     if (val && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -54,7 +53,6 @@ const Login = () => {
     await sendEmailCode();
   };
 
-  // Đổi tên hàm nội bộ để tránh conflict
   const onVerifyEmailCode = async () => {
     await handleVerifyEmailCode(emailVerificationCode);
   };

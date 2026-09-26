@@ -41,7 +41,6 @@ export const findDefaultOrFeaturedCategory = (
     "pho bien",
   ];
 
-  // 1. Tìm danh mục nổi bật / bán chạy
   const featured = allCats.find((cat) => {
     const title = (cat.title || "").toLowerCase();
     const slug = (cat.slug || "").toLowerCase();
@@ -55,7 +54,6 @@ export const findDefaultOrFeaturedCategory = (
     return featured;
   }
 
-  // 2. Ưu tiên danh mục gốc đầu tiên
   const rootCategory = categories.find(
     (cat) => !cat.parentId || String(cat.parentId).trim() === ""
   );
@@ -64,7 +62,6 @@ export const findDefaultOrFeaturedCategory = (
     return rootCategory;
   }
 
-  // 3. Fallback danh mục đầu tiên
   const firstWithId = allCats.find(
     (cat) => Boolean(cat.id) || Boolean((cat as any)._id)
   );

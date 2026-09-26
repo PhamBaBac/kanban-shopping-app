@@ -17,8 +17,6 @@ const SocialLogin = ({ provider }: Props) => {
         ? "http://localhost:8080/oauth2/authorization/google"
         : "http://localhost:8080/oauth2/authorization/github";
 
-    // Chuyển hướng trực tiếp trong cùng tab (chuẩn OAuth2 như Google, Shopee, GitHub...)
-    // Không dùng popup để tránh lỗi cửa sổ trắng và bị trình duyệt chặn
     window.location.href = redirectUrl;
   };
 

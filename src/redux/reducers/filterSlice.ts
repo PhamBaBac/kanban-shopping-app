@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// Interface cho form filter values
 interface FormFilterValues {
   catIds?: string[];
   price?: [number, number];
@@ -11,7 +10,7 @@ interface FormFilterValues {
 
 interface FilterState {
   filterValues: FormFilterValues;
-  rootCatId?: string; // ID danh mục gốc (root parent) của context hiện tại
+  rootCatId?: string;
 }
 
 const initialState: FilterState = {

@@ -34,7 +34,6 @@ export const useAddress = (): UseAddressReturn => {
       const result = await addressService.getAddresses();
       setAddresses(result);
 
-      // Set default address
       if (result.length > 0) {
         const defaultAddr = result.find((addr) => addr.isDefault) || result[0];
         setDefaultAddressState(defaultAddr);
@@ -52,7 +51,7 @@ export const useAddress = (): UseAddressReturn => {
     try {
       await addressService.createAddress(data);
       message.success("Thêm địa chỉ thành công!");
-      await fetchAddresses(); // Refresh addresses
+      await fetchAddresses();
     } catch (error: any) {
       showErrorMessage(error, "Không thể thêm địa chỉ mới!");
       throw error;
@@ -66,7 +65,7 @@ export const useAddress = (): UseAddressReturn => {
     try {
       await addressService.updateAddress(id, data);
       message.success("Cập nhật địa chỉ thành công!");
-      await fetchAddresses(); // Refresh addresses
+      await fetchAddresses();
     } catch (error: any) {
       showErrorMessage(error, "Không thể cập nhật địa chỉ!");
       throw error;
@@ -79,7 +78,7 @@ export const useAddress = (): UseAddressReturn => {
     try {
       await addressService.deleteAddress(id);
       message.success("Xóa địa chỉ thành công!");
-      await fetchAddresses(); // Refresh addresses
+      await fetchAddresses();
     } catch (error: any) {
       showErrorMessage(error, "Không thể xóa địa chỉ!");
       throw error;
@@ -90,7 +89,7 @@ export const useAddress = (): UseAddressReturn => {
     try {
       await addressService.setDefaultAddress(addressId);
       message.success("Đặt làm địa chỉ mặc định thành công!");
-      await fetchAddresses(); // Refresh addresses
+      await fetchAddresses();
     } catch (error: any) {
       showErrorMessage(error, "Không thể đặt làm địa chỉ mặc định!");
       throw error;

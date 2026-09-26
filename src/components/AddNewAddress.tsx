@@ -16,7 +16,6 @@ interface Props {
   onClose?: () => void;
 }
 
-// Chuẩn hóa chuỗi tiếng Việt để tìm kiếm không dấu
 const removeAccents = (str?: string): string => {
   if (!str) return "";
   return str
@@ -45,11 +44,9 @@ const AddNewAddress = (props: Props) => {
     loadProvinces();
   }, []);
 
-  // Xử lý nạp dữ liệu khi sửa địa chỉ
   useEffect(() => {
     if (values) {
       let houseNo = values.address || "";
-      // Loại bỏ phần hậu tố xã/phường, quận/huyện, tỉnh/thành khỏi chuỗi địa chỉ chi tiết
       if (values.ward && values.province) {
         const suffix2Tier = `, ${values.ward}, ${values.province}`;
         const suffix3Tier = values.district
@@ -128,7 +125,6 @@ const AddNewAddress = (props: Props) => {
   };
 
   const handleProvinceChange = async (val: string) => {
-    // Reset ward field
     form.setFieldsValue({
       ward: undefined,
     });
@@ -163,7 +159,6 @@ const AddNewAddress = (props: Props) => {
       const wardName = selectedWard?.name || selectedWard?.label || formData.ward;
 
       const street = (formData.houseNo || "").trim();
-      // Địa chỉ chuẩn chính quyền 2 cấp: [Số nhà/Đường], [Phường/Xã], [Tỉnh/Thành phố]
       const formattedAddress = `${street}, ${wardName}, ${provinceName}`;
 
       const payload = {

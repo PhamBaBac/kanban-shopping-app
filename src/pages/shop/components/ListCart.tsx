@@ -36,11 +36,9 @@ const ListCart = ({
     removeAllInvalidItems,
   } = useCartValidation();
 
-  // State lưu các key (id) của sản phẩm được chọn
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const hasInitializedSelection = React.useRef(false);
 
-  // Tự động chọn tất cả sản phẩm hợp lệ khi tải giỏ hàng lần đầu
   useEffect(() => {
     if (carts && carts.length > 0 && !hasInitializedSelection.current) {
       const validKeys = carts
@@ -53,7 +51,6 @@ const ListCart = ({
     }
   }, [carts]);
 
-  // Tự động loại bỏ các sản phẩm không hợp lệ khỏi danh sách được chọn
   useEffect(() => {
     setSelectedRowKeys((prev) =>
       prev.filter((key) => {
@@ -63,12 +60,10 @@ const ListCart = ({
     );
   }, [carts]);
 
-  // Lấy danh sách sản phẩm được chọn hợp lệ
   const selectedItems = carts.filter(
     (item) => item.id && selectedRowKeys.includes(item.id) && !isItemInvalid(item)
   );
 
-  // Gửi selectedItems ra ngoài nếu có callback
   useEffect(() => {
     if (onSelectItems) onSelectItems(selectedItems);
   }, [selectedRowKeys, carts]);

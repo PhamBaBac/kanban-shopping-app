@@ -3,19 +3,16 @@ import { PromotionModel } from "@/models/PromotionModel";
 import { CategoyModel, ProductModel } from "@/models/Products";
 
 export const homeService = {
-  // Lấy promotions
   getPromotions: async (): Promise<PromotionModel[]> => {
     const res = await handleAPI("/promotions");
     return res.data || [];
   },
 
-  // Lấy categories cho home
   getCategories: async (): Promise<CategoyModel[]> => {
     const res = await handleAPI("/public/categories/all");
     return res.data || [];
   },
 
-  // Lấy best sellers
   getBestSellers: async (): Promise<ProductModel[]> => {
     const res = await handleAPI("/public/products/bestSellers");
     return res.data || [];

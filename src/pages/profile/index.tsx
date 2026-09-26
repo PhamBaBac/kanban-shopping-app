@@ -43,7 +43,6 @@ const ProfilePage = () => {
     }
   }, []);
 
-  // Đồng bộ provider nếu phiên đăng nhập cũ trong localStorage chưa lưu provider
   useEffect(() => {
     if (auth?.accessToken && !auth?.provider) {
       authService
@@ -64,7 +63,6 @@ const ProfilePage = () => {
 
   const isOAuthUser = Boolean(auth?.provider && auth.provider !== "LOCAL");
 
-  // Nếu là tài khoản OAuth2 nhưng URL tab là change-password, tự chuyển về tab edit
   useEffect(() => {
     const tabParam = router.query.tab?.toString();
     if (isOAuthUser && tabParam === "change-password") {

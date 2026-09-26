@@ -281,7 +281,7 @@ const ProductItem = (props: Props) => {
 
   const handleClick = () => {
     if (auth.userId) {
-      recordView(); // Fire-and-forget để chuyển trang ngay lập tức
+      recordView();
     }
     const slug = item.slug || "detail";
     router.push(`/products/${slug}/${item.id}`);
@@ -323,9 +323,7 @@ const ProductItem = (props: Props) => {
     const maxEffective = Math.max(...effectivePrices);
     const maxOriginal = originalPrices.length > 0 ? Math.max(...originalPrices) : maxEffective;
 
-    // Nếu tất cả biến thể đều có cùng một giá bán
     if (minEffective === maxEffective) {
-      // Có giảm giá so với giá gốc
       if (maxOriginal > minEffective) {
         return (
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "nowrap", whiteSpace: "nowrap" }}>
@@ -345,7 +343,6 @@ const ProductItem = (props: Props) => {
       return <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>{VND.format(minEffective)}</strong>;
     }
 
-    // Nếu các biến thể có khoảng giá khác nhau (minEffective !== maxEffective)
     return (
       <strong style={{ color: "var(--color-primary, #131118)", whiteSpace: "nowrap" }}>
         {`${VND.format(minEffective)} - ${VND.format(maxEffective)}`}
@@ -368,7 +365,6 @@ const ProductItem = (props: Props) => {
 
   const secondaryImage = useMemo(() => {
     if (item.images && item.images.length > 1) return item.images[1];
-    // Nếu item.images chỉ có 1 hoặc 0 ảnh, tìm ảnh từ subProducts
     const allImages: string[] = [];
     if (item.images && item.images.length > 0) {
       allImages.push(...item.images);

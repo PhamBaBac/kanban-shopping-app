@@ -21,15 +21,12 @@ const SettingsContent = () => {
 
   const handle2FASwitch = async (checked: boolean) => {
     if (checked && !is2faEnabled) {
-      // Enable TFA - show setup modal
       setShow2faModal(true);
     } else if (!checked && is2faEnabled) {
-      // Disable TFA - call disable API
       try {
         setIsLoading2fa(true);
         await authService.disable2FA(auth.email);
 
-        // Update local state
         const updatedAuth = { ...auth, mfaEnabled: false };
         dispatch(addAuth(updatedAuth));
         localStorage.setItem("authData", JSON.stringify(updatedAuth));

@@ -143,7 +143,6 @@ export const useAuth = (): UseAuthReturn => {
       localStorage.setItem(localDataNames.authData, JSON.stringify(user));
       localStorage.removeItem("sessionId");
 
-      // Sync Redis cart to database
       await authService.syncRedisCart(userInfo.id);
 
       setTimeout(() => {
@@ -211,7 +210,6 @@ export const useAuth = (): UseAuthReturn => {
         return { mfaEnabled: true, userInfo };
       }
 
-      // Sync Redis cart to database
       await authService.syncRedisCart(userInfo.id);
 
       const user = {

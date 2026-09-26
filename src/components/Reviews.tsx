@@ -42,7 +42,6 @@ const Reviews = (props: Props) => {
 
   const auth = useSelector(authSelector);
 
-  // Cập nhật hasReviewed khi prop isReviewed thay đổi
   useEffect(() => {
     setHasReviewed(isReviewed || false);
   }, [isReviewed]);

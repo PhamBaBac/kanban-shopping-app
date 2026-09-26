@@ -7,7 +7,6 @@ import { getOrCreateSessionId } from "@/utils/session";
 export const useCartOperations = () => {
   const dispatch = useDispatch();
 
-  // Lấy cart từ database (cho user đã đăng nhập)
   const getCartInDatabase = async () => {
     try {
       const result = await cartService.getCart();
@@ -19,7 +18,6 @@ export const useCartOperations = () => {
     }
   };
 
-  // Lấy cart từ Redis (cho user chưa đăng nhập)
   const getRedisCart = async () => {
     const sessionId = getOrCreateSessionId();
     try {
@@ -33,11 +31,10 @@ export const useCartOperations = () => {
     }
   };
 
-  // Lấy cart theo ID
   const fetchCartById = async (cartId: string) => {
     try {
       const result = await cartService.getCartById(cartId);
-      const flatResult = result.flat(); // Prevent nested arrays
+      const flatResult = result.flat();
       dispatch(syncProducts(flatResult));
     } catch (error) {
       console.error("Error fetching cart:", error);
