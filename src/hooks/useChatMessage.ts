@@ -131,7 +131,11 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
     });
 
     // Lắng nghe sự kiện nhân viên đang soạn tin
-    socket.on("user_typing", (data: { conversationId: string; isTyping: boolean }) => {
+    socket.on("user_typing", (data: { conversationId: string; isTyping: boolean; senderId?: string; role?: string }) => {
+      // Bỏ qua nếu sự kiện do chính khách hàng này gõ
+      if (data.senderId && data.senderId === userId) return;
+      if (data.role && data.role === "USER") return;
+
       if (data.conversationId === conversationId) {
         setIsStaffTyping(data.isTyping);
       }
@@ -200,6 +204,8 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
 
       socketRef.current.emit("typing", {
         conversationId,
+        senderId: userId,
+        role: "USER",
         username: username || "Khách hàng",
         isTyping,
       });
@@ -209,13 +215,15 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
         typingTimerRef.current = setTimeout(() => {
           socketRef.current?.emit("typing", {
             conversationId,
+            senderId: userId,
+            role: "USER",
             username: username || "Khách hàng",
             isTyping: false,
           });
         }, 1500);
       }
     },
-    [conversationId, username]
+    [conversationId, username, userId]
   );
 
   return {
