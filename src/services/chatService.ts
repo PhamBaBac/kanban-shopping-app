@@ -8,6 +8,7 @@ export interface ChatHistoryItem {
   role: "USER" | "ASSISTANT";
   message: string;
   createdAt: string;
+  products?: any[];
 }
 
 export interface AiChatResponseData {

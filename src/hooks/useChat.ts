@@ -40,6 +40,7 @@ export const useChat = (): UseChatReturn => {
           text: item.message,
           isUser: item.role === "USER",
           timestamp: new Date(item.createdAt),
+          products: item.products || [],
         })
       );
 
