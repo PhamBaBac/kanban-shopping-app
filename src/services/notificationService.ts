@@ -3,56 +3,25 @@ import { UserNotification } from "@/models/NotificationModel";
 
 const STORAGE_KEY = "kanban_user_notifications";
 
-const INITIAL_MOCK_NOTIFICATIONS: UserNotification[] = [
-  {
-    id: "notif-1",
-    type: "ORDER_STATUS",
-    title: "Đơn hàng #KB-89412 đang được giao",
-    content: "Đơn hàng gồm Áo Thun Nam Frontier và 1 sản phẩm khác đang trên đường giao đến bạn.",
-    targetUrl: "/profile?tab=orders",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-  },
-  {
-    id: "notif-2",
-    type: "PROMOTION",
-    title: "Tặng bạn Voucher 50.000đ",
-    content: "Ưu đãi độc quyền: Sử dụng mã KANBAN50 để được giảm 50.000đ cho đơn hàng từ 300.000đ.",
-    targetUrl: "/shop",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: "notif-3",
-    type: "SUPPORT",
-    title: "Chăm sóc khách hàng",
-    content: "Nhân viên hỗ trợ đã phản hồi tin nhắn tư vấn kích cỡ (size) sản phẩm của bạn.",
-    targetUrl: "/",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "notif-4",
-    type: "SYSTEM",
-    title: "Bảo mật tài khoản",
-    content: "Tài khoản của bạn vừa đăng nhập thành công qua Google. Nếu không phải bạn, hãy kiểm tra lại.",
-    targetUrl: "/profile",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-];
-
 const getStoredNotifications = (): UserNotification[] => {
-  if (typeof window === "undefined") return INITIAL_MOCK_NOTIFICATIONS;
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_MOCK_NOTIFICATIONS));
-      return INITIAL_MOCK_NOTIFICATIONS;
+      return [];
     }
-    return JSON.parse(raw);
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items)) return [];
+    // Tự động dọn dẹp các dữ liệu mock/fake cũ nếu còn lưu trong localStorage
+    const cleanItems = items.filter(
+      (n: any) => !n?.id?.toString().startsWith("notif-")
+    );
+    if (cleanItems.length !== items.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanItems));
+    }
+    return cleanItems;
   } catch (e) {
-    return INITIAL_MOCK_NOTIFICATIONS;
+    return [];
   }
 };
 

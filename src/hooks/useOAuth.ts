@@ -5,19 +5,17 @@ import { useDispatch } from "react-redux";
 import { authService } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
-import { useAuth } from "./useAuth";
 
 export const useOAuth = () => {
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
   const [isMfaModalVisible, setIsMfaModalVisible] = useState(false);
-  const [mfaData, setMfaData] = useState<{ email: string; token: string } | null>(null);
+  const [mfaData, setMfaData] = useState<{ email: string } | null>(null);
   const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
   const hasProcessedRef = useRef(false);
   const hasCleanedUrlRef = useRef(false);
 
   const router = useRouter();
   const dispatch = useDispatch();
-  const { verifyMFAAuth } = useAuth();
 
   // 1. Xử lý đổi code thành token xác thực (chỉ chạy 1 lần duy nhất trong background)
   useEffect(() => {
@@ -33,16 +31,17 @@ export const useOAuth = () => {
       setIsOAuthProcessing(true);
       try {
         const authData = await authService.exchangeOAuthToken(code);
-        const token = authData.accessToken;
 
+        // Trường hợp tài khoản có bật 2FA:
+        // Server KHÔNG cấp accessToken hay refreshToken cookie tại bước này
         if (authData.mfaEnabled) {
-          const user = await authService.getOAuthUser(token);
-          setMfaData({ email: user.email, token });
+          setMfaData({ email: authData.email });
           setIsMfaModalVisible(true);
           message.info("Vui lòng nhập mã xác thực OTP 2 bước");
           return;
         }
 
+        const token = authData.accessToken;
         const user = await authService.getOAuthUser(token);
         const userData = {
           accessToken: token,
@@ -97,10 +96,11 @@ export const useOAuth = () => {
 
     setIsOAuthProcessing(true);
     try {
-      await verifyMFAAuth(mfaData.email, codeStr, mfaData.token);
-      const user = await authService.getOAuthUser(mfaData.token);
+      const res = await authService.verifyMFA(mfaData.email, codeStr);
+      const token = res.accessToken;
+      const user = await authService.getOAuthUser(token);
       const userData = {
-        accessToken: mfaData.token,
+        accessToken: token,
         userId: user.id,
         mfaEnabled: true,
         email: user.email,
@@ -115,9 +115,17 @@ export const useOAuth = () => {
       localStorage.setItem(localDataNames.authData, JSON.stringify(userData));
       localStorage.removeItem("sessionId");
 
+      try {
+        await authService.syncRedisCart(user.id);
+      } catch (e) {
+        // ignore
+      }
+
       setIsMfaModalVisible(false);
+      setOtpCode(Array(6).fill(""));
+      message.success("Xác thực 2 bước thành công!");
     } catch (error: any) {
-      message.error("Mã xác thực OTP không chính xác!");
+      message.error(error?.response?.data?.message || error?.message || "Mã xác thực OTP không chính xác!");
     } finally {
       setIsOAuthProcessing(false);
     }
