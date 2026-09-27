@@ -21,6 +21,7 @@ import {
   Drawer,
   Dropdown,
   Input,
+  InputRef,
   List,
   Menu,
   MenuProps,
@@ -33,11 +34,16 @@ import {
 import { isItemDeleted, isItemSoldOut, isItemInvalid } from "@/hooks";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AiOutlineTransaction } from "react-icons/ai";
-import { BiCart, BiPowerOff, BiSun, BiMoon } from "react-icons/bi";
+import { BiPowerOff, BiMoon, BiSun, BiCart } from "react-icons/bi";
 import { GiHamburgerMenu } from "react-icons/gi";
-import { IoHeartOutline, IoSearch } from "react-icons/io5";
+import {
+  IoHeartOutline,
+  IoSearchOutline,
+  IoCloseOutline,
+  IoCartOutline,
+} from "react-icons/io5";
 import {
   FaUser,
   FaHome,
@@ -48,8 +54,10 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
-import CategoriesListCard from "./CategoriesListCard";
+import CategoriesListCard, { prefetchCategories } from "./CategoriesListCard";
 import NotificationPopover from "./NotificationPopover";
+import { useWishlist } from "@/hooks/useWishlist";
+import { loadWishlist } from "@/redux/reducers/wishlistSlice";
 import axios from "axios";
 
 const { useToken } = theme;
@@ -62,11 +70,58 @@ const HeaderComponent = () => {
     useState(false);
   const [productSeleted, setProductSeleted] = useState<CartItemModel>();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+
+  const searchInputRef = useRef<InputRef>(null);
+  const searchBarContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
+    prefetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (searchOpen) {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && searchOpen) {
+        setSearchOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchOpen &&
+        searchBarContainerRef.current &&
+        !searchBarContainerRef.current.contains(e.target as Node)
+      ) {
+        const toggleBtn = (e.target as HTMLElement).closest(
+          ".header-search-toggle-btn"
+        );
+        if (!toggleBtn) {
+          setSearchOpen(false);
+        }
+      }
+    };
+
+    if (searchOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchOpen]);
 
   const { token } = useToken();
   const auth = useSelector(authSelector);
@@ -75,6 +130,7 @@ const HeaderComponent = () => {
   const router = useRouter();
 
   const cart: CartItemModel[] = useSelector(cartSelector);
+  const { wishlistCount } = useWishlist();
   const hasInvalidInCart = cart.some(isItemInvalid);
   const isDark = mode === "dark";
 
@@ -98,13 +154,15 @@ const HeaderComponent = () => {
     router.push("/");
     dispatch(removeAuth({}));
     dispatch(removeCarts());
+    dispatch(loadWishlist({ userId: null }));
   };
 
-  const handleSearch = (value: string) => {
-    if (value.trim()) {
+  const handleSearch = (value?: string) => {
+    const term = (value !== undefined ? value : searchValue).trim();
+    if (term) {
       setSearchOpen(false);
       setIsVisibleDrawer(false);
-      router.push(`/shop?search=${encodeURIComponent(value.trim())}`);
+      router.push(`/shop?search=${encodeURIComponent(term)}`);
     }
   };
 
@@ -164,45 +222,73 @@ const HeaderComponent = () => {
             </Link>
           </div>
 
-          {/* Center: Desktop horizontal navigation */}
-          <div className="site-header-center">
-            <nav className="site-header-nav" aria-label="Main Navigation">
-              <Link
-                href="/"
-                className={`site-header-nav-link ${getActiveKey() === "home" ? "active" : ""}`}
-              >
-                Trang chủ
-              </Link>
-              <Dropdown
-                placement="bottom"
-                popupRender={() => <CategoriesListCard type="card" />}
-              >
-                <Link
-                  href="/shop"
-                  className={`site-header-nav-link ${getActiveKey() === "shop" ? "active" : ""}`}
+          {/* Center: Desktop horizontal navigation OR Search Bar */}
+          <div
+            className={`site-header-center ${searchOpen ? "search-active" : ""}`}
+            ref={searchBarContainerRef}
+          >
+            {searchOpen ? (
+              <div className="site-header-search-bar">
+                <Input
+                  ref={searchInputRef}
+                  placeholder="Tìm kiếm sản phẩm, thương hiệu, danh mục..."
+                  prefix={<IoSearchOutline size={18} className="search-prefix-icon" />}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onPressEnter={() => handleSearch(searchValue)}
+                  allowClear
+                  className="header-expanded-search-input"
+                />
+                <Button
+                  type="primary"
+                  className="header-search-submit-btn"
+                  onClick={() => handleSearch(searchValue)}
                 >
-                  Cửa hàng
+                  Tìm kiếm
+                </Button>
+              </div>
+            ) : (
+              <nav className="site-header-nav" aria-label="Main Navigation">
+                <Link
+                  href="/"
+                  className={`site-header-nav-link ${getActiveKey() === "home" ? "active" : ""}`}
+                >
+                  Trang chủ
                 </Link>
-              </Dropdown>
-              <Link
-                href="/story"
-                className={`site-header-nav-link ${getActiveKey() === "story" ? "active" : ""}`}
-              >
-                Về chúng tôi
-              </Link>
-              <Link
-                href="/blog"
-                className={`site-header-nav-link ${getActiveKey() === "blog" ? "active" : ""}`}
-              >
-                Blog
-              </Link>
-              <Link
-                href="/contact"
-                className={`site-header-nav-link ${getActiveKey() === "contact" ? "active" : ""}`}
-              >
-                Liên hệ
-              </Link>
-            </nav>
+                <Dropdown
+                  placement="bottom"
+                  destroyPopupOnHide={false}
+                  mouseEnterDelay={0.12}
+                  mouseLeaveDelay={0.25}
+                  popupRender={() => <CategoriesListCard type="card" />}
+                >
+                  <Link
+                    href="/shop"
+                    className={`site-header-nav-link ${getActiveKey() === "shop" ? "active" : ""}`}
+                  >
+                    Cửa hàng
+                  </Link>
+                </Dropdown>
+                <Link
+                  href="/story"
+                  className={`site-header-nav-link ${getActiveKey() === "story" ? "active" : ""}`}
+                >
+                  Về chúng tôi
+                </Link>
+                <Link
+                  href="/blog"
+                  className={`site-header-nav-link ${getActiveKey() === "blog" ? "active" : ""}`}
+                >
+                  Blog
+                </Link>
+                <Link
+                  href="/contact"
+                  className={`site-header-nav-link ${getActiveKey() === "contact" ? "active" : ""}`}
+                >
+                  Liên hệ
+                </Link>
+              </nav>
+            )}
           </div>
 
           {/* Mobile Full-width Search Bar Overlay */}
@@ -236,86 +322,43 @@ const HeaderComponent = () => {
 
           {/* Right: Actions */}
           <div className="site-header-right">
-            {/* Search - Desktop dropdown & Mobile overlay trigger */}
-            <div className="d-none d-md-block">
-              <Dropdown
-                open={searchOpen}
-                onOpenChange={setSearchOpen}
-                placement="bottomRight"
-                trigger={["click"]}
-                popupRender={() => (
-                  <Card
-                    className="search-dropdown-card"
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: token.colorBgContainer,
-                    }}
-                  >
-                    <Input.Search
-                      placeholder="Tìm kiếm sản phẩm..."
-                      allowClear
-                      autoFocus
-                      onSearch={handleSearch}
-                    />
-                  </Card>
-                )}
-              >
-                <Button
-                  className="header-action-btn"
-                  icon={<IoSearch size={21} />}
-                  type="text"
-                  aria-label="Tìm kiếm"
-                />
-              </Dropdown>
-            </div>
-
-            {/* Mobile search button */}
-            <Button
-              className="header-action-btn d-inline-flex d-md-none"
-              icon={<IoSearch size={21} />}
-              type="text"
-              aria-label="Tìm kiếm"
-              onClick={() => setSearchOpen((prev) => !prev)}
-            />
+            {/* Search toggle button */}
+            <Tooltip title={searchOpen ? "Đóng tìm kiếm (Esc)" : "Tìm kiếm sản phẩm"}>
+              <Button
+                className={`header-action-btn header-search-toggle-btn ${searchOpen ? "active" : ""}`}
+                icon={searchOpen ? <IoCloseOutline size={22} /> : <IoSearchOutline size={21} />}
+                type="text"
+                aria-label={searchOpen ? "Đóng tìm kiếm" : "Tìm kiếm"}
+                onClick={() => {
+                  setSearchOpen((prev) => !prev);
+                  if (searchOpen) setSearchValue("");
+                }}
+              />
+            </Tooltip>
 
             {/* Wishlist button */}
-            <Button
-              className="header-action-btn d-none d-sm-inline-flex"
-              icon={<IoHeartOutline size={21} />}
-              type="text"
-              onClick={() => router.push("/shop")}
-              aria-label="Yêu thích"
-            />
+            <Tooltip title="Bộ sưu tập yêu thích">
+              <Badge count={wishlistCount} size="small" offset={[-4, 4]}>
+                <Button
+                  className="header-action-btn d-none d-sm-inline-flex"
+                  icon={<IoHeartOutline size={21} />}
+                  type="text"
+                  onClick={() => router.push("/wishlist")}
+                  aria-label="Yêu thích"
+                />
+              </Badge>
+            </Tooltip>
 
             {/* Notification Popover */}
             <NotificationPopover />
 
-            {/* Theme toggle button */}
-            <Button
-              className="header-action-btn"
-              icon={
-                mode === "dark" ? (
-                  <BiSun size={20} color="#FBBF24" />
-                ) : (
-                  <BiMoon size={20} />
-                )
-              }
-              type="text"
-              onClick={toggleTheme}
-              aria-label={
-                mode === "dark" ? "Chuyển giao diện sáng" : "Chuyển giao diện tối"
-              }
-              title={
-                mode === "dark" ? "Chuyển giao diện sáng" : "Chuyển giao diện tối"
-              }
-            />
 
             {/* Mobile Cart Trigger (Drawer) */}
             <div className="d-inline-flex d-md-none">
               <Badge count={cart.length} color="#131118">
                 <Button
                   className="header-action-btn"
-                  icon={<BiCart size={23} />}
+                  icon={<IoCartOutline size={22} />}
                   type="text"
                   aria-label="Giỏ hàng"
                   onClick={() => setIsCartDrawerOpen(true)}
@@ -561,8 +604,8 @@ const HeaderComponent = () => {
               >
                 <Badge count={cart.length} color="#131118">
                   <Button
-                    className="header-action-btn"
-                    icon={<BiCart size={23} />}
+                    className={`header-action-btn ${cartDropdownOpen ? "active" : ""}`}
+                    icon={<IoCartOutline size={22} />}
                     type="text"
                     aria-label="Giỏ hàng"
                   />

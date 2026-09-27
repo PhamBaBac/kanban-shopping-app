@@ -7,13 +7,13 @@ import { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import ProsionalInfomation from "../../components/PersionalInfomations";
-import { FaCog, FaLock, FaShoppingCart } from "react-icons/fa";
-import { IoNotificationsOutline } from "react-icons/io5";
+import { FaBell, FaCog, FaHeart, FaLock, FaShoppingCart } from "react-icons/fa";
 import OrderItem from "@/components/OrderItem";
-import { SettingsContent, ProfileNotifications } from "@/components";
+import { SettingsContent, ProfileNotifications, ProfileWishlist } from "@/components";
 import ChangePassword from "@/components/ChangePassword";
 import { useOrders } from "@/hooks/useOrders";
 import { useNotification } from "@/hooks/useNotification";
+import { useWishlist } from "@/hooks/useWishlist";
 import { authService } from "@/services";
 import { localDataNames } from "@/constants/appInfos";
 
@@ -38,6 +38,7 @@ const ProfilePage = () => {
   } = useOrders();
 
   const { unreadCount } = useNotification();
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     const WIDTH = window ? window.innerWidth : undefined;
@@ -66,6 +67,20 @@ const ProfilePage = () => {
   }, [auth?.accessToken, auth?.provider]);
 
   const isOAuthUser = Boolean(auth?.provider && auth.provider !== "LOCAL");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedAuth = localStorage.getItem(localDataNames.authData);
+      const hasToken = Boolean(auth?.accessToken || storedAuth);
+      if (!hasToken) {
+        if (router.query.tab === "wishlist") {
+          router.replace("/wishlist");
+        } else {
+          router.replace("/auth/login");
+        }
+      }
+    }
+  }, [auth?.accessToken, router.query.tab]);
 
   useEffect(() => {
     const tabParam = router.query.tab?.toString();
@@ -188,9 +203,15 @@ const ProfilePage = () => {
       ),
     },
     {
+      key: "wishlist",
+      label: `Yêu thích ${wishlistCount > 0 ? `(${wishlistCount})` : ""}`,
+      icon: <FaHeart size={14} className="text-muted" />,
+      children: <ProfileWishlist />,
+    },
+    {
       key: "notifications",
       label: `Thông báo ${unreadCount > 0 ? `(${unreadCount})` : ""}`,
-      icon: <IoNotificationsOutline size={15} className="text-muted" />,
+      icon: <FaBell size={14} className="text-muted" />,
       children: <ProfileNotifications />,
     },
     ...(!isOAuthUser
@@ -210,6 +231,20 @@ const ProfilePage = () => {
       children: <SettingsContent />,
     },
   ];
+
+  const hasToken = Boolean(
+    auth?.accessToken ||
+      (typeof window !== "undefined" &&
+        localStorage.getItem(localDataNames.authData))
+  );
+
+  if (!hasToken) {
+    return (
+      <div className="container py-5" style={{ minHeight: "60vh" }}>
+        <Skeleton active paragraph={{ rows: 6 }} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4 mb-4">

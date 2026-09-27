@@ -8,7 +8,7 @@ import { Button, Card, Space, Typography, Modal, Tag, Tooltip, Spin } from "antd
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BiHeart, BiTransfer } from "react-icons/bi";
+import { BiHeart, BiSolidHeart, BiTransfer } from "react-icons/bi";
 import { BsEye } from "react-icons/bs";
 import { FaRegStar } from "react-icons/fa";
 import { MdImage } from "react-icons/md";
@@ -16,6 +16,7 @@ import { useSelector } from "react-redux";
 import { authSelector } from "@/redux/reducers/authReducer";
 import { productService } from "@/services";
 import { userService } from "@/services/userService";
+import { useWishlist } from "@/hooks/useWishlist";
 
 interface Props {
   item: ProductModel;
@@ -38,6 +39,8 @@ const ProductItem = (props: Props) => {
   const ref = useRef<any>();
   const router = useRouter();
   const auth = useSelector(authSelector);
+  const { isFavorite, toggleFavorite } = useWishlist();
+  const isFav = isFavorite(item.id);
 
   const availableSubProducts: SubProductModel[] = useMemo(() => {
     if (subProducts && subProducts.length > 0) return subProducts;
@@ -491,11 +494,19 @@ const ProductItem = (props: Props) => {
                   <Button
                     size="large"
                     className="btn-icon"
-                    icon={<BiHeart size={20} className="text-muted" />}
+                    icon={
+                      isFav ? (
+                        <BiSolidHeart size={20} style={{ color: "#EF4444" }} />
+                      ) : (
+                        <BiHeart size={20} className="text-muted" />
+                      )
+                    }
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      toggleFavorite(item);
                     }}
+                    aria-label={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
                   />
                   <Button
                     size="large"

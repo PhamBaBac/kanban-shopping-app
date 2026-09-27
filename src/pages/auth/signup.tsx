@@ -1,8 +1,9 @@
 /** @format */
 
-import { Button, Checkbox, Form, Input, Typography } from "antd";
+import { Button, Checkbox, Divider, Form, Input, Typography } from "antd";
+import Link from "next/link";
 import { useRef } from "react";
-import { BsArrowLeft } from "react-icons/bs";
+import { BsArrowLeft, BsClockHistory, BsArrowRepeat } from "react-icons/bs";
 import { useSignup } from "@/hooks";
 
 interface SignUp {
@@ -13,6 +14,12 @@ interface SignUp {
   role: "USER";
 }
 
+const formatTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`;
+};
+
 const SignUp = () => {
   const [form] = Form.useForm();
   const refs = useRef<Array<any>>([]);
@@ -22,7 +29,8 @@ const SignUp = () => {
     isAgree,
     signValues,
     numsOfCode,
-    times,
+    expireTime,
+    resendCooldown,
     signup,
     verify,
     resendCode,
@@ -31,7 +39,12 @@ const SignUp = () => {
     setSignValues,
   } = useSignup();
   const handleSignUp = async (values: SignUp) => {
-    await signup(values);
+    await signup({
+      ...values,
+      firstName: values.firstName?.trim(),
+      lastName: values.lastName?.trim(),
+      email: values.email?.trim(),
+    });
     form.resetFields();
   };
 
@@ -39,6 +52,15 @@ const SignUp = () => {
     changeNumsCode(val, index);
     if (val && index < 5) refs.current[index + 1]?.focus();
     if (!val && index > 0) refs.current[index - 1]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length > 0) {
+      e.preventDefault();
+      pasted.split("").forEach((d, i) => changeNumsCode(d, i));
+      refs.current[Math.min(pasted.length, 5)]?.focus();
+    }
   };
 
   const handleVerify = async () => {
@@ -63,7 +85,9 @@ const SignUp = () => {
           }}
         >
           <div className="mt-5 ml-5">
-            <img src="/images/logo.png" alt="Logo" />
+            <Link href="/">
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+            </Link>
           </div>
         </div>
         <div className="col-sm-12 col-md-6 d-flex align-items-center">
@@ -74,16 +98,53 @@ const SignUp = () => {
                   onClick={() => setSignValues(undefined)}
                   type="text"
                   icon={<BsArrowLeft size={20} className="text-muted" />}
+                  style={{ paddingLeft: 0 }}
                 >
                   <Typography.Text>Quay lại</Typography.Text>
                 </Button>
 
                 <div className="mt-4">
                   <Typography.Title level={2}>Nhập mã OTP</Typography.Title>
-                  <Typography.Paragraph type="secondary">
+                  <Typography.Paragraph type="secondary" className="mb-2">
                     Chúng tôi đã gửi mã xác thực tới email:{" "}
                     <b>{signValues.email}</b>
                   </Typography.Paragraph>
+
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 14px",
+                      borderRadius: 20,
+                      backgroundColor: expireTime <= 60 ? "#fff2f0" : "#f0f5ff",
+                      border: `1px solid ${expireTime <= 60 ? "#ffccc7" : "#d6e4ff"}`,
+                      color: expireTime <= 60 ? "#cf1322" : "#1d39c4",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      marginTop: 4,
+                    }}
+                  >
+                    <BsClockHistory size={15} />
+                    {expireTime > 0 ? (
+                      <span>
+                        Mã có hiệu lực trong:{" "}
+                        <strong
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: 15,
+                            letterSpacing: "0.5px",
+                          }}
+                        >
+                          {formatTime(expireTime)}
+                        </strong>
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: 600 }}>
+                        Mã xác thực đã hết hạn! Vui lòng bấm &quot;Gửi lại mã&quot;.
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 d-flex justify-content-between">
@@ -102,6 +163,7 @@ const SignUp = () => {
                       onChange={(e) =>
                         handleChangeNumsCode(e.target.value, index)
                       }
+                      onPaste={handlePaste}
                       ref={(el) => {
                         refs.current[index] = el;
                       }}
@@ -116,17 +178,23 @@ const SignUp = () => {
                     size="large"
                     style={{ width: "100%" }}
                     onClick={handleVerify}
+                    disabled={expireTime <= 0}
                   >
                     Xác thực
                   </Button>
-                  <div className="mt-2 text-center">
-                    {times <= 0 ? (
-                      <Button type="link" onClick={handleResendCode}>
+                  <div className="mt-3 text-center">
+                    {resendCooldown <= 0 ? (
+                      <Button
+                        type="link"
+                        onClick={handleResendCode}
+                        icon={<BsArrowRepeat size={16} />}
+                        style={{ fontWeight: 500 }}
+                      >
                         Gửi lại mã
                       </Button>
                     ) : (
                       <Typography.Text type="secondary">
-                        Gửi lại mã sau: {times}s
+                        Gửi lại mã sau: <b>{resendCooldown}s</b>
                       </Typography.Text>
                     )}
                   </div>
@@ -134,6 +202,17 @@ const SignUp = () => {
               </>
             ) : (
               <>
+                <div className="mb-3">
+                  <Link href="/" style={{ textDecoration: "none" }}>
+                    <Button
+                      type="text"
+                      icon={<BsArrowLeft size={18} />}
+                      style={{ paddingLeft: 0, display: "inline-flex", alignItems: "center" }}
+                    >
+                      Quay về trang chủ
+                    </Button>
+                  </Link>
+                </div>
                 <Typography.Title>Tạo tài khoản mới</Typography.Title>
                 <Typography.Paragraph type="secondary">
                   Vui lòng nhập thông tin của bạn
@@ -211,6 +290,16 @@ const SignUp = () => {
                   >
                     Đăng ký
                   </Button>
+                </div>
+
+                <Divider />
+                <div className="text-center">
+                  <Typography.Text type="secondary">
+                    Đã có tài khoản?{" "}
+                  </Typography.Text>
+                  <Link href="/auth/login" style={{ fontWeight: 500 }}>
+                    Đăng nhập ngay
+                  </Link>
                 </div>
               </>
             )}

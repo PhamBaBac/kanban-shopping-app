@@ -69,7 +69,9 @@ const Login = () => {
           }}
         >
           <div className="mt-5 ml-5">
-            <img src="/images/logo.png" alt="Logo" />
+            <Link href="/">
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+            </Link>
           </div>
         </div>
 
@@ -77,6 +79,17 @@ const Login = () => {
           <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
             {!isMfaEnabled ? (
               <>
+                <div className="mb-3">
+                  <Link href="/" style={{ textDecoration: "none" }}>
+                    <Button
+                      type="text"
+                      icon={<BsArrowLeft size={18} />}
+                      style={{ paddingLeft: 0, display: "inline-flex", alignItems: "center" }}
+                    >
+                      Quay về trang chủ
+                    </Button>
+                  </Link>
+                </div>
                 <Title>Chào mừng trở lại</Title>
                 <Paragraph type="secondary">Vui lòng đăng nhập vào tài khoản của bạn</Paragraph>
 

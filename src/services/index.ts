@@ -12,6 +12,7 @@ export { reviewService } from "./reviewService";
 export { chatService } from "./chatService";
 export { supportService } from "./supportService";
 export { notificationService } from "./notificationService";
+export { wishlistService } from "./wishlistService";
 
 export type { AuthUser, LoginCredentials, SignupData } from "./authService";
 export type { FilterValues, ShopFilters } from "./shopService";

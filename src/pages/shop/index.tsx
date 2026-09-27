@@ -56,6 +56,34 @@ const ShopPageContent = () => {
   const [priceDropdownOpen, setPriceDropdownOpen] = useState(false);
   const lastFiltersRef = useRef<string>("");
 
+  const handleSortChange = (
+    newSort: "relevance" | "latest" | "topsales" | "price_asc" | "price_desc"
+  ) => {
+    setSortBy(newSort);
+    setPage(1);
+    setPriceDropdownOpen(false);
+
+    if (router && router.isReady) {
+      const newQuery = { ...router.query };
+      if (newSort === "relevance") {
+        delete newQuery.sortBy;
+      } else {
+        newQuery.sortBy = newSort;
+      }
+      router.replace(
+        { pathname: router.pathname, query: newQuery },
+        undefined,
+        { shallow: true }
+      );
+    }
+  };
+
+  const getPriceButtonLabel = () => {
+    if (sortBy === "price_asc") return "Giá: Thấp - Cao";
+    if (sortBy === "price_desc") return "Giá: Cao - Thấp";
+    return "Giá";
+  };
+
   const { products, totalItems, isLoading, error, fetchProducts } = useShop();
 
   const handleRemovePriceFilter = () => {
@@ -201,9 +229,17 @@ const ShopPageContent = () => {
       updates.search = rawSearch.trim();
     }
 
+    const rawSort = query.sortBy as string | undefined;
+    if (
+      rawSort &&
+      ["relevance", "latest", "topsales", "price_asc", "price_desc"].includes(rawSort)
+    ) {
+      setSortBy(rawSort as any);
+    }
+
     dispatch(updateFilterValues(updates));
     setPage(1);
-  }, [isReady, query.catId, query.search, query.q, dispatch]);
+  }, [isReady, query.catId, query.search, query.q, query.sortBy, dispatch]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -239,6 +275,7 @@ const ShopPageContent = () => {
     const filters: any = {
       page,
       pageSize: 12,
+      sortBy,
     };
 
     if (filterValues.search && filterValues.search.trim()) {
@@ -271,7 +308,7 @@ const ShopPageContent = () => {
 
     console.log("Sending filters:", filters);
     fetchProducts(filters);
-  }, [filterValues, page, isReady, query.catId, query.search, query.q]);
+  }, [filterValues, page, sortBy, isReady, query.catId, query.search, query.q]);
 
   const hasUrlOrFilterSearch = Boolean(
     String(query.search || query.q || filterValues.search || "").trim()
@@ -379,7 +416,7 @@ const ShopPageContent = () => {
 
                 {/* Relevance */}
                 <button
-                  onClick={() => setSortBy("relevance")}
+                  onClick={() => handleSortChange("relevance")}
                   style={{
                     padding: "5px 14px",
                     borderRadius: 8,
@@ -399,7 +436,7 @@ const ShopPageContent = () => {
 
                 {/* Latest */}
                 <button
-                  onClick={() => setSortBy("latest")}
+                  onClick={() => handleSortChange("latest")}
                   style={{
                     padding: "5px 14px",
                     borderRadius: 8,
@@ -419,7 +456,7 @@ const ShopPageContent = () => {
 
                 {/* Top Sales */}
                 <button
-                  onClick={() => setSortBy("topsales")}
+                  onClick={() => handleSortChange("topsales")}
                   style={{
                     padding: "5px 14px",
                     borderRadius: 8,
@@ -457,7 +494,7 @@ const ShopPageContent = () => {
                       transition: "all 0.15s ease",
                     }}
                   >
-                    Giá
+                    {getPriceButtonLabel()}
                     <BsArrowDown
                       size={13}
                       style={{
@@ -487,7 +524,7 @@ const ShopPageContent = () => {
                       ].map((opt) => (
                         <div
                           key={opt.value}
-                          onClick={() => { setSortBy(opt.value); setPriceDropdownOpen(false); }}
+                          onClick={() => handleSortChange(opt.value)}
                           style={{
                             padding: "10px 16px",
                             fontSize: "0.88rem",

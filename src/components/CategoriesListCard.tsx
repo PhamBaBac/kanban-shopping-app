@@ -25,45 +25,63 @@ interface Props {
   onItemClick?: () => void;
 }
 
+let cachedCategories: CategoyModel[] | null = null;
+let fetchCategoriesPromise: Promise<CategoyModel[]> | null = null;
+
+export const prefetchCategories = async (): Promise<CategoyModel[]> => {
+  if (cachedCategories) return cachedCategories;
+  if (!fetchCategoriesPromise) {
+    fetchCategoriesPromise = (async () => {
+      try {
+        const categoriesRes = await shopService.getCategoriesForFilter();
+        const items = categoriesRes.filter((element: any) => !element.parentId);
+        const values: CategoyModel[] = [];
+        items.forEach((item: any) => {
+          const vals = categoriesRes.filter((element: any) => element.parentId === item.id);
+          if (vals.length > 0) {
+            values.push({ ...item, children: vals });
+          }
+        });
+        cachedCategories = values;
+        return values;
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        return [];
+      } finally {
+        fetchCategoriesPromise = null;
+      }
+    })();
+  }
+  return fetchCategoriesPromise;
+};
+
 const CategoriesListCard = (props: Props) => {
   const { type, onItemClick } = props;
   const { token } = useToken();
-  const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<CategoyModel[]>([]);
-
-  const [width, setWidth] = useState(0);
+  const [categories, setCategories] = useState<CategoyModel[]>(
+    () => cachedCategories || []
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!cachedCategories);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
 
   useEffect(() => {
-    setWidth(window.innerWidth);
-  }, []);
-
-  useEffect(() => {
-    getCategories();
-  }, []);
-
-  const getCategories = async () => {
-    setIsLoading(true);
-    try {
-      const categoriesRes = await shopService.getCategoriesForFilter();
-      changeListToTreeList(categoriesRes);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsLoading(false);
+    if (typeof window !== "undefined") {
+      const handleResize = () => setWidth(window.innerWidth);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     }
-  };
+  }, []);
 
-  const changeListToTreeList = (datas: CategoyModel[]) => {
-    const items = datas.filter((element) => !element.parentId);
-    const values: CategoyModel[] = [];
-    items.forEach((item) => {
-      const vals = datas.filter((element) => element.parentId === item.id);
-      if (vals.length > 0) {
-        values.push({ ...item, children: vals });
-      }
-    });
-    setCategories(values);
-  };
+  useEffect(() => {
+    if (!cachedCategories) {
+      prefetchCategories().then((res) => {
+        setCategories(res);
+        setIsLoading(false);
+      });
+    }
+  }, []);
 
   if (type === "card") {
     const colCount = Math.min(Math.max(categories.length, 1), 5);
@@ -75,18 +93,19 @@ const CategoriesListCard = (props: Props) => {
         : Math.min(Math.max((width || 1200) * 0.55, 640), 800);
 
     return (
-      <div
-        className="shadow mt-2"
-        style={{
-          width: cardWidth,
-          maxWidth: "96vw",
-          backgroundColor: token.colorBgContainer || "#FFFFFF",
-          borderRadius: 14,
-          border: `1px solid ${token.colorBorderSecondary || "#E5E7EB"}`,
-          boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.15)",
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ paddingTop: 8 }}>
+        <div
+          className="shadow"
+          style={{
+            width: cardWidth,
+            maxWidth: "96vw",
+            backgroundColor: token.colorBgContainer || "#FFFFFF",
+            borderRadius: 14,
+            border: `1px solid ${token.colorBorderSecondary || "#E5E7EB"}`,
+            boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.15)",
+            overflow: "hidden",
+          }}
+        >
         {isLoading ? (
           <div style={{ padding: 24 }}>
             <Skeleton active paragraph={{ rows: 4 }} />
@@ -318,6 +337,7 @@ const CategoriesListCard = (props: Props) => {
             <Empty description="Không tìm thấy dữ liệu" />
           </div>
         )}
+        </div>
       </div>
     );
   }

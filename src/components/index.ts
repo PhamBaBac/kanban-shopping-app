@@ -13,6 +13,7 @@ import SettingsContent from "./SettingsContent";
 import ChatProductCard from "./ChatProductCard";
 import NotificationPopover from "./NotificationPopover";
 import ProfileNotifications from "./ProfileNotifications";
+import ProfileWishlist from "./ProfileWishlist";
 
 export {
   TabbarComponent,
@@ -28,4 +29,5 @@ export {
   ChatProductCard,
   NotificationPopover,
   ProfileNotifications,
+  ProfileWishlist,
 };

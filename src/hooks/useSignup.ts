@@ -18,30 +18,47 @@ interface UseSignupReturn {
   signValues: any;
   numsOfCode: string[];
   times: number;
+  expireTime: number;
+  resendCooldown: number;
   signup: (values: SignUpData) => Promise<void>;
   verify: () => Promise<void>;
   resendCode: () => Promise<void>;
   changeNumsCode: (val: string, index: number) => void;
   setIsAgree: (agree: boolean) => void;
   setSignValues: (values: any) => void;
+  resetOtp: () => void;
 }
+
+const OTP_EXPIRY_SECONDS = 300; // 5 phút (khớp TTL Redis backend)
+const RESEND_COOLDOWN_SECONDS = 60; // 60 giây (khớp cooldown Redis backend)
 
 export const useSignup = (): UseSignupReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAgree, setIsAgree] = useState(true);
   const [signValues, setSignValues] = useState<any>();
   const [numsOfCode, setNumsOfCode] = useState<string[]>([]);
-  const [times, setTimes] = useState(160);
+  const [expireTime, setExpireTime] = useState(OTP_EXPIRY_SECONDS);
+  const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
   const router = useRouter();
   const { signup: authSignup, verifyEmailCode, sendVerificationCode } = useAuth();
 
   useEffect(() => {
-    const time = setInterval(() => {
-      setTimes((t) => (t > 0 ? t - 1 : 0));
+    if (!signValues) return;
+
+    const timer = setInterval(() => {
+      setExpireTime((prev) => (prev > 0 ? prev - 1 : 0));
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-    return () => clearInterval(time);
-  }, []);
+
+    return () => clearInterval(timer);
+  }, [signValues]);
+
+  const resetOtp = () => {
+    setNumsOfCode([]);
+    setExpireTime(OTP_EXPIRY_SECONDS);
+    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+  };
 
   const signup = async (values: SignUpData) => {
     if (!isAgree) {
@@ -53,6 +70,7 @@ export const useSignup = (): UseSignupReturn => {
     try {
       await authSignup(values);
       setSignValues({ email: values.email });
+      resetOtp();
       message.success(
         "Mã xác thực OTP đã được gửi đến email. Vui lòng nhập mã OTP để hoàn tất đăng ký."
       );
@@ -70,10 +88,16 @@ export const useSignup = (): UseSignupReturn => {
   };
 
   const verify = async () => {
+    if (expireTime <= 0) {
+      message.error("Mã xác thực OTP đã hết hạn! Vui lòng bấm 'Gửi lại mã' để nhận mã mới.");
+      return;
+    }
+
     if (numsOfCode.length === 6 && numsOfCode.every((c) => c)) {
       const code = numsOfCode.join("");
       try {
         await verifyEmailCode(signValues.email, code);
+        message.success("Xác thực tài khoản thành công!");
         router.push("/");
       } catch (error: any) {
         showErrorMessage(error, "Mã xác thực OTP không đúng hoặc đã hết hạn!");
@@ -84,13 +108,20 @@ export const useSignup = (): UseSignupReturn => {
   };
 
   const resendCode = async () => {
-    setNumsOfCode([]);
+    if (resendCooldown > 0) {
+      message.warning(`Vui lòng đợi ${resendCooldown} giây trước khi yêu cầu mã mới!`);
+      return;
+    }
+
+    setIsLoading(true);
     try {
       await sendVerificationCode(signValues.email);
-      setTimes(300);
+      resetOtp();
       message.success("Mã xác thực mới đã được gửi đến email của bạn.");
     } catch (error: any) {
       showErrorMessage(error, "Không thể gửi lại mã xác thực. Vui lòng thử lại sau!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -99,12 +130,15 @@ export const useSignup = (): UseSignupReturn => {
     isAgree,
     signValues,
     numsOfCode,
-    times,
+    times: resendCooldown,
+    expireTime,
+    resendCooldown,
     signup,
     verify,
     resendCode,
     changeNumsCode,
     setIsAgree,
     setSignValues,
+    resetOtp,
   };
 }; 

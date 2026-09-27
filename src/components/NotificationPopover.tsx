@@ -512,8 +512,8 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
           color="#EF4444"
         >
           <Button
-            className="header-action-btn"
-            icon={<IoNotificationsOutline size={22} />}
+            className={`header-action-btn ${open ? "active" : ""}`}
+            icon={<IoNotificationsOutline size={21} />}
             type="text"
             aria-label="Thông báo"
             title="Thông báo"

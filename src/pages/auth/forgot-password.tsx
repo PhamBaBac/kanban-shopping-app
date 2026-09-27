@@ -1,6 +1,7 @@
 import { Button, Form, Input, Typography } from "antd";
 import Link from "next/link";
 import { useRef } from "react";
+import { BsArrowLeft } from "react-icons/bs";
 import { useForgotPassword } from "@/hooks";
 
 const { Title, Paragraph } = Typography;
@@ -191,9 +192,26 @@ const ForgotPassword = () => {
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}
-        ></div>
+        >
+          <div className="mt-5 ml-5">
+            <Link href="/">
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+            </Link>
+          </div>
+        </div>
         <div className="col-sm-12 col-md-6 d-flex align-items-center">
           <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
+            <div className="mb-3">
+              <Link href="/" style={{ textDecoration: "none" }}>
+                <Button
+                  type="text"
+                  icon={<BsArrowLeft size={18} />}
+                  style={{ paddingLeft: 0, display: "inline-flex", alignItems: "center" }}
+                >
+                  Quay về trang chủ
+                </Button>
+              </Link>
+            </div>
             {renderStep()}
             <div className="text-center mt-3">
               <Link href="/auth/login">Quay lại đăng nhập</Link>

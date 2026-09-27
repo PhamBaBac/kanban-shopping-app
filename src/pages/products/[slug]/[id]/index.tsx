@@ -26,12 +26,13 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { IoAddSharp, IoHeartOutline } from "react-icons/io5";
+import { IoAddSharp, IoHeart, IoHeartOutline } from "react-icons/io5";
 import { LuMinus } from "react-icons/lu";
 import { PiCableCar } from "react-icons/pi";
 import { FiTruck, FiShield, FiRefreshCw } from "react-icons/fi";
 import { HiOutlineHome } from "react-icons/hi2";
 import { useSelector } from "react-redux";
+import { useWishlist } from "@/hooks/useWishlist";
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -56,6 +57,8 @@ const ProductDetail = (props: any) => {
   const product: ProductModel =
     props?.pageProps?.product || props?.product || props?.pageProps;
   const cart = useSelector(cartSelector);
+  const { isFavorite, toggleFavorite } = useWishlist();
+  const isFav = isFavorite(product?.id);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [relatedProducts, setRelatedProducts] = useState<ProductModel[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(true);
@@ -1112,16 +1115,26 @@ const ProductDetail = (props: any) => {
                     {renderButtonGroup()}
                     <Button
                       size="large"
-                      icon={<IoHeartOutline size={22} />}
+                      icon={
+                        isFav ? (
+                          <IoHeart size={22} style={{ color: "#EF4444" }} />
+                        ) : (
+                          <IoHeartOutline size={22} />
+                        )
+                      }
+                      onClick={() => {
+                        if (product) toggleFavorite(product);
+                      }}
                       style={{
                         height: 48,
                         width: 48,
                         borderRadius: 8,
-                        borderColor: "#E5E7EB",
+                        borderColor: isFav ? "#EF4444" : "#E5E7EB",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
+                      aria-label={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
                     />
                   </div>
                 </div>

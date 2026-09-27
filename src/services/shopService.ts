@@ -14,6 +14,7 @@ export interface ShopFilters {
   sizes?: string[];
   price?: [number, number];
   search?: string;
+  sortBy?: string;
   page?: number;
   pageSize?: number;
 }
@@ -46,6 +47,10 @@ export const shopService = {
     if (filters.price && filters.price.length === 2) {
       params.append("price", filters.price[0].toString());
       params.append("price", filters.price[1].toString());
+    }
+
+    if (filters.sortBy && filters.sortBy.trim()) {
+      params.append("sortBy", filters.sortBy.trim());
     }
 
     if (filters.page) {
