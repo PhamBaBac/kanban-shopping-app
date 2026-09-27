@@ -132,62 +132,7 @@ const HeaderComponent = () => {
     },
   ];
 
-  const desktopMenuItems = [
-    {
-      label: (
-        <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
-          Trang chủ
-        </Link>
-      ),
-      key: "home",
-    },
-    {
-      label: (
-        <Dropdown
-          placement="bottom"
-          popupRender={() => <CategoriesListCard type="card" />}
-        >
-          <Link
-            href="/shop"
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            Cửa hàng
-          </Link>
-        </Dropdown>
-      ),
-      key: "shop",
-    },
-    {
-      label: (
-        <Link
-          href="/story"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          Về chúng tôi
-        </Link>
-      ),
-      key: "story",
-    },
-    {
-      label: (
-        <Link href="/blog" style={{ textDecoration: "none", color: "inherit" }}>
-          Blog
-        </Link>
-      ),
-      key: "blog",
-    },
-    {
-      label: (
-        <Link
-          href="/contact"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          Liên hệ
-        </Link>
-      ),
-      key: "contact",
-    },
-  ];
+
 
   const userDisplayName =
     auth.firstName || auth.lastName
@@ -218,14 +163,45 @@ const HeaderComponent = () => {
             </Link>
           </div>
 
-          {/* Center: Desktop horizontal menu */}
+          {/* Center: Desktop horizontal navigation */}
           <div className="site-header-center">
-            <Menu
-              className="site-header-menu"
-              mode="horizontal"
-              selectedKeys={[getActiveKey()]}
-              items={desktopMenuItems}
-            />
+            <nav className="site-header-nav" aria-label="Main Navigation">
+              <Link
+                href="/"
+                className={`site-header-nav-link ${getActiveKey() === "home" ? "active" : ""}`}
+              >
+                Trang chủ
+              </Link>
+              <Dropdown
+                placement="bottom"
+                popupRender={() => <CategoriesListCard type="card" />}
+              >
+                <Link
+                  href="/shop"
+                  className={`site-header-nav-link ${getActiveKey() === "shop" ? "active" : ""}`}
+                >
+                  Cửa hàng
+                </Link>
+              </Dropdown>
+              <Link
+                href="/story"
+                className={`site-header-nav-link ${getActiveKey() === "story" ? "active" : ""}`}
+              >
+                Về chúng tôi
+              </Link>
+              <Link
+                href="/blog"
+                className={`site-header-nav-link ${getActiveKey() === "blog" ? "active" : ""}`}
+              >
+                Blog
+              </Link>
+              <Link
+                href="/contact"
+                className={`site-header-nav-link ${getActiveKey() === "contact" ? "active" : ""}`}
+              >
+                Liên hệ
+              </Link>
+            </nav>
           </div>
 
           {/* Mobile Full-width Search Bar Overlay */}

@@ -25,6 +25,7 @@ import {
   Tooltip,
 } from "antd";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { IoAddSharp, IoHeartOutline } from "react-icons/io5";
 import { LuMinus } from "react-icons/lu";
 import { PiCableCar } from "react-icons/pi";
@@ -35,6 +36,23 @@ import { useSelector } from "react-redux";
 const { Text, Paragraph, Title } = Typography;
 
 const ProductDetail = (props: any) => {
+  const router = useRouter();
+
+  if (router.isFallback) {
+    return (
+      <div className="container" style={{ padding: "40px 16px", minHeight: "80vh", maxWidth: 1200, margin: "0 auto" }}>
+        <div className="row g-4">
+          <div className="col-12 col-md-6">
+            <Skeleton.Image active style={{ width: "100%", height: 420, borderRadius: 12 }} />
+          </div>
+          <div className="col-12 col-md-6">
+            <Skeleton active paragraph={{ rows: 8 }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const product: ProductModel =
     props?.pageProps?.product || props?.product || props?.pageProps;
   const cart = useSelector(cartSelector);
@@ -1469,6 +1487,6 @@ export const getStaticProps = async (context: any) => {
   }
 };
 
-export const getStaticPaths = async () => ({ paths: [], fallback: "blocking" });
+export const getStaticPaths = async () => ({ paths: [], fallback: true });
 
 export default ProductDetail;

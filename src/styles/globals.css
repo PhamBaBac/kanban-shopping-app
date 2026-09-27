@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Nunito+Sans:ital,opsz,wght@0,6..12,300..800;1,6..12,300..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
-
 :root {
   /* Color Palette - Minimalist Monochrome (Black & White) */
   --color-primary: #131118;
@@ -644,19 +642,86 @@ body[data-theme="dark"] .site-header-wrapper {
   }
 }
 
-.site-header-menu {
-  border: none !important;
-  background: transparent !important;
-  font-weight: 500;
-  line-height: 48px;
+.site-header-nav {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex: 1;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.site-header-menu .ant-menu-item {
+.site-header-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
   font-size: 0.95rem;
-  padding: 0 14px !important;
-  transition: color 0.2s ease;
+  font-weight: 500;
+  color: var(--color-foreground, #131118);
+  text-decoration: none !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.site-header-nav-link:hover {
+  color: var(--color-primary, #131118);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+body[data-theme="dark"] .site-header-nav-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body[data-theme="dark"] .site-header-nav-link:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.site-header-nav-link.active {
+  font-weight: 700;
+  color: var(--color-primary, #131118);
+}
+
+.site-header-nav-link.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: var(--color-primary, #131118);
+  border-radius: 2px;
+}
+
+body[data-theme="dark"] .site-header-nav-link.active {
+  color: #ffffff;
+}
+
+body[data-theme="dark"] .site-header-nav-link.active::after {
+  background-color: #ffffff;
+}
+
+/* Bullet reset for any Ant Design menu */
+ul.ant-menu,
+.ant-menu-horizontal,
+.site-header-menu {
+  list-style: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+ul.ant-menu li,
+.ant-menu-item {
+  list-style: none !important;
 }
 
 .site-header-right {

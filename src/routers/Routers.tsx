@@ -8,16 +8,18 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { Layout, Spin, Modal, Input, Button } from "antd";
+import { Layout, Modal, Input, Button } from "antd";
 import { useRouter } from "next/router";
 import FooterComponent from "@/components/FooterComponent";
-import ChatButton from "@/components/ChatButton";
+import dynamic from "next/dynamic";
 import { useCartOperations } from "@/hooks/useCartOperations";
 import { useOAuth } from "@/hooks";
 
-const Routers = ({ Component, pageProps }: any) => {
-  const [isLoading, setIsLoading] = useState(false);
+const ChatButton = dynamic(() => import("@/components/ChatButton"), {
+  ssr: false,
+});
 
+const Routers = ({ Component, pageProps }: any) => {
   const path = usePathname();
   const dispatch = useDispatch();
   const auth = useSelector(authSelector);
@@ -80,23 +82,18 @@ const Routers = ({ Component, pageProps }: any) => {
   };
 
   const getDatabaseDatas = async () => {
-    setIsLoading(true);
     try {
       await getCartInDatabase();
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <>
-      {isLoading ? (
-        <Spin />
-      ) : path?.includes("/auth") ? (
+      {path?.includes("/auth") ? (
         <Layout>
-          <Component pageProps={pageProps} />
+          <Component {...pageProps} pageProps={pageProps} />
         </Layout>
       ) : (
         <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -110,7 +107,7 @@ const Routers = ({ Component, pageProps }: any) => {
             <HeaderComponent />
           </Layout.Header>
           <Layout.Content style={{ flex: 1 }}>
-            <Component pageProps={pageProps} />
+            <Component {...pageProps} pageProps={pageProps} />
           </Layout.Content>
           <Layout.Footer style={{ padding: 0, background: "transparent" }}>
             <FooterComponent />

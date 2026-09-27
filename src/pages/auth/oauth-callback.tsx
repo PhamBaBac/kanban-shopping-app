@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 
 /**
@@ -7,8 +7,11 @@ import { useRouter } from "next/router";
  */
 export default function OAuthCallbackPage() {
   const router = useRouter();
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
     const search = typeof window !== "undefined" ? window.location.search : "";
     router.replace(`/${search}`);
   }, [router]);

@@ -6,7 +6,8 @@ import { useHome } from "@/hooks";
 import { homeService } from "@/services";
 import { Skeleton } from "antd";
 
-const Home = () => {
+const Home = (props: any) => {
+  const initialData = props?.promotions ? props : (props?.pageProps || props);
   const {
     promotions,
     categories,
@@ -14,20 +15,31 @@ const Home = () => {
     recommendations,
     isLoading,
     error,
-  } = useHome();
+  } = useHome(initialData);
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (error && !promotions.length && !categories.length && !bestSellers.length) {
+    return (
+      <div style={{ textAlign: "center", padding: "40px 16px" }}>
+        <p style={{ color: "#ef4444" }}>Không thể tải dữ liệu: {error}</p>
+      </div>
+    );
   }
 
-  return isLoading ? (
-    <Skeleton />
+  const hasData = Boolean(
+    (promotions && promotions.length > 0) ||
+    (categories && categories.length > 0) ||
+    (bestSellers && bestSellers.length > 0)
+  );
+
+  return isLoading && !hasData ? (
+    <div style={{ padding: "24px 16px", maxWidth: 1200, margin: "0 auto" }}>
+      <Skeleton active paragraph={{ rows: 10 }} />
+    </div>
   ) : (
     <HomePage
       promotions={promotions}
       categories={categories}
       bestSellers={bestSellers}
-      // recommendations={recommendations}
     />
   );
 };
@@ -44,11 +56,12 @@ export const getStaticProps = async () => {
 
     return {
       props: {
-        promotions,
-        categories,
-        bestSellers,
+        promotions: promotions || [],
+        categories: categories || [],
+        bestSellers: bestSellers || [],
         listProductRecommendations: [],
       },
+      revalidate: 60,
     };
   } catch (err) {
     return {
@@ -58,6 +71,7 @@ export const getStaticProps = async () => {
         bestSellers: [],
         listProductRecommendations: [],
       },
+      revalidate: 10,
     };
   }
 };

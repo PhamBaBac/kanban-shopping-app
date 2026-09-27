@@ -15,6 +15,8 @@ const MyDocument = () => (
 				href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Nunito+Sans:ital,opsz,wght@0,6..12,300..800;1,6..12,300..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
 				rel="stylesheet"
 			/>
+			<link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+			<link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
 			<link
 				rel='stylesheet'
 				href='https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css'
@@ -22,7 +24,7 @@ const MyDocument = () => (
 				crossOrigin='anonymous'
 			/>
 		</Head>
-		<body>
+		<body data-theme="light">
 			<Main />
 			<NextScript />
 		</body>

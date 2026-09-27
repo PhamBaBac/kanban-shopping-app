@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { message } from "antd";
 import { useDispatch } from "react-redux";
@@ -13,42 +13,21 @@ export const useOAuth = () => {
   const [mfaData, setMfaData] = useState<{ email: string; token: string } | null>(null);
   const [otpCode, setOtpCode] = useState<string[]>(Array(6).fill(""));
   const hasProcessedRef = useRef(false);
+  const hasCleanedUrlRef = useRef(false);
 
   const router = useRouter();
   const dispatch = useDispatch();
   const { verifyMFAAuth } = useAuth();
 
-  const stripCodeFromUrl = useCallback(() => {
-    try {
-      if (typeof window !== "undefined") {
-        window.history.replaceState({}, "", window.location.pathname);
-      }
-      if (router.isReady) {
-        router.replace(router.pathname, undefined, { shallow: true });
-      }
-    } catch (e) {
-      if (typeof window !== "undefined") {
-        window.history.replaceState({}, "", window.location.pathname);
-      }
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (router.isReady && router.query.code) {
-      stripCodeFromUrl();
-    }
-  }, [router.isReady, router.query.code, stripCodeFromUrl]);
-
+  // 1. Xử lý đổi code thành token xác thực (chỉ chạy 1 lần duy nhất trong background)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const searchParams = new URLSearchParams(window.location.search);
-    const code = searchParams.get("code") || (router.query.code as string);
+    const code = searchParams.get("code");
 
     if (!code || hasProcessedRef.current) return;
     hasProcessedRef.current = true;
-
-    stripCodeFromUrl();
 
     const processCode = async () => {
       setIsOAuthProcessing(true);
@@ -86,19 +65,29 @@ export const useOAuth = () => {
         } catch (e) {
           // ignore
         }
-
-        message.success("Đăng nhập thành công!");
       } catch (err: any) {
         console.error("OAuth exchange error:", err);
         message.error(err?.message || "Đăng nhập thất bại hoặc liên kết đã hết hạn!");
       } finally {
         setIsOAuthProcessing(false);
-        stripCodeFromUrl();
       }
     };
 
     processCode();
-  }, [dispatch, router.query.code, stripCodeFromUrl]);
+  }, [dispatch]);
+
+  // 2. Xóa query ?code=... một lần duy nhất đồng bộ với Next.js router khi router đã sẵn sàng
+  useEffect(() => {
+    if (!router.isReady || hasCleanedUrlRef.current) return;
+
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const hasCode = Boolean(router.query.code || searchParams?.has("code"));
+
+    if (hasCode) {
+      hasCleanedUrlRef.current = true;
+      router.replace(router.pathname, undefined, { shallow: true });
+    }
+  }, [router.isReady, router.pathname, router.query.code]);
 
   const handleVerifyMfa = async (codeStr: string) => {
     if (!mfaData || codeStr.length !== 6) {
@@ -127,7 +116,6 @@ export const useOAuth = () => {
       localStorage.removeItem("sessionId");
 
       setIsMfaModalVisible(false);
-      message.success("Xác thực và đăng nhập thành công!");
     } catch (error: any) {
       message.error("Mã xác thực OTP không chính xác!");
     } finally {

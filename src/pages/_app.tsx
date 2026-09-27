@@ -3,6 +3,9 @@
 import { store } from "@/redux/store";
 import Routers from "@/routers/Routers";
 import "@/styles/globals.css";
+import "nprogress/nprogress.css";
+import NProgress from "nprogress";
+import { Router } from "next/router";
 import { ConfigProvider, theme } from "antd";
 import type { AppProps } from "next/app";
 import { Provider, useSelector } from "react-redux";
@@ -10,8 +13,25 @@ import { themeSelector } from "@/redux/reducers/themeSlice";
 import Head from "next/head";
 import { useEffect } from "react";
 
+NProgress.configure({ showSpinner: false, trickleSpeed: 100 });
+
 const AppWrapper = ({ Component, pageProps }: AppProps) => {
   const { mode } = useSelector(themeSelector);
+
+  useEffect(() => {
+    const handleStart = () => NProgress.start();
+    const handleStop = () => NProgress.done();
+
+    Router.events.on("routeChangeStart", handleStart);
+    Router.events.on("routeChangeComplete", handleStop);
+    Router.events.on("routeChangeError", handleStop);
+
+    return () => {
+      Router.events.off("routeChangeStart", handleStart);
+      Router.events.off("routeChangeComplete", handleStop);
+      Router.events.off("routeChangeError", handleStop);
+    };
+  }, []);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", mode);
@@ -28,6 +48,16 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <Head>
+        <style>{`
+          #nprogress .bar {
+            background: ${mode === "dark" ? "#10B981" : "#131118"} !important;
+            height: 3px !important;
+            z-index: 999999 !important;
+          }
+          #nprogress .peg {
+            box-shadow: 0 0 10px ${mode === "dark" ? "#10B981" : "#131118"}, 0 0 5px ${mode === "dark" ? "#10B981" : "#131118"} !important;
+          }
+        `}</style>
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
