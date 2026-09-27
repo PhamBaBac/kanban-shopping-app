@@ -5,6 +5,7 @@ import HomePage from "./HomePage";
 import { useHome } from "@/hooks";
 import { homeService } from "@/services";
 import { Skeleton } from "antd";
+import ServerError500Page from "./500";
 
 const Home = (props: any) => {
   const initialData = props?.promotions ? props : (props?.pageProps || props);
@@ -18,11 +19,7 @@ const Home = (props: any) => {
   } = useHome(initialData);
 
   if (error && !promotions.length && !categories.length && !bestSellers.length) {
-    return (
-      <div style={{ textAlign: "center", padding: "40px 16px" }}>
-        <p style={{ color: "#ef4444" }}>Không thể tải dữ liệu: {error}</p>
-      </div>
-    );
+    return <ServerError500Page />;
   }
 
   const hasData = Boolean(

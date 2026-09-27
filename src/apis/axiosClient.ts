@@ -2,12 +2,32 @@
 
 import axios from "axios";
 import queryString from "query-string";
+import Router from "next/router";
 import { localDataNames } from "../constants/appInfos";
 import { addAuth, removeAuth } from "../redux/reducers/authReducer";
 import { store } from "../redux/store";
 import { getErrorMessage } from "../utils/errorHandler";
 
 const baseURL = `http://localhost:8080/api/v1`;
+
+let isRedirectingTo500 = false;
+
+export const trigger500Redirect = () => {
+  if (typeof window === "undefined" || isRedirectingTo500) return;
+  const currentPath = window.location.pathname;
+  if (currentPath.includes("/500")) return;
+
+  isRedirectingTo500 = true;
+  setTimeout(() => {
+    isRedirectingTo500 = false;
+  }, 2500);
+
+  try {
+    Router.replace("/500");
+  } catch {
+    window.location.href = "/500";
+  }
+};
 
 const getAuthData = () => {
   try {
@@ -164,6 +184,14 @@ axiosClient.interceptors.response.use(
       } catch (refreshError) {
         return Promise.reject(formatRejectedError(refreshError));
       }
+    }
+
+    const isServerErrorOrOffline =
+      !error.response ||
+      (error.response?.status >= 500 && error.response?.status <= 599);
+
+    if (isServerErrorOrOffline && !isLoginRequest && !isRefreshRequest) {
+      trigger500Redirect();
     }
 
     return Promise.reject(formatRejectedError(error));

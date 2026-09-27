@@ -35,6 +35,7 @@ import {
   resetFilterValues,
 } from "@/redux/reducers/filterSlice";
 import { VND } from "@/utils/handleCurrency";
+import ServerError500Page from "../500";
 
 const { Sider, Content } = Layout;
 
@@ -561,7 +562,11 @@ const ShopPageContent = () => {
             )}
           </div>
 
-          {error ? (
+          {error && products.length === 0 ? (
+            <div style={{ width: "100%", padding: "20px 0" }}>
+              <ServerError500Page />
+            </div>
+          ) : error ? (
             <div
               className="rounded-3 border p-4 text-center text-danger"
               style={{
