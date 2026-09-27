@@ -424,14 +424,14 @@ const FilterPanel = ({
               style={{
                 flex: 1,
                 fontSize: "0.9rem",
-                fontWeight: level === 0 ? 600 : 400,
+                fontWeight: 400,
                 color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
               }}
             >
               {cat.title}
             </Checkbox>
-            <div style={{ width: 24, textAlign: "right" }}>
-              {hasChildren && (
+            {hasChildren && level > 0 ? (
+              <div style={{ width: 24, textAlign: "right" }}>
                 <Button
                   type="text"
                   size="small"
@@ -444,10 +444,10 @@ const FilterPanel = ({
                   icon={isExpanded ? <MinusOutlined style={{ fontSize: 10 }} /> : <PlusOutlined style={{ fontSize: 10 }} />}
                   onClick={() => handleToggle(cat.id)}
                 />
-              )}
-            </div>
+              </div>
+            ) : null}
           </div>
-          {hasChildren && isExpanded && (
+          {hasChildren && (level === 0 || isExpanded) && (
             <div style={{ marginTop: 2 }}>{renderCategories(cat.children, level + 1)}</div>
           )}
         </div>
