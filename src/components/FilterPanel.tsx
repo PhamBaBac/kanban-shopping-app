@@ -358,15 +358,21 @@ const FilterPanel = ({
 
     const rawCatId = router.query.catId;
 
+    const hasSearch = Boolean(
+      String(router.query.search || router.query.q || "").trim()
+    );
+
     const activeIds: string[] = rawCatId
       ? Array.isArray(rawCatId)
         ? rawCatId
         : typeof rawCatId === "string" && rawCatId.includes(",")
           ? rawCatId.split(",").map((s) => s.trim())
           : [rawCatId as string]
-      : filterValues.catIds && filterValues.catIds.length > 0
-        ? filterValues.catIds
-        : [];
+      : hasSearch
+        ? []
+        : filterValues.catIds && filterValues.catIds.length > 0
+          ? filterValues.catIds
+          : [];
 
     const resolvedActiveIds = activeIds.map((val) => {
       const node = findCategoryByIdOrSlug(categories, val);

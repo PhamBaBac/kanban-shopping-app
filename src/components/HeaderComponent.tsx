@@ -58,6 +58,8 @@ import CategoriesListCard, { prefetchCategories } from "./CategoriesListCard";
 import NotificationPopover from "./NotificationPopover";
 import { useWishlist } from "@/hooks/useWishlist";
 import { loadWishlist } from "@/redux/reducers/wishlistSlice";
+import { resetFilterValues } from "@/redux/reducers/filterSlice";
+import { findCategoryByKeyword } from "@/utils/categoryHelper";
 import axios from "axios";
 
 const { useToken } = theme;
@@ -157,11 +159,28 @@ const HeaderComponent = () => {
     dispatch(loadWishlist({ userId: null }));
   };
 
-  const handleSearch = (value?: string) => {
+  const handleSearch = async (value?: string) => {
     const term = (value !== undefined ? value : searchValue).trim();
     if (term) {
       setSearchOpen(false);
       setIsVisibleDrawer(false);
+
+      // Reset bộ lọc cũ để tìm kiếm mới hoàn toàn
+      dispatch(resetFilterValues());
+
+      // 1. Kiểm tra xem từ khóa có khớp trực tiếp với danh mục nào không
+      try {
+        const allCats = await prefetchCategories();
+        const matchedRoot = findCategoryByKeyword(term, allCats);
+        if (matchedRoot && matchedRoot.id) {
+          router.push(`/shop?catId=${encodeURIComponent(matchedRoot.id)}&search=${encodeURIComponent(term)}`);
+          return;
+        }
+      } catch (e) {
+        console.error("Error matching category for search:", e);
+      }
+
+      // 2. Chuyển đến trang shop, trang shop sẽ tự động nhận diện category cha từ sản phẩm tìm được
       router.push(`/shop?search=${encodeURIComponent(term)}`);
     }
   };

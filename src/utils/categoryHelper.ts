@@ -68,3 +68,81 @@ export const findDefaultOrFeaturedCategory = (
 
   return firstWithId || categories[0] || null;
 };
+
+/**
+ * Tìm Root Category (danh mục gốc) của một categoryId hoặc category bất kỳ
+ */
+export const findRootCategory = (
+  targetId: string,
+  categories: CategoyModel[]
+): CategoyModel | null => {
+  if (!targetId || !categories || categories.length === 0) return null;
+
+  const flatten = (items: CategoyModel[]): CategoyModel[] => {
+    let result: CategoyModel[] = [];
+    for (const item of items) {
+      if (!item) continue;
+      result.push(item);
+      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+        result = result.concat(flatten(item.children));
+      }
+    }
+    return result;
+  };
+
+  const allCats = flatten(categories);
+  const catMap = new Map<string, CategoyModel>();
+  allCats.forEach((c) => catMap.set(String(c.id), c));
+
+  let current = catMap.get(String(targetId));
+  if (!current) return null;
+
+  const visited = new Set<string>();
+  while (current && current.parentId && String(current.parentId).trim() !== "") {
+    if (visited.has(String(current.id))) break;
+    visited.add(String(current.id));
+    const parent = catMap.get(String(current.parentId));
+    if (!parent || String(parent.id) === String(current.id)) break;
+    current = parent;
+  }
+
+  return current || null;
+};
+
+/**
+ * Tìm Root Category phù hợp nhất với từ khóa tìm kiếm (so khớp theo title hoặc slug của category)
+ */
+export const findCategoryByKeyword = (
+  keyword: string,
+  categories: CategoyModel[]
+): CategoyModel | null => {
+  if (!keyword || !categories || categories.length === 0) return null;
+  const kw = keyword.trim().toLowerCase();
+
+  const flatten = (items: CategoyModel[]): CategoyModel[] => {
+    let result: CategoyModel[] = [];
+    for (const item of items) {
+      if (!item) continue;
+      result.push(item);
+      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+        result = result.concat(flatten(item.children));
+      }
+    }
+    return result;
+  };
+
+  const allCats = flatten(categories);
+
+  const matched = allCats.find((c) => {
+    const title = (c.title || "").toLowerCase();
+    const slug = (c.slug || "").toLowerCase();
+    return title.includes(kw) || kw.includes(title) || slug.includes(kw);
+  });
+
+  if (matched) {
+    return findRootCategory(matched.id, categories) || matched;
+  }
+
+  return null;
+};
+

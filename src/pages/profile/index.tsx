@@ -27,6 +27,7 @@ const ProfilePage = () => {
   const [currentTab, setCurrentTab] = useState<string>(
     router.query.tab?.toString() || "edit"
   );
+  const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const {
     orders,
@@ -41,6 +42,7 @@ const ProfilePage = () => {
   const { wishlistCount } = useWishlist();
 
   useEffect(() => {
+    setIsMounted(true);
     const WIDTH = window ? window.innerWidth : undefined;
 
     if (WIDTH) {
@@ -238,7 +240,7 @@ const ProfilePage = () => {
         localStorage.getItem(localDataNames.authData))
   );
 
-  if (!hasToken) {
+  if (!isMounted || !hasToken) {
     return (
       <div className="container py-5" style={{ minHeight: "60vh" }}>
         <Skeleton active paragraph={{ rows: 6 }} />

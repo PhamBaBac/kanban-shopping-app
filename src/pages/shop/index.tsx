@@ -28,7 +28,11 @@ import { RootState } from "@/redux/store";
 import { themeSelector } from "@/redux/reducers/themeSlice";
 import { useShop } from "@/hooks";
 import { shopService } from "@/services";
-import { findDefaultOrFeaturedCategory } from "@/utils/categoryHelper";
+import {
+  findDefaultOrFeaturedCategory,
+  findRootCategory,
+  findCategoryByKeyword,
+} from "@/utils/categoryHelper";
 import {
   updateFilterValues,
   setFilterValues,
@@ -169,15 +173,33 @@ const ShopPageContent = () => {
     if (!isReady) return;
 
     const rawCatId = query.catId;
-    const hasSearch = Boolean(
-      String(query.search || query.q || "").trim()
-    );
+    const searchParam = String(query.search || query.q || "").trim();
+    const hasSearch = Boolean(searchParam);
     const hasExistingCat =
       Boolean(rawCatId) ||
       Boolean(filterValues.catIds && filterValues.catIds.length > 0);
 
     if (hasSearch) {
       setIsRedirecting(false);
+      if (!rawCatId) {
+        // Tự động nhận diện category cha nếu từ khóa tìm kiếm khớp tên danh mục
+        shopService
+          .getCategoriesForFilter()
+          .then((cats) => {
+            const matchedRoot = findCategoryByKeyword(searchParam, cats);
+            if (matchedRoot && matchedRoot.id) {
+              const newQuery = { ...query, catId: matchedRoot.id };
+              router.replace(
+                { pathname: "/shop", query: newQuery },
+                undefined,
+                { shallow: true }
+              );
+            }
+          })
+          .catch((err) => {
+            console.error("Lỗi khi tìm danh mục theo từ khóa:", err);
+          });
+      }
       return;
     }
 
@@ -206,7 +228,32 @@ const ShopPageContent = () => {
     } else {
       setIsRedirecting(false);
     }
-  }, [isReady, query.catId]);
+  }, [isReady, query.catId, query.search, query.q]);
+
+  // Tự động nhận diện category cha từ sản phẩm đầu tiên khi tìm kiếm mà chưa có catId
+  useEffect(() => {
+    if (!isReady) return;
+    const hasSearch = Boolean(String(query.search || query.q || "").trim());
+    if (hasSearch && !query.catId && products && products.length > 0) {
+      const productWithCat = products.find(
+        (p) => p.categories && p.categories.length > 0
+      );
+      if (productWithCat && productWithCat.categories[0]) {
+        const firstCatId = productWithCat.categories[0].id;
+        shopService.getCategoriesForFilter().then((allCats) => {
+          const rootCat = findRootCategory(firstCatId, allCats);
+          if (rootCat && rootCat.id) {
+            const newQuery = { ...query, catId: rootCat.id };
+            router.replace(
+              { pathname: "/shop", query: newQuery },
+              undefined,
+              { shallow: true }
+            );
+          }
+        });
+      }
+    }
+  }, [isReady, query.catId, query.search, query.q, products]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -253,16 +300,19 @@ const ShopPageContent = () => {
           ? [rawCatId]
           : [];
 
-    const catIdsToFilter =
-      catIdsFromUrl.length > 0
-        ? catIdsFromUrl
-        : filterValues.catIds && filterValues.catIds.length > 0
-          ? filterValues.catIds
-          : [];
-
     const hasSearch = Boolean(
       String(query.search || query.q || filterValues.search || "").trim()
     );
+
+    const catIdsToFilter =
+      catIdsFromUrl.length > 0
+        ? catIdsFromUrl
+        : hasSearch
+          ? []
+          : filterValues.catIds && filterValues.catIds.length > 0
+            ? filterValues.catIds
+            : [];
+
     if (catIdsToFilter.length === 0 && !hasSearch) {
       return;
     }
@@ -282,7 +332,7 @@ const ShopPageContent = () => {
       filters.search = filterValues.search.trim();
     }
 
-    if (!filters.search && catIdsToFilter.length > 0) {
+    if (catIdsToFilter.length > 0) {
       filters.catIds = catIdsToFilter;
     }
 
