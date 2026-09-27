@@ -8,10 +8,12 @@ import { FaUser } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import ProsionalInfomation from "../../components/PersionalInfomations";
 import { FaCog, FaLock, FaShoppingCart } from "react-icons/fa";
+import { IoNotificationsOutline } from "react-icons/io5";
 import OrderItem from "@/components/OrderItem";
-import { SettingsContent } from "@/components";
+import { SettingsContent, ProfileNotifications } from "@/components";
 import ChangePassword from "@/components/ChangePassword";
 import { useOrders } from "@/hooks/useOrders";
+import { useNotification } from "@/hooks/useNotification";
 import { authService } from "@/services";
 import { localDataNames } from "@/constants/appInfos";
 
@@ -34,6 +36,8 @@ const ProfilePage = () => {
     handleOrderDeleted,
     handleOrderStatusChanged,
   } = useOrders();
+
+  const { unreadCount } = useNotification();
 
   useEffect(() => {
     const WIDTH = window ? window.innerWidth : undefined;
@@ -182,6 +186,12 @@ const ProfilePage = () => {
             ))}
         </div>
       ),
+    },
+    {
+      key: "notifications",
+      label: `Thông báo ${unreadCount > 0 ? `(${unreadCount})` : ""}`,
+      icon: <IoNotificationsOutline size={15} className="text-muted" />,
+      children: <ProfileNotifications />,
     },
     ...(!isOAuthUser
       ? [

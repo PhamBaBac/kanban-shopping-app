@@ -19,3 +19,4 @@ export { useLogin } from "./useLogin";
 export { useSignup } from "./useSignup";
 export { useForgotPassword } from "./useForgotPassword";
 export { useOAuth } from "./useOAuth";
+export { useNotification } from "./useNotification";

@@ -49,6 +49,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import ButtonRemoveCartItem from "./ButtonRemoveCartItem";
 import CategoriesListCard from "./CategoriesListCard";
+import NotificationPopover from "./NotificationPopover";
 import axios from "axios";
 
 const { useToken } = theme;
@@ -285,6 +286,9 @@ const HeaderComponent = () => {
               onClick={() => router.push("/shop")}
               aria-label="Yêu thích"
             />
+
+            {/* Notification Popover */}
+            <NotificationPopover />
 
             {/* Theme toggle button */}
             <Button

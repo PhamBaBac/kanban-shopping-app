@@ -11,6 +11,8 @@ import TabbarComponent from "./TabbarComponent";
 import TwoFactorAuthSettings from "./TwoFactorAuthSettings";
 import SettingsContent from "./SettingsContent";
 import ChatProductCard from "./ChatProductCard";
+import NotificationPopover from "./NotificationPopover";
+import ProfileNotifications from "./ProfileNotifications";
 
 export {
   TabbarComponent,
@@ -24,4 +26,6 @@ export {
   FilterPanel,
   SettingsContent,
   ChatProductCard,
+  NotificationPopover,
+  ProfileNotifications,
 };

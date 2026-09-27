@@ -1917,4 +1917,91 @@ body[data-theme="dark"] .testimonial-card::before {
   .address-form-grid {
     grid-template-columns: 1fr !important;
   }
-}
+}
+
+/* ==========================================================================
+   Notification Popover Styles
+   ========================================================================== */
+.notification-popover-overlay .ant-popover-inner {
+  padding: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid var(--color-border);
+}
+
+body[data-theme="dark"] .notification-popover-overlay .ant-popover-inner {
+  border-color: #303030;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+.notification-popover-panel {
+  max-width: calc(100vw - 20px);
+}
+
+.notification-tabs-wrapper .ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.notification-tabs-wrapper .ant-tabs-tab {
+  padding: 8px 10px !important;
+  font-size: 0.84rem !important;
+}
+
+.notification-list-scroll {
+  overscroll-behavior: contain;
+}
+
+.notification-list-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.notification-list-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notification-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+body[data-theme="dark"] .notification-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.notification-item {
+  position: relative;
+  transition: background-color 0.18s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body[data-theme="dark"] .notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.notification-item.unread:hover {
+  background-color: rgba(37, 99, 235, 0.06) !important;
+}
+
+body[data-theme="dark"] .notification-item.unread:hover {
+  background-color: rgba(37, 99, 235, 0.12) !important;
+}
+
+.notification-item-actions {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.notification-item:hover .notification-item-actions {
+  opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .notification-popover-panel {
+    width: 320px !important;
+  }
+}
+
