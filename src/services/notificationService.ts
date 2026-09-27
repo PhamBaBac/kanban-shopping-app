@@ -1,7 +1,6 @@
-import axios from "axios";
+import handleAPI from "@/apis/handleApi";
 import { UserNotification } from "@/models/NotificationModel";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 const STORAGE_KEY = "kanban_user_notifications";
 
 const INITIAL_MOCK_NOTIFICATIONS: UserNotification[] = [
@@ -69,14 +68,13 @@ const saveStoredNotifications = (items: UserNotification[]) => {
 export const notificationService = {
   getNotifications: async (type?: string): Promise<UserNotification[]> => {
     try {
-      const res = await axios.get(`${BASE_URL}/notifications`, {
-        params: type && type !== "ALL" ? { type } : {},
-        withCredentials: true,
-        timeout: 2000,
-      });
-      if (res.data?.data) return res.data.data;
+      const params = type && type !== "ALL" ? { type } : undefined;
+      const res: any = await handleAPI("/notifications", params, "get");
+      if (Array.isArray(res?.data)) {
+        return res.data;
+      }
     } catch (e) {
-      // Fallback local storage khi backend API chưa sẵn sàng (Step 1)
+      // Fallback local storage khi backend chưa kết nối hoặc đang offline
     }
 
     const items = getStoredNotifications();
@@ -86,11 +84,10 @@ export const notificationService = {
 
   getUnreadCount: async (): Promise<number> => {
     try {
-      const res = await axios.get(`${BASE_URL}/notifications/unread-count`, {
-        withCredentials: true,
-        timeout: 2000,
-      });
-      if (typeof res.data?.data === "number") return res.data.data;
+      const res: any = await handleAPI("/notifications/unread-count", undefined, "get");
+      if (typeof res?.data === "number") {
+        return res.data;
+      }
     } catch (e) {
       // Fallback
     }
@@ -101,7 +98,7 @@ export const notificationService = {
 
   markAsRead: async (id: string): Promise<void> => {
     try {
-      await axios.patch(`${BASE_URL}/notifications/${id}/read`, {}, { withCredentials: true, timeout: 2000 });
+      await handleAPI(`/notifications/${id}/read`, undefined, "patch");
     } catch (e) {
       // Fallback
     }
@@ -112,7 +109,7 @@ export const notificationService = {
 
   markAllAsRead: async (): Promise<void> => {
     try {
-      await axios.patch(`${BASE_URL}/notifications/read-all`, {}, { withCredentials: true, timeout: 2000 });
+      await handleAPI("/notifications/read-all", undefined, "patch");
     } catch (e) {
       // Fallback
     }
@@ -123,7 +120,7 @@ export const notificationService = {
 
   deleteNotification: async (id: string): Promise<void> => {
     try {
-      await axios.delete(`${BASE_URL}/notifications/${id}`, { withCredentials: true, timeout: 2000 });
+      await handleAPI(`/notifications/${id}`, undefined, "delete");
     } catch (e) {
       // Fallback
     }
@@ -134,7 +131,7 @@ export const notificationService = {
 
   clearAll: async (): Promise<void> => {
     try {
-      await axios.delete(`${BASE_URL}/notifications/clear-all`, { withCredentials: true, timeout: 2000 });
+      await handleAPI("/notifications/clear-all", undefined, "delete");
     } catch (e) {
       // Fallback
     }
