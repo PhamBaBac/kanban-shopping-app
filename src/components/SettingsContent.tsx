@@ -91,33 +91,46 @@ const SettingsContent = () => {
 
   return (
     <>
-      <List itemLayout="horizontal">
-        <List.Item
-          actions={[
-            <Switch
-              checked={is2faEnabled}
-              onChange={handle2FASwitch}
-              loading={isLoading2fa}
-            />,
-          ]}
-          style={{ borderBottom: "1px solid #f0f0f0", padding: "1.5rem 0" }}
-        >
-          <List.Item.Meta
-            title="Xác thực hai yếu tố (2FA)"
-            description="Bảo vệ tài khoản an toàn hơn bằng xác thực 2 bước"
-          />
-        </List.Item>
-
-        {settingsItems.map((item) => (
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          borderRadius: 12,
+          border: "1px solid #E5E7EB",
+          padding: "16px 20px",
+          maxWidth: 720,
+        }}
+      >
+        <List itemLayout="horizontal">
           <List.Item
-            key={item.key}
-            actions={[item.control]}
-            style={{ borderBottom: "1px solid #f0f0f0", padding: "1.5rem 0" }}
+            actions={[
+              <Switch
+                checked={is2faEnabled}
+                onChange={handle2FASwitch}
+                loading={isLoading2fa}
+              />,
+            ]}
+            style={{ borderBottom: "1px solid #F3F4F6", padding: "12px 0" }}
           >
-            <List.Item.Meta title={item.title} description={item.description} />
+            <List.Item.Meta
+              title={<span style={{ fontWeight: 600, fontSize: "0.92rem" }}>Xác thực hai yếu tố (2FA)</span>}
+              description={<span style={{ fontSize: "0.8rem", color: "#6B7280" }}>Bảo vệ tài khoản an toàn hơn bằng xác thực 2 bước</span>}
+            />
           </List.Item>
-        ))}
-      </List>
+
+          {settingsItems.map((item) => (
+            <List.Item
+              key={item.key}
+              actions={[item.control]}
+              style={{ borderBottom: "1px solid #F3F4F6", padding: "12px 0" }}
+            >
+              <List.Item.Meta
+                title={<span style={{ fontWeight: 600, fontSize: "0.92rem" }}>{item.title}</span>}
+                description={<span style={{ fontSize: "0.8rem", color: "#6B7280" }}>{item.description}</span>}
+              />
+            </List.Item>
+          ))}
+        </List>
+      </div>
 
       {show2faModal && (
         <TwoFactorAuthSettings

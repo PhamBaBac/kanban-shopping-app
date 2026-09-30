@@ -598,18 +598,21 @@ const FilterPanel = ({
             {Boolean(router.query.catId) && (
               <Collapse.Panel
                 header={
-                  <Title
-                    level={5}
+                  <span
                     style={{
-                      marginBottom: 0,
+                      margin: 0,
+                      padding: 0,
                       fontFamily: "var(--font-heading)",
-                      fontSize: "0.92rem",
+                      fontSize: "0.95rem",
                       fontWeight: 600,
+                      lineHeight: "1.4",
                       color: isDark ? "#ffffff" : "#131118",
+                      display: "inline-flex",
+                      alignItems: "center",
                     }}
                   >
                     Danh mục sản phẩm
-                  </Title>
+                  </span>
                 }
                 key="1"
               >
@@ -629,9 +632,21 @@ const FilterPanel = ({
 
             <Collapse.Panel
               header={
-                <Title level={5} style={{ marginBottom: 0, fontFamily: "var(--font-heading)", fontSize: "0.92rem", fontWeight: 600, color: isDark ? "#ffffff" : "#131118" }}>
+                <span
+                  style={{
+                    margin: 0,
+                    padding: 0,
+                    fontFamily: "var(--font-heading)",
+                    fontSize: "0.95rem",
+                    fontWeight: 600,
+                    lineHeight: "1.4",
+                    color: isDark ? "#ffffff" : "#131118",
+                    display: "inline-flex",
+                    alignItems: "center",
+                  }}
+                >
                   Khoảng giá
-                </Title>
+                </span>
               }
               key="2"
             >
@@ -719,44 +734,6 @@ const FilterPanel = ({
           </Collapse>
         </Form>
       </ConfigProvider>
-
-      {isDrawer && (
-        <div
-          style={{
-            position: "sticky",
-            bottom: -24,
-            left: -24,
-            right: -24,
-            margin: "24px -24px -24px -24px",
-            padding: "12px 20px",
-            backgroundColor: isDark ? "#16151a" : "#ffffff",
-            borderTop: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
-            boxShadow: isDark
-              ? "0 -4px 12px rgba(0,0,0,0.3)"
-              : "0 -4px 12px rgba(0,0,0,0.05)",
-            zIndex: 10,
-          }}
-        >
-          <Button
-            type="primary"
-            block
-            onClick={onClose}
-            style={{
-              height: 42,
-              borderRadius: 8,
-              backgroundColor: isDark ? "#ffffff" : "#131118",
-              borderColor: isDark ? "#ffffff" : "#131118",
-              color: isDark ? "#131118" : "#ffffff",
-              fontWeight: 600,
-              fontSize: "0.95rem",
-            }}
-          >
-            {typeof totalProducts === "number"
-              ? `Xem ${totalProducts} sản phẩm`
-              : "Xem kết quả"}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

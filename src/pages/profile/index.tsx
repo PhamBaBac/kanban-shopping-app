@@ -43,11 +43,15 @@ const ProfilePage = () => {
 
   useEffect(() => {
     setIsMounted(true);
-    const WIDTH = window ? window.innerWidth : undefined;
+    const updatePosition = () => {
+      if (typeof window !== "undefined") {
+        setTabPosition(window.innerWidth < 992 ? "top" : "left");
+      }
+    };
 
-    if (WIDTH) {
-      setTabPosition(WIDTH < 768 ? "top" : "left");
-    }
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    return () => window.removeEventListener("resize", updatePosition);
   }, []);
 
   useEffect(() => {
@@ -249,20 +253,21 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mt-4 mb-4">
+    <div className="container mt-2 mt-md-3 mb-3 mb-md-4">
       <Typography.Title
         level={2}
         style={{
           fontFamily: "var(--font-heading)",
+          fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
           fontWeight: 700,
           color: "#131118",
           letterSpacing: "-0.02em",
-          marginBottom: "16px",
+          marginBottom: "8px",
         }}
       >
         Tài khoản của tôi
       </Typography.Title>
-      <div className="mt-4">
+      <div className="mt-1 mt-md-2 profile-tabs-wrapper">
         <Tabs
           items={profileTabs}
           tabPosition={tabPosition}

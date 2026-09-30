@@ -43,10 +43,10 @@ const ProductDetail = (props: any) => {
     return (
       <div className="container" style={{ padding: "40px 16px", minHeight: "80vh", maxWidth: 1200, margin: "0 auto" }}>
         <div className="row g-4">
-          <div className="col-12 col-md-6">
+          <div className="col-12 col-lg-6">
             <Skeleton.Image active style={{ width: "100%", height: 420, borderRadius: 12 }} />
           </div>
-          <div className="col-12 col-md-6">
+          <div className="col-12 col-lg-6">
             <Skeleton active paragraph={{ rows: 8 }} />
           </div>
         </div>
@@ -462,10 +462,10 @@ const ProductDetail = (props: any) => {
           <span
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "1.9rem",
+              fontSize: "clamp(1.4rem, 4vw, 1.9rem)",
               fontWeight: 700,
               color: hasDiscount ? "#DC2626" : "#131118",
-              lineHeight: 1,
+              lineHeight: 1.2,
             }}
           >
             {VND.format(
@@ -515,10 +515,10 @@ const ProductDetail = (props: any) => {
             <span
               style={{
                 fontFamily: "var(--font-heading)",
-                fontSize: "1.9rem",
+                fontSize: "clamp(1.4rem, 4vw, 1.9rem)",
                 fontWeight: 700,
                 color: "#131118",
-                lineHeight: 1,
+                lineHeight: 1.2,
               }}
             >
               {VND.format(minPrice)}
@@ -539,10 +539,10 @@ const ProductDetail = (props: any) => {
           <span
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "1.9rem",
+              fontSize: "clamp(1.4rem, 4vw, 1.9rem)",
               fontWeight: 700,
               color: "#131118",
-              lineHeight: 1,
+              lineHeight: 1.2,
             }}
           >
             {VND.format(minPrice)}
@@ -553,10 +553,10 @@ const ProductDetail = (props: any) => {
           <span
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "1.5rem",
+              fontSize: "clamp(1.2rem, 3.5vw, 1.5rem)",
               fontWeight: 600,
               color: "#6B7280",
-              lineHeight: 1,
+              lineHeight: 1.2,
             }}
           >
             {VND.format(maxPrice)}
@@ -582,7 +582,8 @@ const ProductDetail = (props: any) => {
           size="large"
           type="primary"
           style={{
-            minWidth: 220,
+            flex: "1 1 200px",
+            minWidth: 160,
             height: 48,
             borderRadius: 8,
             fontWeight: 500,
@@ -603,7 +604,7 @@ const ProductDetail = (props: any) => {
       : subProductSelected?.stock ?? 0;
 
     return (
-      <div className="d-flex align-items-center gap-3 flex-wrap">
+      <div className="d-flex align-items-center gap-2 gap-sm-3 flex-wrap flex-grow-1">
         <div
           style={{
             display: "inline-flex",
@@ -613,6 +614,7 @@ const ProductDetail = (props: any) => {
             backgroundColor: "#FFFFFF",
             height: 48,
             padding: "0 4px",
+            flexShrink: 0,
           }}
         >
           <Button
@@ -630,7 +632,7 @@ const ProductDetail = (props: any) => {
           />
           <span
             style={{
-              minWidth: 40,
+              minWidth: 38,
               textAlign: "center",
               fontWeight: 600,
               fontSize: "1rem",
@@ -659,7 +661,8 @@ const ProductDetail = (props: any) => {
           size="large"
           type="primary"
           style={{
-            minWidth: 220,
+            flex: "1 1 180px",
+            minWidth: 150,
             height: 48,
             borderRadius: 8,
             backgroundColor: "#131118",
@@ -711,8 +714,7 @@ const ProductDetail = (props: any) => {
         description={product.description}
         url={`${appInfo.baseUrl}/public/products/${product.slug}/${product.id}`}
       />
-      <div className="container-fluid mt-2 mb-5">
-        <div className="container">
+      <div className="container mt-2 mb-5">
           {/* Breadcrumb Navigation */}
           <div
             className="py-3 mb-4 border-bottom"
@@ -767,7 +769,18 @@ const ProductDetail = (props: any) => {
                 {
                   key: "product-title",
                   title: (
-                    <span style={{ color: "#131118", fontWeight: 600 }}>
+                    <span
+                      style={{
+                        color: "#131118",
+                        fontWeight: 600,
+                        maxWidth: "clamp(160px, 35vw, 400px)",
+                        display: "inline-block",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        verticalAlign: "bottom",
+                      }}
+                    >
                       {product.title}
                     </span>
                   ),
@@ -778,13 +791,13 @@ const ProductDetail = (props: any) => {
 
           <div className="row g-4">
             {/* Left Column: Image Viewer & Gallery */}
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-lg-6">
               <div
-                className="bg-white text-center p-4 border shadow-sm position-relative"
+                className="bg-white text-center p-3 p-md-4 border shadow-sm position-relative"
                 style={{
                   borderRadius: 14,
                   borderColor: "#E5E7EB",
-                  minHeight: 420,
+                  minHeight: "clamp(280px, 45vw, 440px)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -795,7 +808,7 @@ const ProductDetail = (props: any) => {
                   <img
                     style={{
                       maxWidth: "100%",
-                      maxHeight: 420,
+                      maxHeight: "clamp(260px, 45vw, 440px)",
                       objectFit: "contain",
                       transition: "transform 0.3s ease",
                     }}
@@ -835,7 +848,7 @@ const ProductDetail = (props: any) => {
             </div>
 
             {/* Right Column: Product Info & Configuration */}
-            <div className="col-12 col-md-6">
+            <div className="col-12 col-lg-6">
               <div>
                 {supplier?.name && (
                   <div
@@ -1111,7 +1124,7 @@ const ProductDetail = (props: any) => {
                 })}
 
                 <div className="mt-4 pt-2">
-                  <div className="d-flex align-items-center gap-3">
+                  <div className="d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
                     {renderButtonGroup()}
                     <Button
                       size="large"
@@ -1128,6 +1141,7 @@ const ProductDetail = (props: any) => {
                       style={{
                         height: 48,
                         width: 48,
+                        flexShrink: 0,
                         borderRadius: 8,
                         borderColor: isFav ? "#EF4444" : "#E5E7EB",
                         display: "flex",
@@ -1149,10 +1163,10 @@ const ProductDetail = (props: any) => {
                     display: "flex",
                     flexWrap: "wrap",
                     alignItems: "center",
-                    gap: "12px 28px",
+                    gap: "12px 20px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", flex: "1 1 160px" }}>
                     <FiTruck
                       size={18}
                       color="#131118"
@@ -1168,7 +1182,7 @@ const ProductDetail = (props: any) => {
                       Giao hàng nhanh toàn quốc
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", flex: "1 1 140px" }}>
                     <FiShield
                       size={18}
                       color="#131118"
@@ -1184,7 +1198,7 @@ const ProductDetail = (props: any) => {
                       100% Chính hãng
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", flex: "1 1 140px" }}>
                     <FiRefreshCw
                       size={16}
                       color="#131118"
@@ -1207,7 +1221,7 @@ const ProductDetail = (props: any) => {
 
           {/* Description & Reviews Tabs */}
           <div
-            className="mt-5 p-4 bg-white border shadow-sm"
+            className="mt-5 p-3 p-md-4 bg-white border shadow-sm"
             style={{ borderRadius: 14, borderColor: "#E5E7EB" }}
           >
             <Tabs
@@ -1287,7 +1301,7 @@ const ProductDetail = (props: any) => {
                               }}
                             />
                             <div style={{ flex: 1 }}>
-                              <div className="d-flex align-items-center justify-content-between">
+                              <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
                                 <span
                                   style={{
                                     fontWeight: 600,
@@ -1465,7 +1479,6 @@ const ProductDetail = (props: any) => {
               </div>
             )}
         </div>
-      </div>
     </div>
   );
 };

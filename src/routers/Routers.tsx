@@ -96,12 +96,17 @@ const Routers = ({ Component, pageProps }: any) => {
           <Component {...pageProps} pageProps={pageProps} />
         </Layout>
       ) : (
-        <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "transparent" }}>
           <Layout.Header
             style={{
               padding: 0,
               height: "auto",
               lineHeight: "inherit",
+              background: "transparent",
+              position: "sticky",
+              top: 0,
+              zIndex: 1000,
+              width: "100%",
             }}
           >
             <HeaderComponent />

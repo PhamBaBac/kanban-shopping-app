@@ -10,7 +10,6 @@ import {
 import { setTheme, themeSelector } from "@/redux/reducers/themeSlice";
 import { VND } from "@/utils/handleCurrency";
 import {
-  Affix,
   Alert,
   Avatar,
   Badge,
@@ -220,9 +219,8 @@ const HeaderComponent = () => {
         : "Khách hàng";
 
   return (
-    <Affix offsetTop={0} style={{ zIndex: 9999 }}>
-      <div className="site-header-wrapper">
-        <div className="site-header-container">
+    <div className="site-header-wrapper">
+      <div className="site-header-container">
           {/* Left: Mobile hamburger & Logo */}
           <div className="site-header-left">
             <Button
@@ -356,25 +354,39 @@ const HeaderComponent = () => {
             </Tooltip>
 
             {/* Wishlist button */}
-            <Tooltip title="Bộ sưu tập yêu thích">
-              <Badge count={wishlistCount} size="small" offset={[-4, 4]}>
-                <Button
-                  className="header-action-btn d-none d-sm-inline-flex"
-                  icon={<IoHeartOutline size={21} />}
-                  type="text"
-                  onClick={() => router.push("/wishlist")}
-                  aria-label="Yêu thích"
-                />
-              </Badge>
-            </Tooltip>
+            <div className="d-none d-sm-inline-flex align-items-center">
+              <Tooltip title="Bộ sưu tập yêu thích">
+                <Badge
+                  count={wishlistCount}
+                  overflowCount={99}
+                  size="small"
+                  offset={[-2, 4]}
+                  color="#EF4444"
+                >
+                  <Button
+                    className="header-action-btn"
+                    icon={<IoHeartOutline size={21} />}
+                    type="text"
+                    onClick={() => router.push("/wishlist")}
+                    aria-label="Yêu thích"
+                  />
+                </Badge>
+              </Tooltip>
+            </div>
 
             {/* Notification Popover */}
             <NotificationPopover />
 
 
             {/* Mobile Cart Trigger (Drawer) */}
-            <div className="d-inline-flex d-md-none">
-              <Badge count={cart.length} color="#131118">
+            <div className="d-inline-flex d-md-none align-items-center">
+              <Badge
+                count={cart.length}
+                overflowCount={99}
+                size="small"
+                offset={[-2, 4]}
+                color="#131118"
+              >
                 <Button
                   className="header-action-btn"
                   icon={<IoCartOutline size={22} />}
@@ -386,7 +398,7 @@ const HeaderComponent = () => {
             </div>
 
             {/* Desktop Cart Trigger (Dropdown) */}
-            <div className="d-none d-md-inline-flex">
+            <div className="d-none d-md-inline-flex align-items-center">
               <Dropdown
                 placement="bottomRight"
                 trigger={["click"]}
@@ -396,6 +408,8 @@ const HeaderComponent = () => {
                   <Card
                     className="cart-dropdown-card"
                     style={{
+                      width: 500,
+                      maxWidth: "calc(100vw - 24px)",
                       backgroundColor: token.colorBgContainer,
                       boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
                       border: "1px solid #E5E7EB",
@@ -621,7 +635,13 @@ const HeaderComponent = () => {
                   </Card>
                 )}
               >
-                <Badge count={cart.length} color="#131118">
+                <Badge
+                  count={cart.length}
+                  overflowCount={99}
+                  size="small"
+                  offset={[-2, 4]}
+                  color="#131118"
+                >
                   <Button
                     className={`header-action-btn ${cartDropdownOpen ? "active" : ""}`}
                     icon={<IoCartOutline size={22} />}
@@ -703,11 +723,7 @@ const HeaderComponent = () => {
           onClose={() => setIsVisibleDrawer(false)}
           placement="left"
           rootClassName="mobile-nav-drawer"
-          width={
-            typeof window !== "undefined"
-              ? Math.min(320, window.innerWidth * 0.85)
-              : 300
-          }
+          width="min(320px, 85vw)"
           title={
             <div
               style={{
@@ -865,7 +881,7 @@ const HeaderComponent = () => {
           <Divider style={{ margin: "10px 0" }} />
 
           {/* Drawer Main Navigation Links */}
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
             <Link
               href="/"
               onClick={() => setIsVisibleDrawer(false)}
@@ -881,7 +897,7 @@ const HeaderComponent = () => {
               className={`mobile-drawer-nav-item ${router.pathname.startsWith("/shop") ? "active" : ""}`}
             >
               <FaStore size={17} />
-              <span>Cửa hàng (Tất cả sản phẩm)</span>
+              <span>Cửa hàng</span>
             </Link>
 
             {/* Collapsible Categories Section */}
@@ -897,7 +913,7 @@ const HeaderComponent = () => {
                     </span>
                   ),
                   children: (
-                    <div style={{ paddingLeft: 8 }}>
+                    <div style={{ paddingLeft: 0, width: "100%" }}>
                       <CategoriesListCard
                         type="menu"
                         onItemClick={() => setIsVisibleDrawer(false)}
@@ -971,8 +987,7 @@ const HeaderComponent = () => {
           onClose={() => setIsCartDrawerOpen(false)}
           placement="right"
           rootClassName="mobile-cart-drawer"
-          width="100%"
-          style={{ maxWidth: 360 }}
+          width="min(420px, 95vw)"
           title={
             <div
               style={{
@@ -1238,7 +1253,6 @@ const HeaderComponent = () => {
           />
         )}
       </div>
-    </Affix>
   );
 };
 

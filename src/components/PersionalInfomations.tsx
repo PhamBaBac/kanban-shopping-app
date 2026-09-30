@@ -99,92 +99,114 @@ const PersionalInfomations = () => {
 
   return (
     <>
-      <Form
-        disabled={isUpdating}
-        layout="vertical"
-        onFinish={handleVaues}
-        size="large"
-        form={form}
-      >
-        <div className="row d-flex">
-          <div className="col">
-            <Form.Item name={"photoUrl"}>
-              <Upload
-                onChange={(val) => {
-                  const { fileList } = val;
-                  setAvatarList(
-                    fileList.map((item) => ({
-                      ...item,
-                      url: item.originFileObj
-                        ? URL.createObjectURL(item.originFileObj)
-                        : item.url || "",
-                    }))
-                  );
-                }}
-                fileList={avatarList}
-                listType="picture-circle"
-                accept="image/*"
-                maxCount={1}
+      <div className="profile-info-card">
+        <Form
+          disabled={isUpdating}
+          layout="vertical"
+          onFinish={handleVaues}
+          form={form}
+          className="profile-info-form"
+        >
+          {/* Avatar and Save Button Header */}
+          <div className="profile-avatar-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Form.Item name={"photoUrl"} style={{ marginBottom: 0 }}>
+                <Upload
+                  className="profile-avatar-upload"
+                  onChange={(val) => {
+                    const { fileList } = val;
+                    setAvatarList(
+                      fileList.map((item) => ({
+                        ...item,
+                        url: item.originFileObj
+                          ? URL.createObjectURL(item.originFileObj)
+                          : item.url || "",
+                      }))
+                    );
+                  }}
+                  fileList={avatarList}
+                  listType="picture-circle"
+                  accept="image/*"
+                  maxCount={1}
+                >
+                  {avatarList.length === 0 && (
+                    <BiCamera size={22} className="text-muted" />
+                  )}
+                </Upload>
+              </Form.Item>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: "0.92rem", color: "#131118", lineHeight: 1.25 }}>
+                  Ảnh đại diện
+                </div>
+                <div style={{ fontSize: "0.76rem", color: "#6B7280", marginTop: 2 }}>
+                  PNG, JPG (tối đa 5MB)
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Button
+                type="primary"
+                onClick={() => form.submit()}
+                icon={<BiEdit size={16} />}
+                loading={isUpdating}
                 style={{
-                  width: 50,
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  height: 36,
+                  padding: "0 16px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "0.85rem",
                 }}
               >
-                {avatarList.length === 0 && (
-                  <BiCamera size={28} className="text-muted" />
-                )}
-              </Upload>
-            </Form.Item>
+                Lưu thay đổi
+              </Button>
+            </div>
           </div>
 
-          <div className="col text-right">
-            <Button
-              type="primary"
-              onClick={() => form.submit()}
-              icon={<BiEdit size={22} />}
-            >
-              Lưu thay đổi
-            </Button>
+          {/* Form Fields with compact CSS Grid */}
+          <div className="profile-form-grid">
+            <div>
+              <Form.Item name={"firstName"} label="Họ và tên đệm">
+                <Input allowClear />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item name={"lastName"} label="Tên">
+                <Input allowClear />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item name={"phoneNumber"} label="Số điện thoại">
+                <Input allowClear />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item name={"email"} label="Địa chỉ email">
+                <Input allowClear />
+              </Form.Item>
+            </div>
+            <div className="grid-col-full">
+              <Form.Item name={"address"} label="Địa chỉ">
+                <Input
+                  allowClear
+                  placeholder={address?.address || "Nhập địa chỉ của bạn"}
+                  suffix={
+                    <FaLocationDot
+                      onClick={() => setIsVisibleModalAddress(true)}
+                      size={18}
+                      className="text-danger m-0 cursor-pointer"
+                      title="Chọn từ địa chỉ đã lưu"
+                    />
+                  }
+                />
+              </Form.Item>
+            </div>
           </div>
-        </div>
-        <div className="row">
-          <div className="col">
-            <Form.Item name={"firstName"} label="Họ và tên đệm">
-              <Input allowClear />
-            </Form.Item>
-          </div>
-          <div className="col">
-            <Form.Item name={"lastName"} label="Tên">
-              <Input allowClear />
-            </Form.Item>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col">
-            <Form.Item name={"phoneNumber"} label="Số điện thoại">
-              <Input allowClear />
-            </Form.Item>
-          </div>
-          <div className="col">
-            <Form.Item name={"email"} label="Địa chỉ email">
-              <Input allowClear />
-            </Form.Item>
-          </div>
-        </div>
-        <Form.Item name={"address"} label="Địa chỉ">
-          <Input
-            allowClear
-            placeholder={address?.address || "Nhập địa chỉ của bạn"}
-            suffix={
-              <FaLocationDot
-                onClick={() => setIsVisibleModalAddress(true)}
-                size={22}
-                className="text-danger m-0 cursor-pointer"
-                title="Chọn từ địa chỉ đã lưu"
-              />
-            }
-          />
-        </Form.Item>
-      </Form>
+        </Form>
+      </div>
 
       <AddressModal
         onAddAddress={(val) => {

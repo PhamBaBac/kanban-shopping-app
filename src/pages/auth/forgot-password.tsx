@@ -83,7 +83,7 @@ const ForgotPassword = () => {
         disabled={isLoading}
       >
         <Form.Item label="Mã xác thực">
-          <div className="d-flex justify-content-between mb-3">
+          <div className="d-flex justify-content-between mb-3" style={{ gap: 6 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <Input
                 key={i}
@@ -95,10 +95,11 @@ const ForgotPassword = () => {
                 onChange={(e) => onOtpChange(e.target.value, i)}
                 autoFocus={i === 0}
                 style={{
-                  width: 45,
-                  height: 55,
-                  fontSize: 24,
+                  width: "clamp(36px, 12vw, 52px)",
+                  height: "clamp(46px, 14vw, 56px)",
+                  fontSize: "clamp(18px, 5vw, 24px)",
                   textAlign: "center",
+                  padding: 0,
                 }}
               />
             ))}
@@ -183,24 +184,31 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="container-fluid" style={{ height: "100vh" }}>
-      <div className="row h-100">
+    <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
+      <div className="row g-0" style={{ minHeight: "100vh" }}>
         <div
           className="d-none d-md-block col-md-6 p-0"
           style={{
             backgroundImage: `url(/images/bg-auth-2.png)`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
           }}
         >
-          <div className="mt-5 ml-5">
+          <div style={{ padding: "40px 0 0 40px" }}>
             <Link href="/">
-              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 110 }} />
             </Link>
           </div>
         </div>
-        <div className="col-sm-12 col-md-6 d-flex align-items-center">
-          <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
+        <div className="col-12 col-md-6 d-flex align-items-center justify-content-center py-4 py-md-5 px-3 px-sm-4">
+          <div style={{ width: "100%", maxWidth: 440 }}>
+            {/* Mobile Logo */}
+            <div className="d-block d-md-none text-center mb-4">
+              <Link href="/">
+                <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 100 }} />
+              </Link>
+            </div>
             <div className="mb-3">
               <Link href="/" style={{ textDecoration: "none" }}>
                 <Button

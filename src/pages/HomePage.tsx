@@ -67,7 +67,7 @@ const TESTIMONIALS = [
 ];
 
 const FEATURES = [
-  { icon: BsTruck, title: "Miễn phí vận chuyển", desc: "Đơn hàng từ 500K" },
+  { icon: BsTruck, title: "Miễn phí vận chuyển", desc: "Đơn hàng từ 400K" },
   { icon: BsArrowRepeat, title: "Đổi trả dễ dàng", desc: "Trong vòng 30 ngày" },
   { icon: BsShieldCheck, title: "Bảo hành chính hãng", desc: "100% chính hãng" },
   { icon: BsHeadset, title: "Hỗ trợ 24/7", desc: "Luôn sẵn sàng giúp bạn" },
@@ -182,29 +182,33 @@ const HomePage = (props: Props) => {
         .delay-4 { animation-delay: 0.4s; }
 
         @media (max-width: 992px) {
-          .hero-slide { height: 440px; }
-          .hero-content { left: 36px; max-width: 440px; }
-          .hero-nav { left: 36px; }
+          .hero-slide { height: 420px; }
+          .hero-content { left: 32px; right: 32px; max-width: 520px; }
+          .hero-nav { left: 32px; bottom: 18px; }
+          .hero-arrow { display: none !important; }
+          .feature-item { border-right: none; }
         }
 
         @media (max-width: 768px) {
           .hero-slide { height: 380px; }
-          .hero-content { left: 18px; right: 18px; max-width: 100%; }
-          .hero-title { font-size: 1.55rem; }
+          .hero-content { left: 20px; right: 20px; max-width: 100%; }
+          .hero-title { font-size: clamp(1.4rem, 5vw, 1.8rem); }
           .hero-desc { font-size: 0.88rem; margin-bottom: 18px; }
-          .hero-nav { left: 50%; transform: translateX(-50%); bottom: 12px; }
-          .hero-arrow { display: none !important; }
-          .feature-item { border-right: none; }
+          .hero-nav { left: 20px; bottom: 14px; }
           .hp-section { padding: 40px 0 !important; }
         }
 
         @media (max-width: 576px) {
-          .hero-slide { height: 350px; }
-          .hero-title { font-size: 1.35rem; }
-          .feature-item { gap: 8px; padding: 6px 2px; }
-          .feature-icon { width: 34px; height: 34px; }
-          .feature-icon svg { width: 16px; height: 16px; }
-          .cat-card-label { padding: 12px 10px 10px; font-size: 0.88rem; }
+          .hero-slide { height: 340px; }
+          .hero-title { font-size: 1.3rem; }
+          .hero-desc { font-size: 0.82rem; margin-bottom: 14px; }
+          .hero-badge { margin-bottom: 8px; font-size: 0.72rem; padding: 4px 10px; }
+          .hero-btn { padding: 8px 18px; font-size: 0.82rem; }
+          .hero-btn-outline { padding: 7px 16px; font-size: 0.82rem; }
+          .feature-item { gap: 10px; padding: 8px 4px; }
+          .feature-icon { width: 36px; height: 36px; }
+          .feature-icon svg { width: 17px; height: 17px; }
+          .cat-card-label { padding: 12px 10px 10px; font-size: 0.85rem; }
           .cat-shop-now { opacity: 1; transform: none; font-size: 0.7rem; }
           .testimonial-card { padding: 18px 16px; }
           .testimonial-card::before { font-size: 4.5rem; top: 0; right: 10px; }
@@ -335,7 +339,7 @@ const HomePage = (props: Props) => {
           <div className="container">
             <div className="row g-2 g-md-0">
               {FEATURES.map((f, i) => (
-                <div key={i} className="col-6 col-md-3">
+                <div key={i} className="col-6 col-lg-3">
                   <div className="feature-item">
                     <div className="feature-icon">
                       <f.icon size={19} color="#fff" />
@@ -346,9 +350,7 @@ const HomePage = (props: Props) => {
                           fontWeight: 700,
                           fontSize: "0.86rem",
                           color: "#fff",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          lineHeight: 1.25,
                         }}
                       >
                         {f.title}
@@ -357,10 +359,8 @@ const HomePage = (props: Props) => {
                         style={{
                           fontSize: "0.75rem",
                           color: "rgba(255,255,255,0.6)",
-                          marginTop: 2,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          marginTop: 3,
+                          lineHeight: 1.2,
                         }}
                       >
                         {f.desc}
@@ -603,6 +603,7 @@ const HomePage = (props: Props) => {
             </p>
             <form
               onSubmit={handlePromoSubscribe}
+              className="promo-subscribe-form"
               style={{
                 display: "flex",
                 justifyContent: "center",
@@ -618,6 +619,7 @@ const HomePage = (props: Props) => {
                 placeholder="Nhập email của bạn..."
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
+                className="promo-subscribe-input"
                 style={{
                   padding: "11px 18px",
                   borderRadius: "100px",
@@ -633,6 +635,7 @@ const HomePage = (props: Props) => {
               />
               <button
                 type="submit"
+                className="promo-subscribe-btn"
                 style={{
                   padding: "11px 24px",
                   borderRadius: "100px",

@@ -72,26 +72,33 @@ const SignUp = () => {
   };
 
   return (
-    <div className="container-fluid" style={{ height: "100vh" }}>
-      <div className="row" style={{ height: "100vh" }}>
+    <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
+      <div className="row g-0" style={{ minHeight: "100vh" }}>
         <div
-          className="d-none d-md-block col-6 p-0"
+          className="d-none d-md-block col-md-6 p-0"
           style={{
             backgroundImage: `url(/images/bg-auth-${
               signValues ? "2" : "1"
             }.png)`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
           }}
         >
-          <div className="mt-5 ml-5">
+          <div style={{ padding: "40px 0 0 40px" }}>
             <Link href="/">
-              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 110 }} />
             </Link>
           </div>
         </div>
-        <div className="col-sm-12 col-md-6 d-flex align-items-center">
-          <div className="col-12 col-md-12 col-lg-8 offset-lg-2">
+        <div className="col-12 col-md-6 d-flex align-items-center justify-content-center py-4 py-md-5 px-3 px-sm-4">
+          <div style={{ width: "100%", maxWidth: 440 }}>
+            {/* Mobile Logo */}
+            <div className="d-block d-md-none text-center mb-4">
+              <Link href="/">
+                <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 100 }} />
+              </Link>
+            </div>
             {signValues ? (
               <>
                 <Button
@@ -147,7 +154,7 @@ const SignUp = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 d-flex justify-content-between">
+                <div className="mt-3 d-flex justify-content-between" style={{ gap: 6 }}>
                   {[0, 1, 2, 3, 4, 5].map((_, index) => (
                     <Input
                       key={index}
@@ -155,10 +162,12 @@ const SignUp = () => {
                       value={numsOfCode[index] || ""}
                       size="large"
                       style={{
-                        fontSize: 32,
+                        fontSize: "clamp(18px, 5vw, 26px)",
                         fontWeight: "bold",
-                        width: "calc((100% - 90px) / 6)",
+                        width: "clamp(36px, 12vw, 52px)",
+                        height: "clamp(46px, 14vw, 56px)",
                         textAlign: "center",
+                        padding: 0,
                       }}
                       onChange={(e) =>
                         handleChangeNumsCode(e.target.value, index)
@@ -213,8 +222,10 @@ const SignUp = () => {
                     </Button>
                   </Link>
                 </div>
-                <Typography.Title>Tạo tài khoản mới</Typography.Title>
-                <Typography.Paragraph type="secondary">
+                <Typography.Title level={2} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(1.4rem, 4vw, 1.9rem)", marginBottom: 4 }}>
+                  Tạo tài khoản mới
+                </Typography.Title>
+                <Typography.Paragraph type="secondary" style={{ marginBottom: 20 }}>
                   Vui lòng nhập thông tin của bạn
                 </Typography.Paragraph>
 

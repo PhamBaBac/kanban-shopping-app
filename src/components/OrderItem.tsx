@@ -324,69 +324,80 @@ const OrderItem: React.FC<OrderItemProps> = ({
                     transition: "border-color 0.2s ease",
                   }}
                 >
-                  <Row gutter={[16, 12]} align="middle">
-                    <Col>
-                      <Avatar
-                        src={item.image}
-                        size={72}
-                        shape="square"
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "12px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Avatar
+                      src={item.image}
+                      size={64}
+                      shape="square"
+                      style={{
+                        borderRadius: "8px",
+                        border: "1px solid #E5E7EB",
+                        objectFit: "cover",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ flex: "1 1 180px", minWidth: 0 }}>
+                      <Typography.Text
+                        strong
                         style={{
-                          borderRadius: "8px",
-                          border: "1px solid #E5E7EB",
-                          objectFit: "cover",
+                          fontFamily: "var(--font-heading)",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          color: "#131118",
+                          display: "block",
+                          wordBreak: "break-word",
                         }}
-                      />
-                    </Col>
-                    <Col flex="auto">
-                      <Space direction="vertical" size={4} style={{ width: "100%" }}>
-                        <Typography.Text
-                          strong
-                          style={{
-                            fontFamily: "var(--font-heading)",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            color: "#131118",
-                            display: "block",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            maxWidth: 420,
-                          }}
-                        >
-                          {item.title}
-                        </Typography.Text>
+                      >
+                        {item.title}
+                      </Typography.Text>
 
-                        {entries.length > 0 && (
-                          <Space wrap size={[4, 4]}>
-                            {entries.map(([key, val]) => (
-                              <Tag
-                                key={key}
-                                style={{
-                                  margin: 0,
-                                  fontSize: "11px",
-                                  padding: "1px 8px",
-                                  borderRadius: "4px",
-                                  background: "#FFFFFF",
-                                  border: "1px solid #E5E7EB",
-                                  color: "#4B5563",
-                                }}
-                              >
-                                {key}: <strong>{val}</strong>
-                              </Tag>
-                            ))}
-                          </Space>
-                        )}
+                      {entries.length > 0 && (
+                        <Space wrap size={[4, 4]} style={{ marginTop: 4 }}>
+                          {entries.map(([key, val]) => (
+                            <Tag
+                              key={key}
+                              style={{
+                                margin: 0,
+                                fontSize: "11px",
+                                padding: "1px 8px",
+                                borderRadius: "4px",
+                                background: "#FFFFFF",
+                                border: "1px solid #E5E7EB",
+                                color: "#4B5563",
+                              }}
+                            >
+                              {key}: <strong>{val}</strong>
+                            </Tag>
+                          ))}
+                        </Space>
+                      )}
 
+                      <div style={{ marginTop: 4 }}>
                         <Typography.Text
                           type="secondary"
                           style={{ fontSize: "12px", color: "#6B7280" }}
                         >
                           Số lượng: <strong style={{ color: "#131118" }}>{item.qty}</strong>
                         </Typography.Text>
-                      </Space>
-                    </Col>
+                      </div>
+                    </div>
 
-                    <Col style={{ textAlign: "right" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        marginLeft: "auto",
+                        flexShrink: 0,
+                      }}
+                    >
                       <div
                         style={{
                           fontFamily: "var(--font-heading)",
@@ -437,8 +448,8 @@ const OrderItem: React.FC<OrderItemProps> = ({
                           )}
                         </div>
                       )}
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
 
                   {order.orderStatus?.toLowerCase() === "completed" &&
                     isReviewOpen &&
@@ -509,7 +520,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
                 </span>
               </div>
 
-              <Space size="small">
+              <Space size="small" wrap>
                 <Button
                   type="default"
                   size="middle"

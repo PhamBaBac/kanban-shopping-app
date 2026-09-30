@@ -114,7 +114,7 @@ const ProfileWishlist: React.FC = () => {
             <ProductItem
               item={product}
               key={product.id}
-              className="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 mb-3 mb-md-4 px-1 px-sm-2"
+              className="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 mb-3 mb-md-4"
             />
           ))}
         </div>

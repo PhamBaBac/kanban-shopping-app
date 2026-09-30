@@ -87,33 +87,60 @@ const CheckoutPage = () => {
       router.replace("/shop/checkout", undefined, { shallow: true });
     }
   }, [router.query.from_payment, auth.userId]);
+  const FREE_SHIPPING_THRESHOLD = 400000;
+  const DEFAULT_SHIPPING_FEE = 20000;
 
   useEffect(() => {
     const total = selectedItems.reduce((a, b) => a + b.count * b.price, 0);
     setSubtotal(total);
 
+    const shipFee =
+      selectedItems.length > 0
+        ? total >= FREE_SHIPPING_THRESHOLD
+          ? 0
+          : DEFAULT_SHIPPING_FEE
+        : 0;
+
     if (discountValue && selectedItems.length > 0) {
-      setGrandTotal(
+      const discount =
         discountValue.type === "PERCENT"
-          ? Math.ceil(total - total * (discountValue.value / 100))
-          : total - discountValue.value
-      );
+          ? Math.ceil(total * (discountValue.value / 100))
+          : discountValue.value;
+      setGrandTotal(Math.max(0, total - discount) + shipFee);
     } else {
-      setGrandTotal(total);
+      setGrandTotal(total + shipFee);
     }
   }, [discountValue, selectedItems]);
 
   const handleCheckDiscountCode = async () => {
+    if (!discountCode || !discountCode.trim()) {
+      message.warning("Vui lòng nhập mã khuyến mãi!");
+      return;
+    }
+    const cleanCode = discountCode.trim().toUpperCase();
     setIsCheckingCode(true);
     try {
-      const res = await promotionService.checkPromotionCode(discountCode);
+      const res = await promotionService.checkPromotionCode(cleanCode, auth?.userId);
       if (res) {
-        const detail = await promotionService.getPromotionByCode(discountCode);
-        setDiscountValue({
-          value: detail.value,
-          type: detail.type,
-        });
-        message.success("Mã khuyến mãi hợp lệ!");
+        const detail = await promotionService.getPromotionByCode(cleanCode);
+        if (detail.minOrderAmount && subtotal < detail.minOrderAmount) {
+          message.warning(
+            `Mã này chỉ áp dụng cho đơn hàng từ ${detail.minOrderAmount.toLocaleString("vi-VN")}đ. Đơn của bạn hiện là ${subtotal.toLocaleString("vi-VN")}đ.`
+          );
+          setDiscountValue(undefined);
+        } else {
+          setDiscountValue({
+            value: detail.value,
+            type: detail.type,
+            minOrderAmount: detail.minOrderAmount,
+            maxDiscountAmount: detail.maxDiscountAmount,
+          });
+          message.success(
+            detail.minOrderAmount
+              ? `Mã hợp lệ! Áp dụng cho đơn từ ${detail.minOrderAmount.toLocaleString("vi-VN")}đ.`
+              : "Mã khuyến mãi hợp lệ!"
+          );
+        }
       } else {
         message.warning("Mã không hợp lệ, đã hết hạn hoặc hết lượt sử dụng!");
         setDiscountValue(undefined);
@@ -134,6 +161,7 @@ const CheckoutPage = () => {
         ...item,
         discountValue: discountValue,
       })),
+      code: discountCode?.trim() ? discountCode.trim().toUpperCase() : undefined,
     };
     if (method === "vnpay" || method === "momo") {
       setIsLoading(true);
@@ -197,6 +225,15 @@ const CheckoutPage = () => {
           "Không tìm thấy địa chỉ giao hàng. Vui lòng chọn địa chỉ hợp lệ!"
         );
         setCurrentStep(0);
+      } else if (error?.code === 4008) {
+        const minAmt = discountValue?.minOrderAmount;
+        message.error(
+          minAmt
+            ? `Đơn hàng chưa đạt giá trị tối thiểu ${minAmt.toLocaleString("vi-VN")}đ để áp dụng mã giảm giá này.`
+            : "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã giảm giá này."
+        );
+        setDiscountValue(undefined);
+        setDiscountCode("");
       } else {
         showErrorMessage(
           error,
@@ -263,7 +300,7 @@ const CheckoutPage = () => {
       case 3:
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
               <div>
                 <h2
                   style={{
@@ -309,6 +346,8 @@ const CheckoutPage = () => {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "8px",
                   marginBottom: "16px",
                   paddingBottom: "12px",
                   borderBottom: "1px solid #F3F4F6",
@@ -562,9 +601,16 @@ const CheckoutPage = () => {
       : discountValue.value
     : 0;
 
+  const shippingFee =
+    selectedItems.length > 0
+      ? subtotal >= FREE_SHIPPING_THRESHOLD
+        ? 0
+        : DEFAULT_SHIPPING_FEE
+      : 0;
+
   return (
     <div className="checkout-page-wrapper" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "16px 0", overflowX: "hidden" }}>
-      <div className="container px-2 px-md-3" style={{ maxWidth: "1200px" }}>
+      <div className="container" style={{ maxWidth: "1200px" }}>
         {/* Step Indicator */}
         <div
           className="checkout-steps-wrapper"
@@ -615,21 +661,21 @@ const CheckoutPage = () => {
           />
         </div>
 
-        <div className="row mx-0">
+        <div className="row g-3 g-lg-4">
           {/* Main Content Area */}
-          <div className="col-12 col-md-8 px-0 px-md-3 mb-4">
+          <div className="col-12 col-lg-8 mb-4 mb-lg-0">
             {renderComponents()}
           </div>
 
           {/* Right Sidebar: Order Summary */}
-          <div className="col-12 col-md-4 px-0 px-md-3">
+          <div className="col-12 col-lg-4">
             <div
               className="checkout-summary-card"
               style={{
                 background: "#FFFFFF",
                 borderRadius: "12px",
                 border: "1px solid #E5E7EB",
-                padding: "20px",
+                padding: "clamp(16px, 3vw, 24px)",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
               }}
             >
@@ -702,7 +748,7 @@ const CheckoutPage = () => {
                     }}
                   >
                     <span style={{ fontSize: "12px", color: "#059669", fontWeight: 600 }}>
-                      ✓ Đã áp dụng mã ({discountValue.type === "PERCENT" ? `${discountValue.value}%` : VND.format(discountValue.value)})
+                      Đã áp dụng mã ({discountValue.type === "PERCENT" ? `${discountValue.value}%` : VND.format(discountValue.value)})
                     </span>
                     <Button
                       type="text"
@@ -741,10 +787,40 @@ const CheckoutPage = () => {
 
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
                     <span style={{ color: "#6B7280" }}>Phí vận chuyển:</span>
-                    <span style={{ color: "#059669", fontWeight: 600 }}>
-                      Miễn phí
-                    </span>
+                    {shippingFee === 0 ? (
+                      <span style={{ color: "#059669", fontWeight: 600 }}>
+                        Miễn phí
+                      </span>
+                    ) : (
+                      <strong style={{ color: "#131118" }}>
+                        {VND.format(shippingFee)}
+                      </strong>
+                    )}
                   </div>
+
+                  {selectedItems.length > 0 && (
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        backgroundColor: subtotal >= FREE_SHIPPING_THRESHOLD ? "#ECFDF5" : "#FFFBEB",
+                        border: `1px solid ${subtotal >= FREE_SHIPPING_THRESHOLD ? "#A7F3D0" : "#FDE68A"}`,
+                        color: subtotal >= FREE_SHIPPING_THRESHOLD ? "#059669" : "#B45309",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      {subtotal >= FREE_SHIPPING_THRESHOLD ? (
+                        <span>Đơn hàng được <strong>Miễn phí vận chuyển</strong> (từ 400.000 ₫)</span>
+                      ) : (
+                        <span>
+                          Mua thêm <strong>{VND.format(FREE_SHIPPING_THRESHOLD - subtotal)}</strong> để được <strong>Freeship</strong> (mặc định 20.000 ₫).
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <Divider style={{ borderColor: "#F3F4F6", margin: "8px 0" }} />
 

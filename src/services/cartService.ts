@@ -78,7 +78,7 @@ export const cartService = {
   },
 
   removeFromCart: async (id: string): Promise<any> => {
-    const res = await handleAPI(`/carts/remove?id=${id}`, {}, "delete");
+    const res = await handleAPI(`/carts/${id}`, {}, "delete");
     return res.data;
   },
 

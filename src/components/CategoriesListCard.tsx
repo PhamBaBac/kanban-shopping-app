@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { shopService } from "@/services";
+import { FaChevronDown } from "react-icons/fa";
 
 const { useToken } = theme;
 
@@ -65,6 +66,15 @@ const CategoriesListCard = (props: Props) => {
   const [width, setWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -342,31 +352,135 @@ const CategoriesListCard = (props: Props) => {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div style={{ padding: "8px 12px" }}>
+        <Skeleton active paragraph={{ rows: 3 }} />
+      </div>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div
+        style={{
+          padding: "12px",
+          textAlign: "center",
+          color: "#9CA3AF",
+          fontSize: "0.88rem",
+        }}
+      >
+        Không có danh mục nào
+      </div>
+    );
+  }
+
   return (
-    <Menu
-      mode="inline"
-      style={{ backgroundColor: "transparent", border: "none" }}
-      items={categories.map((item) => ({
-        key: item.id,
-        label: item.children && item.children.length > 0 ? (
-          item.title
-        ) : (
-          <Link href={`/shop?catId=${item.id}`} onClick={onItemClick}>
-            {item.title}
-          </Link>
-        ),
-        children: item.children && item.children.length > 0
-          ? item.children.map((child) => ({
-            key: child.id,
-            label: (
-              <Link href={`/shop?catId=${child.id}`} onClick={onItemClick}>
-                {child.title}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        gap: 2,
+      }}
+    >
+      {categories.map((item) => {
+        const hasChildren = item.children && item.children.length > 0;
+        const isExpanded = expandedIds.includes(item.id);
+
+        return (
+          <div key={item.id} style={{ width: "100%" }}>
+            <div
+              className={`drawer-category-item ${isExpanded ? "expanded" : ""}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderRadius: 8,
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Link
+                href={`/shop?catId=${item.id}`}
+                onClick={onItemClick}
+                style={{
+                  flex: 1,
+                  fontSize: "0.92rem",
+                  fontWeight: 500,
+                  color: "inherit",
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <span>{item.title}</span>
               </Link>
-            ),
-          }))
-          : undefined,
-      }))}
-    />
+
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={(e) => toggleExpand(item.id, e)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    padding: "6px 8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "inherit",
+                    opacity: 0.65,
+                    transition: "transform 0.2s ease, opacity 0.15s ease",
+                    transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                  }}
+                  aria-label={`Mở rộng ${item.title}`}
+                >
+                  <FaChevronDown size={12} />
+                </button>
+              )}
+            </div>
+
+            {hasChildren && isExpanded && (
+              <div
+                className="drawer-subcategory-list"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  paddingLeft: 12,
+                  marginLeft: 14,
+                  marginTop: 2,
+                  marginBottom: 6,
+                  borderLeft: `2px solid ${token.colorBorderSecondary || "#E5E7EB"}`,
+                }}
+              >
+                {item.children!.map((child) => (
+                  <Link
+                    key={child.id}
+                    href={`/shop?catId=${child.id}`}
+                    onClick={onItemClick}
+                    className="drawer-subcategory-link"
+                    style={{
+                      display: "block",
+                      padding: "6px 10px",
+                      borderRadius: 6,
+                      fontSize: "0.88rem",
+                      color: "inherit",
+                      opacity: 0.85,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {child.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

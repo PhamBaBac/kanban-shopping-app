@@ -161,6 +161,7 @@ const ChatButton: React.FC = () => {
     <>
       {/* Floating Action Button */}
       <div
+        className="kanban-chat-fab-container"
         style={{
           position: "fixed",
           bottom: 24,
@@ -228,8 +229,8 @@ const ChatButton: React.FC = () => {
             position: "fixed",
             bottom: 96,
             right: 24,
-            width: 410,
-            maxWidth: "calc(100vw - 32px)",
+            width: "min(410px, calc(100% - 32px))",
+            maxWidth: "100%",
             height: 600,
             maxHeight: "calc(100vh - 120px)",
             backgroundColor: isDarkMode ? "#1f1f23" : "#ffffff",

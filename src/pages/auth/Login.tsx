@@ -58,25 +58,33 @@ const Login = () => {
   };
 
   return (
-    <div className="container-fluid" style={{ height: "100vh" }}>
-      <div className="row h-100">
+    <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
+      <div className="row g-0" style={{ minHeight: "100vh" }}>
         <div
           className="d-none d-md-block col-md-6 p-0"
           style={{
             backgroundImage: `url(/images/bg-auth-3.png)`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
           }}
         >
-          <div className="mt-5 ml-5">
+          <div style={{ padding: "40px 0 0 40px" }}>
             <Link href="/">
-              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer" }} />
+              <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 110 }} />
             </Link>
           </div>
         </div>
 
-        <div className="col-sm-12 col-md-6 d-flex align-items-center">
-          <div className="col-sm-12 col-md-10 col-lg-8 offset-lg-2">
+        <div className="col-12 col-md-6 d-flex align-items-center justify-content-center py-4 py-md-5 px-3 px-sm-4">
+          <div style={{ width: "100%", maxWidth: 440 }}>
+            {/* Mobile Logo */}
+            <div className="d-block d-md-none text-center mb-4">
+              <Link href="/">
+                <img src="/images/logo.png" alt="Logo" style={{ cursor: "pointer", width: 100 }} />
+              </Link>
+            </div>
+
             {!isMfaEnabled ? (
               <>
                 <div className="mb-3">
@@ -90,8 +98,12 @@ const Login = () => {
                     </Button>
                   </Link>
                 </div>
-                <Title>Chào mừng trở lại</Title>
-                <Paragraph type="secondary">Vui lòng đăng nhập vào tài khoản của bạn</Paragraph>
+                <Title level={2} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(1.4rem, 4vw, 1.9rem)", marginBottom: 4 }}>
+                  Chào mừng trở lại
+                </Title>
+                <Paragraph type="secondary" style={{ marginBottom: 24 }}>
+                  Vui lòng đăng nhập vào tài khoản của bạn
+                </Paragraph>
 
                 <Form
                   form={form}

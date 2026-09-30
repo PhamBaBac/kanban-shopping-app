@@ -45,6 +45,10 @@ interface OrderDetailModalProps {
     cancelReason?: string;
     trackingCode?: string;
     shippingStatus?: string;
+    shippingFee?: number;
+    subtotal?: number;
+    total?: number;
+    discountAmount?: number;
     orderResponses: Array<{
       orderId: string;
       image: string;
@@ -870,33 +874,85 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           </div>
 
           {/* Order Summary */}
-          <div
-            style={{
-              background: "#FAFAFA",
-              border: "1px solid #E5E7EB",
-              borderRadius: "10px",
-              padding: "16px 20px",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-              <span style={{ fontSize: "14px", color: "#4B5563" }}>
-                Tổng thanh toán:
-              </span>
-              <span
+          {(() => {
+            const itemsSubtotal = calculateTotalAmount();
+            const shipFee =
+              activeOrder?.shippingFee !== undefined && activeOrder?.shippingFee !== null
+                ? activeOrder.shippingFee
+                : itemsSubtotal >= 400000
+                  ? 0
+                  : 20000;
+            const finalTotal =
+              activeOrder?.total !== undefined && activeOrder?.total !== null
+                ? activeOrder.total
+                : Math.max(0, itemsSubtotal - (activeOrder?.discountAmount || 0)) + shipFee;
+
+            return (
+              <div
                 style={{
-                  fontFamily: "var(--font-heading)",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#131118",
+                  background: "#FAFAFA",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "10px",
+                  padding: "16px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: "8px",
                 }}
               >
-                {VND.format(calculateTotalAmount())}
-              </span>
-            </div>
-          </div>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "260px", fontSize: "13px" }}>
+                  <span style={{ color: "#6B7280" }}>Tiền hàng:</span>
+                  <span style={{ fontWeight: 600, color: "#131118" }}>
+                    {VND.format(activeOrder?.subtotal || itemsSubtotal)}
+                  </span>
+                </div>
+
+                {activeOrder?.discountAmount && activeOrder.discountAmount > 0 ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", width: "260px", fontSize: "13px" }}>
+                    <span style={{ color: "#6B7280" }}>Giảm giá:</span>
+                    <span style={{ fontWeight: 600, color: "#059669" }}>
+                      -{VND.format(activeOrder.discountAmount)}
+                    </span>
+                  </div>
+                ) : null}
+
+                <div style={{ display: "flex", justifyContent: "space-between", width: "260px", fontSize: "13px" }}>
+                  <span style={{ color: "#6B7280" }}>Phí vận chuyển:</span>
+                  {shipFee === 0 ? (
+                    <span style={{ color: "#059669", fontWeight: 600 }}>Miễn phí</span>
+                  ) : (
+                    <span style={{ fontWeight: 600, color: "#131118" }}>{VND.format(shipFee)}</span>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "260px",
+                    borderTop: "1px solid #E5E7EB",
+                    paddingTop: "8px",
+                    marginTop: "2px",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#131118" }}>
+                    Tổng thanh toán:
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "20px",
+                      fontWeight: 700,
+                      color: "#131118",
+                    }}
+                  >
+                    {VND.format(finalTotal)}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </Modal>

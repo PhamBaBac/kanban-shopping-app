@@ -128,8 +128,8 @@ const PaymentMethod = (props: Props) => {
                 transition: "all 0.2s ease",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1, minWidth: 0 }}>
                   <div
                     style={{
                       width: "44px",
@@ -141,12 +141,13 @@ const PaymentMethod = (props: Props) => {
                       alignItems: "center",
                       justifyContent: "center",
                       transition: "all 0.2s ease",
+                      flexShrink: 0,
                     }}
                   >
                     {item.icon}
                   </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <span
                         style={{
                           fontFamily: "var(--font-heading)",
@@ -179,7 +180,7 @@ const PaymentMethod = (props: Props) => {
                   </div>
                 </div>
 
-                <div>
+                <div style={{ flexShrink: 0 }}>
                   {isSelected ? (
                     <IoCheckmarkCircle size={22} color="#131118" />
                   ) : (

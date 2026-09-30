@@ -76,8 +76,8 @@ const CarouselImages = (props: Props) => {
                     src={item.imgURL}
                     alt={item.title || "product thumbnail"}
                     style={{
-                      width: 72,
-                      height: 72,
+                      width: "clamp(54px, 13vw, 72px)",
+                      height: "clamp(54px, 13vw, 72px)",
                       objectFit: "cover",
                       borderRadius: 6,
                       display: "block",

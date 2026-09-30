@@ -9,6 +9,7 @@ import {
   Empty,
   Layout,
   Pagination,
+  Select,
   Skeleton,
   Space,
   Spin,
@@ -167,7 +168,25 @@ const ShopPageContent = () => {
   const hasActiveSearch = Boolean(
     filterValues.search && filterValues.search.trim()
   );
-  const hasActiveFilters = hasActivePrice || hasActiveSearch;
+  const hasActiveColors = Boolean(
+    filterValues.colors && filterValues.colors.length > 0
+  );
+  const hasActiveSizes = Boolean(
+    filterValues.sizes && filterValues.sizes.length > 0
+  );
+  const hasActiveCategories = Boolean(
+    filterValues.catIds &&
+      filterValues.catIds.length > 0 &&
+      (!rootCatId ||
+        filterValues.catIds.length > 1 ||
+        filterValues.catIds[0] !== rootCatId)
+  );
+  const hasActiveFilters =
+    hasActivePrice ||
+    hasActiveSearch ||
+    hasActiveColors ||
+    hasActiveSizes ||
+    hasActiveCategories;
 
   useEffect(() => {
     if (!isReady) return;
@@ -383,7 +402,7 @@ const ShopPageContent = () => {
   }
 
   return (
-    <div className="container px-3 px-sm-4 py-3">
+    <div className="container py-3">
       <div className="py-2 mb-3 border-bottom" style={{ borderColor: isDark ? "#303030" : "#F3F4F6" }}>
         <Breadcrumb
           items={[
@@ -426,24 +445,19 @@ const ShopPageContent = () => {
             }}
           >
             {/* Toolbar: Sort by bar & Mobile Filter toggle */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-              <div
-                className="shop-sort-bar-scroll"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  flexWrap: "nowrap",
-                  overflowX: "auto",
-                  paddingBottom: 4,
-                  maxWidth: "100%",
-                  WebkitOverflowScrolling: "touch",
-                  msOverflowStyle: "none",
-                  scrollbarWidth: "none",
-                }}
-              >
+            <div
+              className="shop-toolbar-wrapper"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              {/* Mobile Toolbar (< 576px): Filter button on Left, Sort Select on Right */}
+              <div className="d-flex d-sm-none align-items-center justify-content-between w-100 gap-2">
                 <Button
-                  className="d-lg-none"
                   icon={<BsFilterLeft size={18} />}
                   onClick={() => setDrawerVisible(true)}
                   style={{
@@ -453,146 +467,216 @@ const ShopPageContent = () => {
                     color: isDark ? "#FFFFFF" : "#131118",
                     fontWeight: 600,
                     fontSize: "0.85rem",
-                    flexShrink: 0,
-                    height: 34,
+                    height: 36,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
                   Bộ lọc
+                  {hasActiveFilters && (
+                    <span
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        backgroundColor: "#1677ff",
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
                 </Button>
 
-                <span style={{ color: isDark ? "#9CA3AF" : "#6B7280", fontWeight: 500, fontSize: "0.88rem", marginRight: 2, flexShrink: 0 }}>
-                  Sắp xếp:
-                </span>
+                <Select
+                  value={sortBy}
+                  onChange={(val) => handleSortChange(val)}
+                  style={{ width: 165, height: 36 }}
+                  popupMatchSelectWidth={false}
+                  options={[
+                    { label: "Sắp xếp: Liên quan", value: "relevance" },
+                    { label: "Sắp xếp: Mới nhất", value: "latest" },
+                    { label: "Sắp xếp: Bán chạy", value: "topsales" },
+                    { label: "Giá: Thấp đến Cao", value: "price_asc" },
+                    { label: "Giá: Cao đến Thấp", value: "price_desc" },
+                  ]}
+                />
+              </div>
 
-                {/* Relevance */}
-                <button
-                  onClick={() => handleSortChange("relevance")}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: 8,
-                    border: sortBy === "relevance" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                    backgroundColor: sortBy === "relevance" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                    color: sortBy === "relevance" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                    fontWeight: 500,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Liên quan
-                </button>
+              {/* Tablet & Desktop Toolbar (>= 576px): Filter Button + Sort Chips */}
+              <div className="d-none d-sm-flex align-items-center justify-content-between flex-wrap gap-2 w-100">
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Button
+                    className="d-lg-none"
+                    icon={<BsFilterLeft size={18} />}
+                    onClick={() => setDrawerVisible(true)}
+                    style={{
+                      borderRadius: 8,
+                      borderColor: isDark ? "#424242" : "#E5E7EB",
+                      backgroundColor: isDark ? "#2a2a2a" : "#FFFFFF",
+                      color: isDark ? "#FFFFFF" : "#131118",
+                      fontWeight: 600,
+                      fontSize: "0.85rem",
+                      flexShrink: 0,
+                      height: 34,
+                    }}
+                  >
+                    Bộ lọc
+                  </Button>
 
-                {/* Latest */}
-                <button
-                  onClick={() => handleSortChange("latest")}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: 8,
-                    border: sortBy === "latest" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                    backgroundColor: sortBy === "latest" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                    color: sortBy === "latest" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                    fontWeight: 500,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Mới nhất
-                </button>
+                  <span
+                    style={{
+                      color: isDark ? "#9CA3AF" : "#6B7280",
+                      fontWeight: 500,
+                      fontSize: "0.88rem",
+                      marginRight: 2,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Sắp xếp:
+                  </span>
 
-                {/* Top Sales */}
-                <button
-                  onClick={() => handleSortChange("topsales")}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: 8,
-                    border: sortBy === "topsales" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                    backgroundColor: sortBy === "topsales" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                    color: sortBy === "topsales" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                    fontWeight: 500,
-                    fontSize: "0.85rem",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  Bán chạy
-                </button>
-
-                {/* Price dropdown */}
-                <div style={{ position: "relative", flexShrink: 0 }}>
+                  {/* Relevance */}
                   <button
-                    onClick={() => setPriceDropdownOpen((v) => !v)}
+                    onClick={() => handleSortChange("relevance")}
                     style={{
                       padding: "5px 14px",
                       borderRadius: 8,
-                      border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                      backgroundColor: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                      color: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                      border: sortBy === "relevance" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                      backgroundColor: sortBy === "relevance" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                      color: sortBy === "relevance" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
                       fontWeight: 500,
                       fontSize: "0.85rem",
                       cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
                       whiteSpace: "nowrap",
+                      flexShrink: 0,
                       transition: "all 0.15s ease",
                     }}
                   >
-                    {getPriceButtonLabel()}
-                    <BsArrowDown
-                      size={13}
-                      style={{
-                        transition: "transform 0.2s",
-                        transform: priceDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      }}
-                    />
+                    Liên quan
                   </button>
-                  {priceDropdownOpen && (
-                    <div
+
+                  {/* Latest */}
+                  <button
+                    onClick={() => handleSortChange("latest")}
+                    style={{
+                      padding: "5px 14px",
+                      borderRadius: 8,
+                      border: sortBy === "latest" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                      backgroundColor: sortBy === "latest" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                      color: sortBy === "latest" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                      fontWeight: 500,
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    Mới nhất
+                  </button>
+
+                  {/* Top Sales */}
+                  <button
+                    onClick={() => handleSortChange("topsales")}
+                    style={{
+                      padding: "5px 14px",
+                      borderRadius: 8,
+                      border: sortBy === "topsales" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                      backgroundColor: sortBy === "topsales" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                      color: sortBy === "topsales" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                      fontWeight: 500,
+                      fontSize: "0.85rem",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    Bán chạy
+                  </button>
+
+                  {/* Price dropdown */}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <button
+                      onClick={() => setPriceDropdownOpen((v) => !v)}
                       style={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
-                        border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                        padding: "5px 14px",
                         borderRadius: 8,
-                        boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)",
-                        minWidth: 160,
-                        zIndex: 100,
-                        overflow: "hidden",
+                        border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                        backgroundColor: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                        color: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                        fontWeight: 500,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        whiteSpace: "nowrap",
+                        transition: "all 0.15s ease",
                       }}
                     >
-                      {[
-                        { label: "Giá: Thấp đến Cao", value: "price_asc" as const },
-                        { label: "Giá: Cao đến Thấp", value: "price_desc" as const },
-                      ].map((opt) => (
-                        <div
-                          key={opt.value}
-                          onClick={() => handleSortChange(opt.value)}
-                          style={{
-                            padding: "10px 16px",
-                            fontSize: "0.88rem",
-                            fontWeight: sortBy === opt.value ? 600 : 400,
-                            color: sortBy === opt.value ? (isDark ? "#fff" : "#131118") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                            cursor: "pointer",
-                            backgroundColor: sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"),
-                            transition: "background 0.15s",
-                          }}
-                          onMouseEnter={(e) => { if (sortBy !== opt.value) (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark ? "#252525" : "#F9FAFB"; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"); }}
-                        >
-                          {opt.label}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                      {getPriceButtonLabel()}
+                      <BsArrowDown
+                        size={13}
+                        style={{
+                          transition: "transform 0.2s",
+                          transform: priceDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        }}
+                      />
+                    </button>
+                    {priceDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 4px)",
+                          left: 0,
+                          backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
+                          border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                          borderRadius: 8,
+                          boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)",
+                          minWidth: 160,
+                          zIndex: 100,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {[
+                          { label: "Giá: Thấp đến Cao", value: "price_asc" as const },
+                          { label: "Giá: Cao đến Thấp", value: "price_desc" as const },
+                        ].map((opt) => (
+                          <div
+                            key={opt.value}
+                            onClick={() => handleSortChange(opt.value)}
+                            style={{
+                              padding: "10px 16px",
+                              fontSize: "0.88rem",
+                              fontWeight: sortBy === opt.value ? 600 : 400,
+                              color: sortBy === opt.value ? (isDark ? "#fff" : "#131118") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                              cursor: "pointer",
+                              backgroundColor: sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"),
+                              transition: "background 0.15s",
+                            }}
+                            onMouseEnter={(e) => { if (sortBy !== opt.value) (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark ? "#252525" : "#F9FAFB"; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"); }}
+                          >
+                            {opt.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {totalItems !== undefined && (
+                  <span
+                    style={{
+                      color: isDark ? "#9CA3AF" : "#6B7280",
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {totalItems} sản phẩm
+                  </span>
+                )}
               </div>
             </div>
 
@@ -767,21 +851,67 @@ const ShopPageContent = () => {
 
       <Drawer
         title="Bộ lọc sản phẩm"
-        placement="left"
-        width={typeof window !== "undefined" && window.innerWidth < 400 ? "88vw" : 340}
+        placement="right"
+        width="min(380px, 92vw)"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
         className="d-lg-none shop-filter-drawer"
         destroyOnClose
         styles={{
-          body: { padding: "16px 16px 80px 16px", overflowY: "auto" },
+          body: { padding: "16px 16px", overflowY: "auto", overflowX: "hidden" },
           content: { backgroundColor: isDark ? "#16151a" : "#FFFFFF" },
           header: {
             backgroundColor: isDark ? "#1c1a22" : "#FFFFFF",
             borderBottom: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
             color: isDark ? "#FFFFFF" : "#131118",
           },
+          footer: {
+            padding: "12px 16px",
+            borderTop: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+            backgroundColor: isDark ? "#16151a" : "#FFFFFF",
+          },
         }}
+        footer={
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {hasActiveFilters && (
+              <Button
+                onClick={() => {
+                  handleClearAllFilters();
+                  setDrawerVisible(false);
+                }}
+                style={{
+                  height: 44,
+                  borderRadius: 8,
+                  fontWeight: 500,
+                  borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
+                  backgroundColor: isDark ? "#24222c" : "#fff",
+                  color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                }}
+              >
+                Xóa tất cả
+              </Button>
+            )}
+            <Button
+              type="primary"
+              block
+              onClick={() => setDrawerVisible(false)}
+              style={{
+                height: 44,
+                borderRadius: 8,
+                backgroundColor: isDark ? "#ffffff" : "#131118",
+                borderColor: isDark ? "#ffffff" : "#131118",
+                color: isDark ? "#131118" : "#ffffff",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                flex: 1,
+              }}
+            >
+              {typeof totalItems === "number"
+                ? `Xem ${totalItems} sản phẩm`
+                : "Xem kết quả"}
+            </Button>
+          </div>
+        }
       >
         {drawerVisible && (
           <FilterPanel

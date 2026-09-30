@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   Badge,
   Button,
+  Drawer,
   Empty,
   Popover,
   Tabs,
@@ -96,6 +97,7 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   className,
 }) => {
   const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const { token } = useToken();
@@ -126,10 +128,252 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       markAsRead(item.id);
     }
     setOpen(false);
+    setDrawerOpen(false);
     if (item.targetUrl) {
       router.push(item.targetUrl);
     }
   };
+
+  const renderTabs = () => (
+    <div className="notification-tabs-wrapper">
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        size="small"
+        tabBarGutter={0}
+        tabBarStyle={{
+          margin: 0,
+          padding: "0 6px",
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+        }}
+        items={[
+          { key: "ALL", label: "Tất cả" },
+          { key: "ORDER_STATUS", label: "Đơn hàng" },
+          { key: "PROMOTION", label: "Khuyến mãi" },
+          { key: "SYSTEM", label: "Hệ thống" },
+        ]}
+      />
+    </div>
+  );
+
+  const renderNotificationList = (isDrawer = false) => {
+    if (notifications.length === 0) {
+      return (
+        <div style={{ padding: "40px 16px" }}>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <span style={{ fontSize: "0.85rem", color: token.colorTextSecondary }}>
+                Không có thông báo nào trong mục này
+              </span>
+            }
+          />
+        </div>
+      );
+    }
+
+    return notifications.map((item) => {
+      const meta = getTypeMeta(item.type);
+      return (
+        <div
+          key={item.id}
+          className={`notification-item ${!item.isRead ? "unread" : ""}`}
+          onClick={() => handleItemClick(item)}
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 12,
+            padding: isDrawer ? "14px 16px" : "12px 16px",
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            cursor: "pointer",
+            transition: "background-color 0.15s ease",
+            position: "relative",
+            backgroundColor: !item.isRead
+              ? isDark
+                ? "rgba(255, 255, 255, 0.04)"
+                : "#F8FAFC"
+              : "transparent",
+          }}
+        >
+          {/* Icon */}
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              backgroundColor: meta.bg,
+              color: meta.color,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              marginTop: 2,
+            }}
+          >
+            {meta.icon}
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 6,
+                marginBottom: 3,
+              }}
+            >
+              <Typography.Text
+                strong={!item.isRead}
+                style={{
+                  fontSize: "0.88rem",
+                  lineHeight: "1.3",
+                  color: token.colorText,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 1,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {item.title}
+              </Typography.Text>
+
+              {/* Unread indicator */}
+              {!item.isRead && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "#2563EB",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+            </div>
+
+            <Typography.Paragraph
+              type="secondary"
+              style={{
+                fontSize: "0.8rem",
+                lineHeight: "1.35",
+                margin: "0 0 6px 0",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {item.content}
+            </Typography.Paragraph>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.72rem",
+                  color: token.colorTextTertiary || token.colorTextSecondary,
+                }}
+              >
+                {formatRelativeTime(item.createdAt)}
+              </span>
+
+              {/* Quick action buttons */}
+              <div
+                className="notification-item-actions"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                {!item.isRead && (
+                  <Tooltip title="Đánh dấu đã đọc">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<IoCheckmarkOutline size={15} />}
+                      onClick={() => markAsRead(item.id)}
+                      style={{
+                        padding: 0,
+                        width: 22,
+                        height: 22,
+                        minWidth: 22,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                <Tooltip title="Xóa thông báo">
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<IoTrashOutline size={14} />}
+                    onClick={() => deleteNotification(item.id)}
+                    style={{
+                      padding: 0,
+                      width: 22,
+                      height: 22,
+                      minWidth: 22,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  />
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
+
+  const renderNotLoggedIn = (onLoginClick: () => void) => (
+    <div style={{ padding: "36px 20px", textAlign: "center" }}>
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
+          backgroundColor: isDark ? "#262626" : "#F3F4F6",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: token.colorTextSecondary,
+          marginBottom: 12,
+        }}
+      >
+        <IoNotificationsOutline size={26} />
+      </div>
+      <Typography.Title level={5} style={{ margin: "0 0 6px 0", fontSize: "0.95rem" }}>
+        Đăng nhập để nhận thông báo
+      </Typography.Title>
+      <Typography.Paragraph
+        type="secondary"
+        style={{ fontSize: "0.85rem", marginBottom: 16 }}
+      >
+        Theo dõi trạng thái đơn hàng, ưu đãi mã giảm giá và thông tin tài khoản kịp thời nhất.
+      </Typography.Paragraph>
+      <Button
+        type="primary"
+        style={{ borderRadius: 8, padding: "0 24px" }}
+        onClick={onLoginClick}
+      >
+        Đăng nhập ngay
+      </Button>
+    </div>
+  );
 
   const popoverContent = (
     <div
@@ -214,65 +458,13 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       </div>
 
       {!isLoggedIn ? (
-        <div style={{ padding: "36px 20px", textAlign: "center" }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: "50%",
-              backgroundColor: isDark ? "#262626" : "#F3F4F6",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: token.colorTextSecondary,
-              marginBottom: 12,
-            }}
-          >
-            <IoNotificationsOutline size={26} />
-          </div>
-          <Typography.Title level={5} style={{ margin: "0 0 6px 0", fontSize: "0.95rem" }}>
-            Đăng nhập để nhận thông báo
-          </Typography.Title>
-          <Typography.Paragraph
-            type="secondary"
-            style={{ fontSize: "0.85rem", marginBottom: 16 }}
-          >
-            Theo dõi trạng thái đơn hàng, ưu đãi mã giảm giá và thông tin tài khoản kịp thời nhất.
-          </Typography.Paragraph>
-          <Button
-            type="primary"
-            style={{ borderRadius: 8, padding: "0 24px" }}
-            onClick={() => {
-              setOpen(false);
-              router.push("/auth/login");
-            }}
-          >
-            Đăng nhập ngay
-          </Button>
-        </div>
+        renderNotLoggedIn(() => {
+          setOpen(false);
+          router.push("/auth/login");
+        })
       ) : (
         <>
-          {/* Tabs Filter */}
-          <div className="notification-tabs-wrapper">
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              size="small"
-              tabBarStyle={{
-                margin: 0,
-                padding: "0 14px",
-                borderBottom: `1px solid ${token.colorBorderSecondary}`,
-              }}
-              items={[
-                { key: "ALL", label: "Tất cả" },
-                { key: "ORDER_STATUS", label: "Đơn hàng" },
-                { key: "PROMOTION", label: "Khuyến mãi" },
-                { key: "SYSTEM", label: "Hệ thống" },
-              ]}
-            />
-          </div>
-
-          {/* List items */}
+          {renderTabs()}
           <div
             className="notification-list-scroll custom-scrollbar"
             style={{
@@ -281,184 +473,7 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
               minHeight: 140,
             }}
           >
-            {notifications.length === 0 ? (
-              <div style={{ padding: "40px 16px" }}>
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={
-                    <span style={{ fontSize: "0.85rem", color: token.colorTextSecondary }}>
-                      Không có thông báo nào trong mục này
-                    </span>
-                  }
-                />
-              </div>
-            ) : (
-              notifications.map((item) => {
-                const meta = getTypeMeta(item.type);
-                return (
-                  <div
-                    key={item.id}
-                    className={`notification-item ${!item.isRead ? "unread" : ""}`}
-                    onClick={() => handleItemClick(item)}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      padding: "12px 16px",
-                      borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                      cursor: "pointer",
-                      transition: "background-color 0.15s ease",
-                      position: "relative",
-                      backgroundColor: !item.isRead
-                        ? isDark
-                          ? "rgba(255, 255, 255, 0.04)"
-                          : "#F8FAFC"
-                        : "transparent",
-                    }}
-                  >
-                    {/* Icon */}
-                    <div
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: "50%",
-                        backgroundColor: meta.bg,
-                        color: meta.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        marginTop: 2,
-                      }}
-                    >
-                      {meta.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 6,
-                          marginBottom: 3,
-                        }}
-                      >
-                        <Typography.Text
-                          strong={!item.isRead}
-                          style={{
-                            fontSize: "0.88rem",
-                            lineHeight: "1.3",
-                            color: token.colorText,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 1,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {item.title}
-                        </Typography.Text>
-
-                        {/* Unread indicator */}
-                        {!item.isRead && (
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              backgroundColor: "#2563EB",
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                      </div>
-
-                      <Typography.Paragraph
-                        type="secondary"
-                        style={{
-                          fontSize: "0.8rem",
-                          lineHeight: "1.35",
-                          margin: "0 0 6px 0",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {item.content}
-                      </Typography.Paragraph>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.72rem",
-                            color: token.colorTextTertiary || token.colorTextSecondary,
-                          }}
-                        >
-                          {formatRelativeTime(item.createdAt)}
-                        </span>
-
-                        {/* Quick action buttons */}
-                        <div
-                          className="notification-item-actions"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          {!item.isRead && (
-                            <Tooltip title="Đánh dấu đã đọc">
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<IoCheckmarkOutline size={15} />}
-                                onClick={() => markAsRead(item.id)}
-                                style={{
-                                  padding: 0,
-                                  width: 22,
-                                  height: 22,
-                                  minWidth: 22,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              />
-                            </Tooltip>
-                          )}
-                          <Tooltip title="Xóa thông báo">
-                            <Button
-                              type="text"
-                              size="small"
-                              danger
-                              icon={<IoTrashOutline size={14} />}
-                              onClick={() => deleteNotification(item.id)}
-                              style={{
-                                padding: 0,
-                                width: 22,
-                                height: 22,
-                                minWidth: 22,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            />
-                          </Tooltip>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+            {renderNotificationList(false)}
           </div>
 
           {/* Footer */}
@@ -493,17 +508,9 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
   );
 
   return (
-    <Popover
-      content={popoverContent}
-      trigger="click"
-      open={open}
-      onOpenChange={setOpen}
-      placement="bottomRight"
-      overlayClassName="notification-popover-overlay"
-      arrow={false}
-      overlayInnerStyle={{ padding: 0, borderRadius: 12 }}
-    >
-      <div className={`d-inline-flex align-items-center ${className || ""}`}>
+    <>
+      {/* Mobile Notification Trigger */}
+      <div className={`d-inline-flex d-md-none align-items-center ${className || ""}`}>
         <Badge
           count={isMounted && isLoggedIn ? unreadCount : 0}
           overflowCount={99}
@@ -512,15 +519,172 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
           color="#EF4444"
         >
           <Button
-            className={`header-action-btn ${open ? "active" : ""}`}
+            className={`header-action-btn ${drawerOpen ? "active" : ""}`}
             icon={<IoNotificationsOutline size={21} />}
             type="text"
             aria-label="Thông báo"
             title="Thông báo"
+            onClick={() => setDrawerOpen(true)}
           />
         </Badge>
       </div>
-    </Popover>
+
+      {/* Mobile Notification Drawer - Slides smoothly from the right side */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        placement="right"
+        rootClassName="mobile-notification-drawer"
+        width="min(420px, 95vw)"
+        title={
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 600, fontSize: "1.05rem" }}>
+                Thông báo
+              </span>
+              {unreadCount > 0 && isLoggedIn && (
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    padding: "1px 8px",
+                    borderRadius: 10,
+                    backgroundColor: isDark ? "#374151" : "#F3F4F6",
+                    color: token.colorTextSecondary,
+                    fontWeight: 600,
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+
+            {isLoggedIn && notifications.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                {unreadCount > 0 && (
+                  <Tooltip title="Đánh dấu tất cả đã đọc">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<IoCheckmarkDoneOutline size={18} />}
+                      onClick={markAllAsRead}
+                      style={{
+                        color: token.colorPrimary,
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "2px 6px",
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                <Tooltip title="Xóa tất cả">
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<IoTrashOutline size={16} />}
+                    onClick={clearAll}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "2px 6px",
+                    }}
+                  />
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        }
+        footer={
+          <div
+            style={{
+              padding: "4px 0",
+              textAlign: "center",
+            }}
+          >
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setDrawerOpen(false);
+                router.push("/profile?tab=notifications");
+              }}
+              style={{
+                fontSize: "0.85rem",
+                color: token.colorPrimary,
+                fontWeight: 500,
+                padding: 0,
+              }}
+            >
+              Xem tất cả thông báo trong tài khoản →
+            </Button>
+          </div>
+        }
+      >
+        {!isLoggedIn ? (
+          renderNotLoggedIn(() => {
+            setDrawerOpen(false);
+            router.push("/auth/login");
+          })
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            {renderTabs()}
+            <div
+              className="notification-list-scroll custom-scrollbar"
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+              }}
+            >
+              {renderNotificationList(true)}
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Desktop Notification Trigger (Popover) */}
+      <div className={`d-none d-md-inline-flex align-items-center ${className || ""}`}>
+        <Popover
+          content={popoverContent}
+          trigger="click"
+          open={open}
+          onOpenChange={setOpen}
+          placement="bottomRight"
+          overlayClassName="notification-popover-overlay"
+          arrow={false}
+          overlayInnerStyle={{ padding: 0, borderRadius: 12 }}
+        >
+          <Badge
+            count={isMounted && isLoggedIn ? unreadCount : 0}
+            overflowCount={99}
+            size="small"
+            offset={[-2, 4]}
+            color="#EF4444"
+          >
+            <Button
+              className={`header-action-btn ${open ? "active" : ""}`}
+              icon={<IoNotificationsOutline size={21} />}
+              type="text"
+              aria-label="Thông báo"
+              title="Thông báo"
+            />
+          </Badge>
+        </Popover>
+      </div>
+    </>
   );
 };
 

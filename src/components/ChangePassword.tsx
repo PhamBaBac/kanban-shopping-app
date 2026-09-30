@@ -53,7 +53,7 @@ const ChangePassword = () => {
             <span>Đổi mật khẩu</span>
           </Space>
         }
-        style={{ maxWidth: 600, margin: "20px auto" }}
+        style={{ maxWidth: 600, margin: "0 0 20px 0" }}
       >
         <Alert
           type="info"
@@ -138,14 +138,14 @@ const ChangePassword = () => {
           <span>Đổi mật khẩu</span>
         </Space>
       }
-      style={{ maxWidth: 600, margin: "20px auto" }}
+      style={{ maxWidth: 600, margin: "0 0 20px 0" }}
     >
-      <Paragraph>
+      <Paragraph style={{ marginBottom: 12 }}>
         Đổi mật khẩu để bảo mật tài khoản của bạn. Mật khẩu mới phải đáp ứng các
         yêu cầu bảo mật.
       </Paragraph>
 
-      <Divider />
+      <Divider style={{ margin: "14px 0" }} />
 
       <Form
         form={form}

@@ -430,6 +430,7 @@ const ListCart = ({
           dataSource={carts}
           columns={columns}
           pagination={false}
+          scroll={{ x: 620 }}
           rowSelection={{
             selectedRowKeys,
             onChange: setSelectedRowKeys,
