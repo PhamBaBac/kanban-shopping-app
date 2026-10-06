@@ -310,20 +310,12 @@ const ChatButton: React.FC = () => {
                     gap: 6,
                   }}
                 >
-                  <span
-                    style={{
-                      display: "inline-block",
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      backgroundColor: socketConnected ? "#10B981" : "#F59E0B",
-                    }}
-                  />
                   <span>
                     {socketConnected
-                      ? "Trực tuyến • Sẵn sàng hỗ trợ"
+                      ? "Trực tuyến"
                       : "Đang kết nối lại..."}
                   </span>
+                  
                 </div>
               </div>
             </div>
@@ -344,7 +336,6 @@ const ChatButton: React.FC = () => {
             />
           </div>
 
-          {/* Mode Tabs: Live Support vs AI Chat */}
           <div
             style={{
               padding: "10px 14px",
@@ -393,7 +384,7 @@ const ChatButton: React.FC = () => {
               }}
             >
               <BsHeadset size={15} />
-              <span>Tư vấn viên (CSKH)</span>
+              <span>Tư vấn viên</span>
               {unreadCount > 0 && (
                 <span
                   style={{
