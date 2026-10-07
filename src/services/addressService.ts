@@ -25,23 +25,33 @@ export interface CreateAddressData {
   district: string;
   ward: string;
   isDefault: boolean;
+  default?: boolean;
   createdBy: string;
 }
+
+const normalizeAddress = (item: any): AddressModel => {
+  if (!item) return item;
+  return {
+    ...item,
+    isDefault: Boolean(item.isDefault ?? item.default),
+  };
+};
 
 export const addressService = {
   getAddresses: async (): Promise<AddressModel[]> => {
     const res = await handleAPI("/addresses/all");
-    return res.data || [];
+    const list = res.data || [];
+    return Array.isArray(list) ? list.map(normalizeAddress) : [];
   },
 
   getAddressById: async (id: string): Promise<AddressModel> => {
     const res = await handleAPI(`/addresses/${id}`);
-    return res.data;
+    return normalizeAddress(res.data);
   },
 
   createAddress: async (data: CreateAddressData): Promise<AddressModel> => {
     const res = await handleAPI("/addresses/create", data, "post");
-    return res.data;
+    return normalizeAddress(res.data);
   },
 
   updateAddress: async (
@@ -53,7 +63,7 @@ export const addressService = {
       data,
       "put"
     );
-    return res.data;
+    return normalizeAddress(res.data);
   },
 
   deleteAddress: async (id: string): Promise<any> => {
@@ -63,7 +73,7 @@ export const addressService = {
 
   setDefaultAddress: async (id: string): Promise<any> => {
     const res = await handleAPI(`/addresses/${id}/set-default`, {}, "patch");
-    return res.data;
+    return normalizeAddress(res.data);
   },
 
   getProvinces: async (): Promise<AdministrativeUnit[]> => {

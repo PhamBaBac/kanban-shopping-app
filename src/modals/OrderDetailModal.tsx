@@ -10,10 +10,8 @@ import {
   Space,
   Tag,
   Descriptions,
-  Timeline,
-  Spin,
-  Steps,
   Button,
+  message,
 } from "antd";
 import { VND } from "@/utils/handleCurrency";
 import {
@@ -21,10 +19,8 @@ import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
-  CarOutlined,
-  ClockCircleOutlined,
   ExportOutlined,
-  SyncOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
 import { orderService } from "@/services";
 
@@ -44,6 +40,7 @@ interface OrderDetailModalProps {
     orderStatus: string;
     cancelReason?: string;
     trackingCode?: string;
+    carrier?: string;
     shippingStatus?: string;
     shippingFee?: number;
     subtotal?: number;
@@ -70,79 +67,26 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   onClose,
   orderDetail,
 }) => {
-  const [shippingTracking, setShippingTracking] = useState<any>(null);
-  const [trackingLoading, setTrackingLoading] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<any>(orderDetail);
 
   const activeOrder = currentOrder || orderDetail;
 
-  const fetchTrackingAndOrder = async () => {
-    if (!orderDetail) return;
-    setTrackingLoading(true);
+  const fetchOrder = async () => {
+    if (!orderDetail?.id) return;
     try {
-      const promises: Promise<any>[] = [];
-      if (orderDetail.trackingCode) {
-        promises.push(
-          orderService
-            .getTrackingByCode(orderDetail.trackingCode)
-            .then((data) => setShippingTracking(data))
-            .catch((err) => {
-              console.error("Failed to fetch tracking data:", err);
-              setShippingTracking(null);
-            })
-        );
-      }
-      if (orderDetail.id) {
-        promises.push(
-          orderService
-            .getOrderDetail(orderDetail.id)
-            .then((res) => {
-              if (res) setCurrentOrder(res);
-            })
-            .catch((err) => console.error("Failed to refresh order:", err))
-        );
-      }
-      await Promise.allSettled(promises);
-    } finally {
-      setTrackingLoading(false);
+      const res = await orderService.getOrderDetail(orderDetail.id);
+      if (res) setCurrentOrder(res);
+    } catch (err) {
+      console.error("Failed to refresh order:", err);
     }
   };
 
   useEffect(() => {
     setCurrentOrder(orderDetail);
-    if (visible && orderDetail) {
-      fetchTrackingAndOrder();
-    } else {
-      setShippingTracking(null);
+    if (visible && orderDetail?.id) {
+      fetchOrder();
     }
-  }, [visible, orderDetail?.id, orderDetail?.trackingCode]);
-
-  const getShippingStatusRank = (status?: string): number => {
-    const s = (status || "").toLowerCase();
-    if (["ready_to_pick", "picking", "money_collect_picking"].includes(s)) return 0;
-    if (["picked", "storing", "transporting", "sorting"].includes(s)) return 1;
-    if (["delivering", "money_collect_delivering"].includes(s)) return 2;
-    if (["delivered"].includes(s)) return 3;
-    if (["cancel", "return", "return_transporting", "return_sorting", "returning", "return_fail", "returned", "delivery_fail", "damage", "lost"].includes(s)) return 99;
-    return -1;
-  };
-
-  const mapShippingStatusToTitle = (status?: string): string => {
-    const s = (status || "").toLowerCase();
-    switch (s) {
-      case "ready_to_pick": return "Mới tạo đơn - Chờ lấy hàng";
-      case "picking": return "Shipper đang đi lấy hàng";
-      case "picked": return "Đã lấy hàng thành công";
-      case "storing": return "Hàng đã nhập kho GHN";
-      case "transporting": return "Đang luân chuyển hàng giữa các kho";
-      case "sorting": return "Đang phân loại hàng hóa";
-      case "delivering": return "Shipper đang trên đường giao hàng";
-      case "money_collect_delivering": return "Shipper đang thu tiền khi giao";
-      case "delivered": return "Giao hàng thành công";
-      case "cancel": return "Đơn hàng đã hủy";
-      default: return status || "Mới tạo đơn - Chờ lấy hàng";
-    }
-  };
+  }, [visible, orderDetail?.id]);
   const getOrderStatusBadge = (status: string) => {
     const s = (status || "PENDING").toUpperCase();
     switch (s) {
@@ -204,6 +148,21 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     }
   };
 
+  const isSystemOrPriceAttribute = (key: string): boolean => {
+    const k = key.trim().toLowerCase().replace(/[-_]/g, "");
+    return (
+      k === "discounttype" ||
+      k === "discountvalue" ||
+      k === "discountamount" ||
+      k === "discount" ||
+      k === "price" ||
+      k === "cost" ||
+      k === "stock" ||
+      k === "qty" ||
+      k === "reservedstock"
+    );
+  };
+
   const getItemAttributes = (item: any): Record<string, string> => {
     let attrs: any = item.attributes;
     if (typeof attrs === "string") {
@@ -215,11 +174,32 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     }
     const res: Record<string, string> = {};
     if (attrs && typeof attrs === "object") {
-      Object.entries(attrs).forEach(([k, v]) => {
-        if (v !== null && v !== undefined && String(v).trim() !== "") {
-          res[k] = String(v);
-        }
-      });
+      if (Array.isArray(attrs)) {
+        attrs.forEach((it: any) => {
+          const k = it?.name || it?.key || it?.label;
+          const v = it?.value;
+          if (
+            k &&
+            !isSystemOrPriceAttribute(String(k)) &&
+            v !== null &&
+            v !== undefined &&
+            String(v).trim() !== ""
+          ) {
+            res[String(k)] = String(v);
+          }
+        });
+      } else {
+        Object.entries(attrs).forEach(([k, v]) => {
+          if (
+            !isSystemOrPriceAttribute(k) &&
+            v !== null &&
+            v !== undefined &&
+            String(v).trim() !== ""
+          ) {
+            res[k] = String(v);
+          }
+        });
+      }
     }
     if (item.color && !Object.keys(res).some((k) => /màu|color/i.test(k))) {
       res["Màu sắc"] = item.color;
@@ -289,6 +269,23 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       ]}
       width={820}
       centered
+      style={{
+        maxWidth: "calc(100vw - 32px)",
+      }}
+      styles={{
+        body: {
+          maxHeight: "calc(85vh - 130px)",
+          overflowY: "auto",
+          overflowX: "hidden",
+          paddingRight: 8,
+        },
+      }}
+      bodyStyle={{
+        maxHeight: "calc(85vh - 130px)",
+        overflowY: "auto",
+        overflowX: "hidden",
+        paddingRight: 8,
+      }}
     >
       {orderDetail && statusBadge && (
         <div style={{ padding: "10px 0" }}>
@@ -368,7 +365,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   </Space>
                 </Descriptions.Item>
                 {orderDetail.email && (
-                  <Descriptions.Item label="Email">
+                  <Descriptions.Item label="Email" span={2}>
                     <Space>
                       <MailOutlined style={{ color: "#131118" }} />
                       <span style={{ color: "#4B5563" }}>{orderDetail.email}</span>
@@ -396,348 +393,128 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     </Descriptions.Item>
                   )}
               </Descriptions>
-            </div>
-          </div>
 
-          {/* Shipping / GHN Tracking Information */}
-          {orderDetail.trackingCode ? (
-            <div
-              style={{
-                marginBottom: "20px",
-                padding: "18px",
-                borderRadius: "12px",
-                background: "#FAFAFA",
-                border: "1px solid #E5E7EB",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                  marginBottom: "16px",
-                }}
-              >
-                <Space align="center" size="middle">
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
-                      background: "#131118",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#FFFFFF",
-                    }}
-                  >
-                    <CarOutlined style={{ fontSize: "18px" }} />
-                  </div>
-                  <div>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#131118",
-                        display: "block",
-                      }}
-                    >
-                      Giao Hàng Nhanh (GHN)
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#6B7280" }}>
-                      Theo dõi lộ trình giao hàng trực tiếp
-                    </span>
-                  </div>
-                </Space>
+              {orderDetail.trackingCode && (() => {
+                const code = orderDetail.trackingCode?.trim() || "";
+                const rawCarrier = (orderDetail.carrier || "").toUpperCase();
+                let carrierType = rawCarrier;
+                if (!carrierType) {
+                  if (code.startsWith("SHOP-")) carrierType = "SHOP_DELIVERY";
+                  else if (code.startsWith("VIETTEL_POST-") || code.startsWith("VT")) carrierType = "VIETTEL_POST";
+                  else if (code.startsWith("GHTK-")) carrierType = "GHTK";
+                  else if (code.startsWith("J_AND_T-")) carrierType = "J_AND_T";
+                  else if (code.startsWith("VNPOST-")) carrierType = "VNPOST";
+                  else carrierType = "GHN";
+                }
 
-                <Space size="small">
-                  <span
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      background: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      padding: "4px 10px",
-                      borderRadius: "6px",
-                      color: "#131118",
-                    }}
-                  >
-                    Vận đơn: <strong>{orderDetail.trackingCode}</strong>
-                  </span>
-                  <Button
-                    size="small"
-                    type="default"
-                    icon={<ExportOutlined />}
-                    href={`https://tracking.ghn.dev/?order_code=${orderDetail.trackingCode}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      border: "1px solid #E5E7EB",
-                      color: "#131118",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Tra cứu GHN
-                  </Button>
-                </Space>
-              </div>
+                let carrierName = "Đối tác vận chuyển";
+                let tagColor = "default";
+                let trackingUrl: string | null = null;
 
-              {/* Progress Steps */}
-              {(() => {
-                const trkStatus = shippingTracking?.status;
-                const dbStatus = activeOrder?.shippingStatus;
-
-                const effectiveStatus = (
-                  getShippingStatusRank(dbStatus) > getShippingStatusRank(trkStatus)
-                    ? dbStatus
-                    : (trkStatus || dbStatus || "ready_to_pick")
-                ).toLowerCase();
-
-                let currentStep = 0;
-                let isFailed = false;
-
-                if (["ready_to_pick", "picking", "money_collect_picking"].includes(effectiveStatus)) {
-                  currentStep = 0;
-                } else if (["picked", "storing", "transporting", "sorting"].includes(effectiveStatus)) {
-                  currentStep = 1;
-                } else if (["delivering", "money_collect_delivering"].includes(effectiveStatus)) {
-                  currentStep = 2;
-                } else if (["delivered"].includes(effectiveStatus)) {
-                  currentStep = 3;
-                } else if (["cancel", "return", "return_transporting", "return_sorting", "returning", "return_fail", "returned", "delivery_fail", "damage", "lost"].includes(effectiveStatus)) {
-                  currentStep = 1;
-                  isFailed = true;
+                if (carrierType === "SHOP_DELIVERY") {
+                  carrierName = "Cửa hàng tự giao";
+                  tagColor = "green";
+                } else if (carrierType === "VIETTEL_POST") {
+                  carrierName = "Viettel Post";
+                  tagColor = "red";
+                  trackingUrl = `https://viettelpost.com.vn/tra-cuu-hanh-trinh-don/?code=${code}`;
+                } else if (carrierType === "GHTK") {
+                  carrierName = "GHTK";
+                  tagColor = "cyan";
+                  trackingUrl = `https://giaohangtietkiem.vn/tra-cuu-don-hang/?order_code=${code}`;
+                } else if (carrierType === "GHN") {
+                  carrierName = "Giao Hàng Nhanh (GHN)";
+                  tagColor = "blue";
+                  trackingUrl = `https://tracking.ghn.dev/?order_code=${code}`;
+                } else {
+                  carrierName = orderDetail.carrier || "Đơn vị vận chuyển";
                 }
 
                 return (
                   <div
                     style={{
-                      background: "#FFFFFF",
-                      padding: "16px",
-                      borderRadius: "8px",
-                      marginBottom: "16px",
-                      border: "1px solid #E5E7EB",
-                    }}
-                  >
-                    <Steps
-                      size="small"
-                      current={currentStep}
-                      status={isFailed ? "error" : undefined}
-                      items={[
-                        { title: "Chờ lấy hàng", description: "Shop đóng gói" },
-                        { title: "Đang luân chuyển", description: "Đã nhập kho GHN" },
-                        { title: "Đang giao", description: "Shipper đang giao" },
-                        { title: "Thành công", description: "Đã giao hàng" },
-                      ]}
-                    />
-                  </div>
-                );
-              })()}
-
-              <div
-                style={{
-                  background: "#FFFFFF",
-                  padding: "12px 16px",
-                  borderRadius: "8px",
-                  border: "1px solid #E5E7EB",
-                  marginBottom: "16px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                }}
-              >
-                <div>
-                  <span style={{ fontSize: "12px", color: "#6B7280", marginRight: "8px" }}>
-                    Trạng thái hiện tại:
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      background: "#F3F4F6",
-                      color: "#131118",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      border: "1px solid #E5E7EB",
-                    }}
-                  >
-                    {(() => {
-                      const trkStatus = shippingTracking?.status;
-                      const dbStatus = activeOrder?.shippingStatus;
-                      return getShippingStatusRank(dbStatus) > getShippingStatusRank(trkStatus)
-                        ? mapShippingStatusToTitle(dbStatus)
-                        : (shippingTracking?.statusName || mapShippingStatusToTitle(dbStatus || "ready_to_pick"));
-                    })()}
-                  </span>
-                </div>
-
-                {shippingTracking?.expectedDeliveryTime && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <ClockCircleOutlined style={{ color: "#131118" }} />
-                    <span style={{ fontSize: "12px", color: "#6B7280" }}>Dự kiến giao:</span>
-                    <strong style={{ fontSize: "12px", color: "#131118" }}>
-                      {new Date(shippingTracking.expectedDeliveryTime).toLocaleString("vi-VN")}
-                    </strong>
-                  </div>
-                )}
-              </div>
-
-              {trackingLoading ? (
-                <div style={{ textAlign: "center", padding: "16px 0" }}>
-                  <Spin tip="Đang đồng bộ lộ trình GHN..." size="small" />
-                </div>
-              ) : (
-                <div
-                  style={{
-                    background: "#FFFFFF",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    border: "1px solid #E5E7EB",
-                  }}
-                >
-                  <div
-                    style={{
+                      marginTop: "14px",
+                      paddingTop: "12px",
+                      borderTop: "1px dashed #E5E7EB",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      marginBottom: "12px",
+                      flexWrap: "wrap",
+                      gap: "10px",
                     }}
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontWeight: 600,
-                        fontSize: "13px",
-                        color: "#131118",
-                      }}
-                    >
-                      Lịch sử lộ trình
-                    </span>
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<SyncOutlined spin={trackingLoading} />}
-                      onClick={fetchTrackingAndOrder}
-                      style={{ color: "#4B5563", fontSize: "12px", cursor: "pointer" }}
-                    >
-                      Làm mới
-                    </Button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <Tag
+                        color={tagColor}
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "12px",
+                          padding: "2px 8px",
+                          margin: 0,
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {carrierName}
+                      </Tag>
+                      <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                        Mã vận đơn:
+                      </span>
+                      <Tag
+                        color="orange"
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "12px",
+                          padding: "2px 8px",
+                          margin: 0,
+                        }}
+                      >
+                        {code}
+                      </Tag>
+                    </div>
+
+                    {trackingUrl ? (
+                      <Button
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<ExportOutlined />}
+                        href={trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        Tra cứu trên {carrierName}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="small"
+                        icon={<CopyOutlined />}
+                        onClick={() => {
+                          navigator.clipboard.writeText(code);
+                          message.success("Đã sao chép mã vận đơn!");
+                        }}
+                        style={{
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        Sao chép mã
+                      </Button>
+                    )}
                   </div>
-                  <Timeline
-                    items={(() => {
-                      const trkStatus = shippingTracking?.status;
-                      const dbStatus = activeOrder?.shippingStatus;
-                      const effectiveStatus = (
-                        getShippingStatusRank(dbStatus) > getShippingStatusRank(trkStatus)
-                          ? dbStatus
-                          : (trkStatus || dbStatus || "ready_to_pick")
-                      ).toLowerCase();
-                      const effectiveStatusName =
-                        getShippingStatusRank(dbStatus) > getShippingStatusRank(trkStatus)
-                          ? mapShippingStatusToTitle(dbStatus)
-                          : (shippingTracking?.statusName || mapShippingStatusToTitle(effectiveStatus));
-
-                      const rawLogs = shippingTracking?.logs || [];
-                      const logsToRender = [...rawLogs];
-                      if (getShippingStatusRank(effectiveStatus) > 0) {
-                        const hasCurrent = logsToRender.some(
-                          (l: any) => (l.status || "").toLowerCase() === effectiveStatus
-                        );
-                        if (!hasCurrent) {
-                          logsToRender.unshift({
-                            status: effectiveStatus,
-                            statusName: effectiveStatusName,
-                            location: "Hệ thống GHN đang cập nhật lộ trình giao hàng",
-                            updatedDate: new Date().toISOString(),
-                          });
-                        }
-                      }
-
-                      if (logsToRender.length === 0) {
-                        return [
-                          {
-                            color: "#131118",
-                            children: (
-                              <div>
-                                <Text strong style={{ color: "#131118" }}>
-                                  {effectiveStatusName}
-                                </Text>
-                                <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                                  {effectiveStatus === "delivering"
-                                    ? "Shipper đang trên đường giao hàng đến địa chỉ nhận."
-                                    : "Đơn hàng đã được tạo thành công trên hệ thống Giao Hàng Nhanh (GHN). Shipper sẽ sớm đến lấy hàng."}
-                                </div>
-                                {activeOrder?.createdAt && (
-                                  <div style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px" }}>
-                                    {activeOrder.createdAt}
-                                  </div>
-                                )}
-                              </div>
-                            ),
-                          },
-                        ];
-                      }
-
-                      return logsToRender.map((log: any, idx: number) => {
-                        const isLatest = idx === 0;
-                        return {
-                          color: isLatest ? "#131118" : "#9CA3AF",
-                          children: (
-                            <div>
-                              <Text strong={isLatest} style={{ color: isLatest ? "#131118" : "#4B5563" }}>
-                                {log.statusName || mapShippingStatusToTitle(log.status)}
-                              </Text>
-                              {log.location && (
-                                <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                                  {log.location}
-                                </div>
-                              )}
-                              {(log.updatedDate || log.action_at) && (
-                                <div style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px" }}>
-                                  {new Date(log.updatedDate || log.action_at).toLocaleString("vi-VN")}
-                                </div>
-                              )}
-                            </div>
-                          ),
-                        };
-                      });
-                    })()}
-                  />
-                </div>
-              )}
+                );
+              })()}
             </div>
-          ) : (
-            <div
-              style={{
-                marginBottom: "20px",
-                padding: "16px",
-                borderRadius: "10px",
-                background: "#FAFAFA",
-                border: "1px dashed #D1D5DB",
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-              }}
-            >
-              <CarOutlined style={{ fontSize: "22px", color: "#9CA3AF" }} />
-              <div>
-                <Text strong style={{ color: "#374151", display: "block" }}>
-                  Thông tin vận chuyển
-                </Text>
-                <Text type="secondary" style={{ fontSize: "13px", color: "#6B7280" }}>
-                  Đơn hàng đang chờ cửa hàng chuẩn bị và bàn giao cho đơn vị vận chuyển Giao Hàng Nhanh (GHN).
-                </Text>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Order Items */}
           <div style={{ marginBottom: "20px" }}>

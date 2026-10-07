@@ -41,6 +41,17 @@ const ListCart = ({
 
   useEffect(() => {
     if (carts && carts.length > 0 && !hasInitializedSelection.current) {
+      const buyNowSubId = router.query.buyNowId as string;
+      if (buyNowSubId) {
+        const targetItem = carts.find(
+          (c) => String(c.subProductId) === String(buyNowSubId) && !isItemInvalid(c) && c.id
+        );
+        if (targetItem && targetItem.id) {
+          setSelectedRowKeys([targetItem.id]);
+          hasInitializedSelection.current = true;
+          return;
+        }
+      }
       const validKeys = carts
         .filter((c) => !isItemInvalid(c) && c.id)
         .map((c) => c.id as React.Key);
@@ -49,7 +60,7 @@ const ListCart = ({
         hasInitializedSelection.current = true;
       }
     }
-  }, [carts]);
+  }, [carts, router.query.buyNowId]);
 
   useEffect(() => {
     setSelectedRowKeys((prev) =>

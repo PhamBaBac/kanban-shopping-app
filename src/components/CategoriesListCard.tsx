@@ -155,32 +155,15 @@ const CategoriesListCard = (props: Props) => {
 
                   return (
                     <div key={item.id}>
-                      <div style={{ marginBottom: 12 }}>
+                      <div className="mega-menu-category-header">
                         <Link
                           href={`/shop?catId=${item.id}`}
-                          style={{
-                            fontFamily:
-                              "var(--font-heading)",
-                            fontSize: "0.92rem",
-                            fontWeight: 700,
-                            letterSpacing: "0.6px",
-                            textTransform: "uppercase",
-                            color: "#131118",
-                            textDecoration: "none",
-                            display: "inline-block",
-                          }}
+                          onClick={onItemClick}
+                          className="mega-menu-category-title"
                         >
                           {item.title}
                         </Link>
-                        <div
-                          style={{
-                            width: 28,
-                            height: 2,
-                            backgroundColor: "#131118",
-                            marginTop: 4,
-                            borderRadius: 1,
-                          }}
-                        />
+                        <div className="mega-menu-category-underline" />
                       </div>
 
                       {item.children && item.children.length > 0 && (

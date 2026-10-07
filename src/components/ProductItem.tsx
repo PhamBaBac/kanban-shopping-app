@@ -4,19 +4,22 @@ import { colors } from "@/constants/colors";
 import { ProductModel, SubProductModel } from "@/models/Products";
 import { SupplierModel } from "@/models/SupplierModel";
 import { VND } from "@/utils/handleCurrency";
-import { Button, Card, Space, Typography, Modal, Tag, Tooltip, Spin } from "antd";
+import { Button, Card, Space, Typography, Modal, Tag, Tooltip, Spin, message } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BiHeart, BiSolidHeart, BiTransfer } from "react-icons/bi";
-import { BsEye } from "react-icons/bs";
+import { BsEye, BsBagCheckFill } from "react-icons/bs";
+import { FiShoppingCart } from "react-icons/fi";
 import { FaRegStar } from "react-icons/fa";
 import { MdImage } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { authSelector } from "@/redux/reducers/authReducer";
+import { themeSelector } from "@/redux/reducers/themeSlice";
 import { productService } from "@/services";
 import { userService } from "@/services/userService";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useCart } from "@/hooks/useCart";
 
 interface Props {
   item: ProductModel;
@@ -35,12 +38,21 @@ const ProductItem = (props: Props) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [quickViewLoading, setQuickViewLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const [isAddingCart, setIsAddingCart] = useState(false);
 
   const ref = useRef<any>();
   const router = useRouter();
   const auth = useSelector(authSelector);
+  const { mode } = useSelector(themeSelector);
+  const isDark = mode === "dark";
   const { isFavorite, toggleFavorite } = useWishlist();
   const isFav = isFavorite(item.id);
+
+  const { count, setCount, handleCart } = useCart({
+    subProductSelected: selectedSubProduct || undefined,
+    product: item,
+  });
 
   const availableSubProducts: SubProductModel[] = useMemo(() => {
     if (subProducts && subProducts.length > 0) return subProducts;
@@ -186,6 +198,84 @@ const ProductItem = (props: Props) => {
     return getSubProductAttributes(selectedSubProduct);
   }, [selectedSubProduct]);
 
+  const sortAttributeValues = (key: string, values: string[]): string[] => {
+    const sizeOrder: Record<string, number> = {
+      XXS: 1,
+      "2XS": 1,
+      XS: 2,
+      S: 3,
+      M: 4,
+      L: 5,
+      XL: 6,
+      XXL: 7,
+      "2XL": 7,
+      XXXL: 8,
+      "3XL": 8,
+      "4XL": 9,
+      "5XL": 10,
+      "6XL": 11,
+      FREESIZE: 99,
+      "FREE SIZE": 99,
+      OS: 99,
+      "ONE SIZE": 99,
+    };
+
+    const cleanSizeStr = (s: string): string => {
+      return s
+        .trim()
+        .replace(/^(size|cỡ|kích\s*cỡ|kích\s*thước)\s*:?\s*/i, "")
+        .trim()
+        .toUpperCase();
+    };
+
+    const getStorageBytes = (str: string): number | null => {
+      const match = str.trim().toUpperCase().match(/^(\d+(?:\.\d+)?)\s*(GB|TB|MB|KB)$/);
+      if (!match) return null;
+      const num = parseFloat(match[1]);
+      const unit = match[2];
+      if (unit === "KB") return num * 1024;
+      if (unit === "MB") return num * 1024 * 1024;
+      if (unit === "GB") return num * 1024 * 1024 * 1024;
+      if (unit === "TB") return num * 1024 * 1024 * 1024 * 1024;
+      return null;
+    };
+
+    return [...values].sort((a, b) => {
+      const aClean = cleanSizeStr(a);
+      const bClean = cleanSizeStr(b);
+
+      // 1. Quần áo size chữ: S, M, L, XL, XXL...
+      const aRank = sizeOrder[aClean];
+      const bRank = sizeOrder[bClean];
+      if (aRank !== undefined && bRank !== undefined) {
+        return aRank - bRank;
+      }
+      if (aRank !== undefined) return -1;
+      if (bRank !== undefined) return 1;
+
+      // 2. Dung lượng bộ nhớ: GB, TB...
+      const aBytes = getStorageBytes(a);
+      const bBytes = getStorageBytes(b);
+      if (aBytes !== null && bBytes !== null) {
+        return aBytes - bBytes;
+      }
+
+      // 3. Size số: 28, 29, 30, 31, 32 hoặc size giày: 38, 39, 40...
+      const aNum = parseFloat(aClean);
+      const bNum = parseFloat(bClean);
+      const isANum = !isNaN(aNum) && String(aNum) === aClean;
+      const isBNum = !isNaN(bNum) && String(bNum) === bClean;
+      if (isANum && isBNum) {
+        return aNum - bNum;
+      }
+      if (isANum) return -1;
+      if (isBNum) return 1;
+
+      // 4. Mặc định theo thứ tự tự nhiên locale
+      return a.localeCompare(b, "vi", { numeric: true, sensitivity: "base" });
+    });
+  };
+
   const getAvailableValuesForKey = (key: string): string[] => {
     const valuesSet = new Set<string>();
     currentSubProducts.forEach((sp) => {
@@ -194,7 +284,56 @@ const ProductItem = (props: Props) => {
         valuesSet.add(attrs[key].trim());
       }
     });
-    return Array.from(valuesSet);
+    return sortAttributeValues(key, Array.from(valuesSet));
+  };
+
+  const handleBuyNow = async () => {
+    if (!selectedSubProduct) {
+      message.warning("Vui lòng chọn phân loại sản phẩm!");
+      return;
+    }
+
+    if (selectedSubProduct.stock <= 0) {
+      message.warning("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    setIsBuyingNow(true);
+    try {
+      const isSuccess = await handleCart();
+      if (isSuccess) {
+        setShowQuickView(false);
+        router.push(`/shop/checkout?buyNowId=${selectedSubProduct.id}`);
+      }
+    } catch (err: any) {
+      console.error("Lỗi khi mua ngay:", err);
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!selectedSubProduct) {
+      message.warning("Vui lòng chọn phân loại sản phẩm!");
+      return;
+    }
+
+    if (selectedSubProduct.stock <= 0) {
+      message.warning("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    setIsAddingCart(true);
+    try {
+      const isSuccess = await handleCart();
+      if (isSuccess) {
+        message.success("Đã thêm sản phẩm vào giỏ hàng thành công!");
+      }
+    } catch (err: any) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", err);
+    } finally {
+      setIsAddingCart(false);
+    }
   };
 
   const isHexColor = (val: string) =>
@@ -584,7 +723,7 @@ const ProductItem = (props: Props) => {
               style={{
                 width: "100%",
                 height: 320,
-                background: "#f8f9fa",
+                background: isDark ? "#242428" : "#f8f9fa",
                 borderRadius: 8,
                 display: "flex",
                 alignItems: "center",
@@ -726,19 +865,156 @@ const ProductItem = (props: Props) => {
               </div>
             ) : null}
 
-            <div style={{ marginTop: 18 }}>
-              <Button
-                type="primary"
-                size="large"
-                style={{ width: "100%", borderRadius: 8, height: 40, fontWeight: 500 }}
-                onClick={() => {
-                  const slug = item.slug || "detail";
-                  router.push(`/products/${slug}/${item.id}`);
-                }}
-              >
-                Xem chi tiết sản phẩm &rarr;
-              </Button>
-            </div>
+            {/* Quantity Stepper & Buy Now / Add to Cart */}
+            {(() => {
+              const isOutOfStock = !selectedSubProduct || selectedSubProduct.stock <= 0;
+              return (
+                <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                  {/* Row 1: Stepper & Nút Mua ngay */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* Stepper */}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        border: `1px solid ${isDark ? "#38383e" : "#E5E7EB"}`,
+                        borderRadius: 8,
+                        backgroundColor: isDark ? "#242428" : "#FFFFFF",
+                        height: 42,
+                        padding: "0 4px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Button
+                        onClick={() => setCount(Math.max(1, count - 1))}
+                        disabled={count <= 1 || isOutOfStock}
+                        type="text"
+                        size="small"
+                        style={{
+                          width: 30,
+                          height: 30,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 700,
+                          color: isDark ? "#FFFFFF" : "#131118",
+                        }}
+                      >
+                        -
+                      </Button>
+                      <span
+                        style={{
+                          minWidth: 32,
+                          textAlign: "center",
+                          fontWeight: 600,
+                          fontSize: "0.95rem",
+                          color: isDark ? "#FFFFFF" : "#131118",
+                        }}
+                      >
+                        {count}
+                      </span>
+                      <Button
+                        onClick={() => setCount(count + 1)}
+                        disabled={isOutOfStock || (selectedSubProduct ? count >= selectedSubProduct.stock : true)}
+                        type="text"
+                        size="small"
+                        style={{
+                          width: 30,
+                          height: 30,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 700,
+                          color: isDark ? "#FFFFFF" : "#131118",
+                        }}
+                      >
+                        +
+                      </Button>
+                    </div>
+
+                    {/* Nút Mua Ngay */}
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<BsBagCheckFill size={15} />}
+                      loading={isBuyingNow}
+                      disabled={isOutOfStock}
+                      onClick={handleBuyNow}
+                      style={{
+                        flex: 1,
+                        height: 42,
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        fontSize: "0.95rem",
+                        backgroundColor: isOutOfStock ? undefined : (isDark ? "#ffffff" : "#131118"),
+                        borderColor: isOutOfStock ? undefined : (isDark ? "#ffffff" : "#131118"),
+                        color: isOutOfStock ? undefined : (isDark ? "#131118" : "#ffffff"),
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {isOutOfStock ? "Hết hàng" : "Mua ngay"}
+                    </Button>
+                  </div>
+
+                  {/* Row 2: Thêm vào giỏ & Xem chi tiết trên cùng 1 hàng */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* Nút Thêm vào giỏ */}
+                    <Button
+                      size="large"
+                      icon={<FiShoppingCart size={16} />}
+                      loading={isAddingCart}
+                      disabled={isOutOfStock}
+                      onClick={handleAddToCart}
+                      style={{
+                        flex: 1,
+                        height: 40,
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        fontSize: "0.92rem",
+                        borderColor: isOutOfStock ? undefined : (isDark ? "#4b4b55" : "#131118"),
+                        color: isOutOfStock ? undefined : (isDark ? "#ffffff" : "#131118"),
+                        backgroundColor: isDark ? "#1f1f23" : "#ffffff",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      Thêm vào giỏ
+                    </Button>
+
+                    {/* Nút Xem chi tiết */}
+                    <Button
+                      type="default"
+                      size="large"
+                      style={{
+                        flex: 1,
+                        height: 40,
+                        borderRadius: 8,
+                        fontWeight: 500,
+                        fontSize: "0.92rem",
+                        color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                        borderColor: isDark ? "#38383e" : "#E5E7EB",
+                        backgroundColor: isDark ? "transparent" : "#F9FAFB",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                      }}
+                      onClick={() => {
+                        const slug = item.slug || "detail";
+                        router.push(`/products/${slug}/${item.id}`);
+                      }}
+                    >
+                      Xem chi tiết &rarr;
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </Modal>

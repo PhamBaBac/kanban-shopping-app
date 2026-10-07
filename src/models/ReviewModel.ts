@@ -1,16 +1,21 @@
 /** @format */
 
 export interface ReviewModel {
+  id?: string;
+  _id?: string;
   comment: string;
   star: number;
   createdBy: string;
-  parentId: string;
-  images: any[];
-  like: string[];
-  isDeleted: boolean;
-  _id: string;
+  userFirstname?: string;
+  userLastname?: string;
+  userAvatar?: string;
+  subProductId?: string;
+  color?: string;
+  size?: string;
+  images?: string[];
+  like?: string[];
+  isDeleted?: boolean;
   createdAt: string;
-  updatedAt: string;
-  dislike: string[];
-  __v: number;
+  updatedAt?: string;
 }
+

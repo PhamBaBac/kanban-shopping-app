@@ -60,16 +60,19 @@ const AddNewAddress = (props: Props) => {
         }
       }
 
+      const initialDefault = Boolean(values.isDefault ?? (values as any).default ?? false);
       form.setFieldsValue({
         name: values.name,
         phoneNumber: values.phoneNumber,
         houseNo: houseNo,
+        isDefault: initialDefault,
       });
-      setIsDefault(values.isDefault ?? false);
+      setIsDefault(initialDefault);
 
       initializeForEdit(values);
     } else {
       form.resetFields();
+      form.setFieldsValue({ isDefault: false });
       setIsDefault(false);
       setWards([]);
     }
@@ -161,6 +164,8 @@ const AddNewAddress = (props: Props) => {
       const street = (formData.houseNo || "").trim();
       const formattedAddress = `${street}, ${wardName}, ${provinceName}`;
 
+      const defaultVal = Boolean(formData.isDefault ?? isDefault);
+
       const payload = {
         name: formData.name.trim(),
         phoneNumber: formData.phoneNumber.trim(),
@@ -168,7 +173,8 @@ const AddNewAddress = (props: Props) => {
         province: provinceName,
         district: "", // Bỏ cấp huyện theo mô hình chính quyền 2 cấp
         ward: wardName,
-        isDefault: !!isDefault,
+        isDefault: defaultVal,
+        default: defaultVal,
         createdBy: auth.userId,
       };
 
@@ -287,7 +293,10 @@ const AddNewAddress = (props: Props) => {
         <Form.Item name="isDefault" valuePropName="checked" style={{ marginBottom: 20 }}>
           <Checkbox
             checked={isDefault}
-            onChange={(e) => setIsDefault(e.target.checked)}
+            onChange={(e) => {
+              setIsDefault(e.target.checked);
+              form.setFieldValue("isDefault", e.target.checked);
+            }}
           >
             Đặt làm địa chỉ nhận hàng mặc định
           </Checkbox>

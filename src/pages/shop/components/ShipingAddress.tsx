@@ -43,6 +43,12 @@ const ShipingAddress = (props: Props) => {
     try {
       const res = await addressService.getAddresses();
       setAddress(res);
+      if (res && res.length > 0) {
+        const item = res.find((element) => element.isDefault) || res[0];
+        if (item) {
+          setAddressSelected(item);
+        }
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -303,7 +309,16 @@ const ShipingAddress = (props: Props) => {
       >
         <AddNewAddress
           onAddnew={(val) => {
-            const items = [...address];
+            let items = [...address];
+            const isValDefault = Boolean(val.isDefault || (val as any).default);
+            if (isValDefault) {
+              items = items.map((element) => ({
+                ...element,
+                isDefault: false,
+              }));
+              val.isDefault = true;
+            }
+
             if (isEditAddress) {
               const index = items.findIndex(
                 (element) => element.id === isEditAddress.id
@@ -315,10 +330,17 @@ const ShipingAddress = (props: Props) => {
 
               setIsEditAddress(undefined);
             } else {
-              items.push(val);
+              if (isValDefault) {
+                items.unshift(val);
+              } else {
+                items.push(val);
+              }
             }
 
             setAddress(items);
+            if (isValDefault || items.length === 1) {
+              setAddressSelected(val);
+            }
           }}
           values={isEditAddress}
         />

@@ -13,6 +13,9 @@ const Home = (props: any) => {
     promotions,
     categories,
     bestSellers,
+    newArrivals,
+    flashSale,
+    featuredReviews,
     recommendations,
     isLoading,
     error,
@@ -25,7 +28,8 @@ const Home = (props: any) => {
   const hasData = Boolean(
     (promotions && promotions.length > 0) ||
     (categories && categories.length > 0) ||
-    (bestSellers && bestSellers.length > 0)
+    (bestSellers && bestSellers.length > 0) ||
+    (newArrivals && newArrivals.length > 0)
   );
 
   return isLoading && !hasData ? (
@@ -37,6 +41,9 @@ const Home = (props: any) => {
       promotions={promotions}
       categories={categories}
       bestSellers={bestSellers}
+      newArrivals={newArrivals}
+      flashSale={flashSale}
+      featuredReviews={featuredReviews}
     />
   );
 };
@@ -45,10 +52,13 @@ export default Home;
 
 export const getStaticProps = async () => {
   try {
-    const [promotions, categories, bestSellers] = await Promise.all([
+    const [promotions, categories, bestSellers, newArrivals, flashSale, featuredReviews] = await Promise.all([
       homeService.getPromotions(),
       homeService.getCategories(),
       homeService.getBestSellers(),
+      homeService.getNewArrivals(8),
+      homeService.getFlashSale(8),
+      homeService.getFeaturedReviews(6),
     ]);
 
     return {
@@ -56,6 +66,9 @@ export const getStaticProps = async () => {
         promotions: promotions || [],
         categories: categories || [],
         bestSellers: bestSellers || [],
+        newArrivals: newArrivals || [],
+        flashSale: flashSale || [],
+        featuredReviews: featuredReviews || [],
         listProductRecommendations: [],
       },
       revalidate: 60,
@@ -66,6 +79,9 @@ export const getStaticProps = async () => {
         promotions: [],
         categories: [],
         bestSellers: [],
+        newArrivals: [],
+        flashSale: [],
+        featuredReviews: [],
         listProductRecommendations: [],
       },
       revalidate: 10,

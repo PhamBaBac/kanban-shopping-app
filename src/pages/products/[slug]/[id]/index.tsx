@@ -23,13 +23,14 @@ import {
   Typography,
   Spin,
   Tooltip,
+  message,
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { IoAddSharp, IoHeart, IoHeartOutline } from "react-icons/io5";
 import { LuMinus } from "react-icons/lu";
 import { PiCableCar } from "react-icons/pi";
-import { FiTruck, FiShield, FiRefreshCw } from "react-icons/fi";
+import { FiTruck, FiShield, FiRefreshCw, FiShoppingCart } from "react-icons/fi";
 import { HiOutlineHome } from "react-icons/hi2";
 import { useSelector } from "react-redux";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -62,6 +63,7 @@ const ProductDetail = (props: any) => {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [relatedProducts, setRelatedProducts] = useState<ProductModel[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(true);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   const {
     subProducts,
@@ -77,6 +79,20 @@ const ProductDetail = (props: any) => {
     subProductSelected,
     product,
   });
+
+  const cartItemForSelected = useMemo(() => {
+    if (!subProductSelected) return null;
+    return cart.find(
+      (el: any) => String(el.subProductId) === String(subProductSelected?.id)
+    );
+  }, [cart, subProductSelected]);
+
+  const availableQty = useMemo(() => {
+    if (!subProductSelected) return 0;
+    return cartItemForSelected
+      ? (subProductSelected.stock ?? 0) - cartItemForSelected.count
+      : subProductSelected.stock ?? 0;
+  }, [subProductSelected, cartItemForSelected]);
 
   const getSubProductImage = (sp?: SubProductModel | null): string => {
     if (!sp) return "";
@@ -574,19 +590,46 @@ const ProductDetail = (props: any) => {
     );
   };
 
+  const handleBuyNow = async () => {
+    if (!subProductSelected) {
+      message.warning("Vui lòng chọn phân loại sản phẩm!");
+      return;
+    }
+
+    if (availableQty <= 0) {
+      message.warning("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    setIsBuyingNow(true);
+    try {
+      const isSuccess = await handleCart();
+      if (isSuccess) {
+        router.push(`/shop/checkout?buyNowId=${subProductSelected.id}`);
+      }
+    } catch (err: any) {
+      console.error("Lỗi khi mua ngay:", err);
+    } finally {
+      setIsBuyingNow(false);
+    }
+  };
+
   const renderButtonGroup = () => {
     if (!subProductSelected) {
       return (
         <Button
           disabled
           size="large"
-          type="primary"
+          icon={<FiShoppingCart size={18} />}
           style={{
-            flex: "1 1 200px",
-            minWidth: 160,
+            flex: 1,
             height: 48,
             borderRadius: 8,
-            fontWeight: 500,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
           {subProducts.length === 0
@@ -596,15 +639,10 @@ const ProductDetail = (props: any) => {
       );
     }
 
-    const item = cart.find(
-      (el: any) => el.subProductId === subProductSelected?.id
-    );
-    const availableQty = item
-      ? (subProductSelected?.stock ?? 0) - item.count
-      : subProductSelected?.stock ?? 0;
+    const isOutOfStock = availableQty <= 0;
 
     return (
-      <div className="d-flex align-items-center gap-2 gap-sm-3 flex-wrap flex-grow-1">
+      <div className="d-flex align-items-center gap-2 gap-sm-3 flex-grow-1">
         <div
           style={{
             display: "inline-flex",
@@ -619,7 +657,7 @@ const ProductDetail = (props: any) => {
         >
           <Button
             onClick={() => setCount(count - 1)}
-            disabled={count <= 1}
+            disabled={count <= 1 || isOutOfStock}
             type="text"
             icon={<LuMinus size={16} />}
             style={{
@@ -643,7 +681,7 @@ const ProductDetail = (props: any) => {
           </span>
           <Button
             onClick={() => setCount(count + 1)}
-            disabled={count >= (availableQty ?? 0)}
+            disabled={count >= (availableQty ?? 0) || isOutOfStock}
             type="text"
             icon={<IoAddSharp size={18} />}
             style={{
@@ -656,24 +694,54 @@ const ProductDetail = (props: any) => {
           />
         </div>
         <Button
-          disabled={availableQty <= 0}
+          disabled={isOutOfStock || isBuyingNow}
           onClick={handleCart}
           size="large"
-          type="primary"
+          icon={<FiShoppingCart size={18} />}
           style={{
-            flex: "1 1 180px",
+            flex: 1,
             minWidth: 150,
             height: 48,
             borderRadius: 8,
-            backgroundColor: "#131118",
-            borderColor: "#131118",
+            borderColor: isOutOfStock ? undefined : "#131118",
+            color: isOutOfStock ? undefined : "#131118",
+            backgroundColor: isOutOfStock ? undefined : "#FFFFFF",
             fontWeight: 600,
             fontSize: "0.95rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
-          {availableQty <= 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
+          {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ hàng"}
         </Button>
       </div>
+    );
+  };
+
+  const renderBuyNowButton = () => {
+    const isOutOfStock = !subProductSelected || availableQty <= 0;
+    return (
+      <Button
+        disabled={isOutOfStock}
+        loading={isBuyingNow}
+        onClick={handleBuyNow}
+        size="large"
+        type="primary"
+        style={{
+          width: "100%",
+          height: 48,
+          borderRadius: 8,
+          backgroundColor: isOutOfStock ? undefined : "#131118",
+          borderColor: isOutOfStock ? undefined : "#131118",
+          color: "#FFFFFF",
+          fontWeight: 600,
+          fontSize: "1rem",
+        }}
+      >
+        {isOutOfStock && subProductSelected ? "Hết hàng" : "Mua ngay"}
+      </Button>
     );
   };
 
@@ -1124,32 +1192,35 @@ const ProductDetail = (props: any) => {
                 })}
 
                 <div className="mt-4 pt-2">
-                  <div className="d-flex align-items-center gap-2 gap-sm-3 flex-wrap">
-                    {renderButtonGroup()}
-                    <Button
-                      size="large"
-                      icon={
-                        isFav ? (
-                          <IoHeart size={22} style={{ color: "#EF4444" }} />
-                        ) : (
-                          <IoHeartOutline size={22} />
-                        )
-                      }
-                      onClick={() => {
-                        if (product) toggleFavorite(product);
-                      }}
-                      style={{
-                        height: 48,
-                        width: 48,
-                        flexShrink: 0,
-                        borderRadius: 8,
-                        borderColor: isFav ? "#EF4444" : "#E5E7EB",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      aria-label={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
-                    />
+                  <div className="d-flex flex-column gap-2 gap-sm-3">
+                    <div className="d-flex align-items-center gap-2 gap-sm-3">
+                      {renderButtonGroup()}
+                      <Button
+                        size="large"
+                        icon={
+                          isFav ? (
+                            <IoHeart size={22} style={{ color: "#EF4444" }} />
+                          ) : (
+                            <IoHeartOutline size={22} />
+                          )
+                        }
+                        onClick={() => {
+                          if (product) toggleFavorite(product);
+                        }}
+                        style={{
+                          height: 48,
+                          width: 48,
+                          flexShrink: 0,
+                          borderRadius: 8,
+                          borderColor: isFav ? "#EF4444" : "#E5E7EB",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                        aria-label={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                      />
+                    </div>
+                    {renderBuyNowButton()}
                   </div>
                 </div>
 

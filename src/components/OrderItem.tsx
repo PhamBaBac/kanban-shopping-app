@@ -62,6 +62,21 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const [orderDetail, setOrderDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const isSystemOrPriceAttribute = (key: string): boolean => {
+    const k = key.trim().toLowerCase().replace(/[-_]/g, "");
+    return (
+      k === "discounttype" ||
+      k === "discountvalue" ||
+      k === "discountamount" ||
+      k === "discount" ||
+      k === "price" ||
+      k === "cost" ||
+      k === "stock" ||
+      k === "qty" ||
+      k === "reservedstock"
+    );
+  };
+
   const getItemAttributes = (item: any): Record<string, string> => {
     let attrs: any = item.attributes;
     if (typeof attrs === "string") {
@@ -73,11 +88,32 @@ const OrderItem: React.FC<OrderItemProps> = ({
     }
     const res: Record<string, string> = {};
     if (attrs && typeof attrs === "object") {
-      Object.entries(attrs).forEach(([k, v]) => {
-        if (v !== null && v !== undefined && String(v).trim() !== "") {
-          res[k] = String(v);
-        }
-      });
+      if (Array.isArray(attrs)) {
+        attrs.forEach((it: any) => {
+          const k = it?.name || it?.key || it?.label;
+          const v = it?.value;
+          if (
+            k &&
+            !isSystemOrPriceAttribute(String(k)) &&
+            v !== null &&
+            v !== undefined &&
+            String(v).trim() !== ""
+          ) {
+            res[String(k)] = String(v);
+          }
+        });
+      } else {
+        Object.entries(attrs).forEach(([k, v]) => {
+          if (
+            !isSystemOrPriceAttribute(k) &&
+            v !== null &&
+            v !== undefined &&
+            String(v).trim() !== ""
+          ) {
+            res[k] = String(v);
+          }
+        });
+      }
     }
     if (item.color && !Object.keys(res).some((k) => /màu|color/i.test(k))) {
       res["Màu sắc"] = item.color;
@@ -89,9 +125,7 @@ const OrderItem: React.FC<OrderItemProps> = ({
   };
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [openReviewProductId, setOpenReviewProductId] = useState<string | null>(
-    null
-  );
+  const [reviewingItem, setReviewingItem] = useState<any | null>(null);
 
   const getOrderStatusBadge = (status: string) => {
     const s = (status || "PENDING").toUpperCase();
@@ -260,9 +294,12 @@ const OrderItem: React.FC<OrderItemProps> = ({
             </span>
 
             {trackingCode && (
-              <Tooltip title="Bấm để xem chi tiết lộ trình vận chuyển GHN">
+              <Tooltip title="Tra cứu trực tiếp trên GHN (Mở tab mới)">
                 <span
-                  onClick={handleViewOrderDetails}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`https://tracking.ghn.dev/?order_code=${trackingCode}`, "_blank");
+                  }}
                   style={{
                     cursor: "pointer",
                     display: "inline-flex",
@@ -311,7 +348,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
               const attrs = getItemAttributes(item);
               const entries = Object.entries(attrs);
               const isItemReviewed = item.isReviewed;
-              const isReviewOpen = openReviewProductId === item.subProductId;
 
               return (
                 <div
@@ -418,19 +454,15 @@ const OrderItem: React.FC<OrderItemProps> = ({
                                 borderRadius: "6px",
                                 fontSize: "12px",
                                 fontWeight: 500,
-                                background: isReviewOpen ? "#F3F4F6" : "#131118",
-                                color: isReviewOpen ? "#131118" : "#FFFFFF",
-                                border: isReviewOpen ? "1px solid #E5E7EB" : "none",
+                                background: "#131118",
+                                color: "#FFFFFF",
+                                border: "none",
                                 cursor: "pointer",
                                 transition: "all 0.2s ease",
                               }}
-                              onClick={() =>
-                                setOpenReviewProductId(
-                                  isReviewOpen ? null : item.subProductId
-                                )
-                              }
+                              onClick={() => setReviewingItem(item)}
                             >
-                              {isReviewOpen ? "Đóng đánh giá" : "Viết đánh giá"}
+                              Viết đánh giá
                             </Button>
                           ) : (
                             <span
@@ -450,28 +482,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
                       )}
                     </div>
                   </div>
-
-                  {order.orderStatus?.toLowerCase() === "completed" &&
-                    isReviewOpen &&
-                    !isItemReviewed && (
-                      <div
-                        style={{
-                          marginTop: "14px",
-                          paddingTop: "14px",
-                          borderTop: "1px dashed #E5E7EB",
-                        }}
-                      >
-                        <Reviews
-                          subProductId={item.subProductId}
-                          orderId={order.orderId}
-                          isReviewed={item.isReviewed}
-                          onReviewed={async () => {
-                            setOpenReviewProductId(null);
-                            await onReviewSubmitted?.();
-                          }}
-                        />
-                      </div>
-                    )}
                 </div>
               );
             })}
@@ -605,6 +615,21 @@ const OrderItem: React.FC<OrderItemProps> = ({
         onClose={handleCloseOrderDetail}
         orderDetail={orderDetail}
       />
+
+      {reviewingItem && (
+        <Reviews
+          open={!!reviewingItem}
+          onClose={() => setReviewingItem(null)}
+          subProductId={reviewingItem.subProductId}
+          orderId={order.orderId}
+          itemInfo={reviewingItem}
+          isReviewed={reviewingItem.isReviewed}
+          onReviewed={async () => {
+            setReviewingItem(null);
+            await onReviewSubmitted?.();
+          }}
+        />
+      )}
     </>
   );
 };

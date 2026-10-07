@@ -22,7 +22,7 @@ interface UseCartReturn {
   count: number;
   setCount: (count: number) => void;
   instockQuantity: number;
-  handleCart: () => Promise<void>;
+  handleCart: () => Promise<boolean>;
 }
 
 export const useCart = ({
@@ -53,10 +53,10 @@ export const useCart = ({
     }
   }, [cart, subProductSelected]);
 
-  const handleCart = async () => {
+  const handleCart = async (): Promise<boolean> => {
     if (!subProductSelected) {
       message.error("Vui lòng chọn phân loại / biến thể sản phẩm!");
-      return;
+      return false;
     }
 
     const isLoggedIn = auth.userId && auth.accessToken;
@@ -186,8 +186,10 @@ export const useCart = ({
         }
       }
       setCount(1);
+      return true;
     } catch (error: any) {
       showErrorMessage(error, "Thêm vào giỏ hàng thất bại. Vui lòng thử lại!");
+      return false;
     }
   };
 

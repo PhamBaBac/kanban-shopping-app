@@ -616,44 +616,77 @@ const ChatButton: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Message list */}
                     {liveMessages.map((msg, index) => {
-                      const isUser = msg.role === "USER";
+                      const msgRole = (msg.role || "").toUpperCase();
+                      const isUser =
+                        msgRole === "USER" ||
+                        (Boolean(currentUserId) && String(msg.senderId) === String(currentUserId));
+
                       const prevMsg = index > 0 ? liveMessages[index - 1] : null;
+                      const prevRole = prevMsg ? (prevMsg.role || "").toUpperCase() : "";
+                      const prevIsUser = Boolean(
+                        prevMsg &&
+                          (prevRole === "USER" ||
+                            (Boolean(currentUserId) && String(prevMsg.senderId) === String(currentUserId)))
+                      );
                       const isSameSender = Boolean(
                         prevMsg &&
-                        (prevMsg.senderId && msg.senderId
-                          ? prevMsg.senderId === msg.senderId
-                          : prevMsg.role === msg.role)
+                          (isUser
+                            ? prevIsUser
+                            : !prevIsUser &&
+                              (prevMsg.senderId && msg.senderId
+                                ? String(prevMsg.senderId) === String(msg.senderId)
+                                : true))
                       );
 
                       let isWithinTimeThreshold = false;
-                      if (isSameSender && prevMsg?.createdAt && msg.createdAt) {
-                        const prevTime = new Date(prevMsg.createdAt).getTime();
-                        const currTime = new Date(msg.createdAt).getTime();
-                        if (!isNaN(prevTime) && !isNaN(currTime)) {
-                          const diffMinutes = Math.abs(currTime - prevTime) / (1000 * 60);
-                          isWithinTimeThreshold = diffMinutes <= 5;
+                      if (isSameSender) {
+                        if (prevMsg?.createdAt && msg.createdAt) {
+                          const prevTime = new Date(prevMsg.createdAt).getTime();
+                          const currTime = new Date(msg.createdAt).getTime();
+                          if (!isNaN(prevTime) && !isNaN(currTime)) {
+                            const diffMinutes = Math.abs(currTime - prevTime) / (1000 * 60);
+                            isWithinTimeThreshold = diffMinutes <= 5;
+                          } else {
+                            isWithinTimeThreshold = true;
+                          }
+                        } else {
+                          isWithinTimeThreshold = true;
                         }
                       }
 
                       const isFirstInChain = !isSameSender || !isWithinTimeThreshold;
 
                       const nextMsg = index < liveMessages.length - 1 ? liveMessages[index + 1] : null;
+                      const nextRole = nextMsg ? (nextMsg.role || "").toUpperCase() : "";
+                      const nextIsUser = Boolean(
+                        nextMsg &&
+                          (nextRole === "USER" ||
+                            (Boolean(currentUserId) && String(nextMsg.senderId) === String(currentUserId)))
+                      );
                       const isSameNextSender = Boolean(
                         nextMsg &&
-                        (nextMsg.senderId && msg.senderId
-                          ? nextMsg.senderId === msg.senderId
-                          : nextMsg.role === msg.role)
+                          (isUser
+                            ? nextIsUser
+                            : !nextIsUser &&
+                              (nextMsg.senderId && msg.senderId
+                                ? String(nextMsg.senderId) === String(msg.senderId)
+                                : true))
                       );
 
                       let isNextWithinTimeThreshold = false;
-                      if (isSameNextSender && nextMsg?.createdAt && msg.createdAt) {
-                        const currTime = new Date(msg.createdAt).getTime();
-                        const nextTime = new Date(nextMsg.createdAt).getTime();
-                        if (!isNaN(currTime) && !isNaN(nextTime)) {
-                          const diffMinutes = Math.abs(nextTime - currTime) / (1000 * 60);
-                          isNextWithinTimeThreshold = diffMinutes <= 5;
+                      if (isSameNextSender) {
+                        if (nextMsg?.createdAt && msg.createdAt) {
+                          const currTime = new Date(msg.createdAt).getTime();
+                          const nextTime = new Date(nextMsg.createdAt).getTime();
+                          if (!isNaN(currTime) && !isNaN(nextTime)) {
+                            const diffMinutes = Math.abs(nextTime - currTime) / (1000 * 60);
+                            isNextWithinTimeThreshold = diffMinutes <= 5;
+                          } else {
+                            isNextWithinTimeThreshold = true;
+                          }
+                        } else {
+                          isNextWithinTimeThreshold = true;
                         }
                       }
 
@@ -664,7 +697,34 @@ const ChatButton: React.FC = () => {
                             hour: "2-digit",
                             minute: "2-digit",
                           })
-                        : "";
+                        : new Date().toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          });
+
+                      // Tính toán bo góc thông minh cho bong bóng chat khi gộp tin nhắn
+                      let bubbleBorderRadius: string;
+                      if (isUser) {
+                        if (isFirstInChain && isLastInChain) {
+                          bubbleBorderRadius = "18px 18px 4px 18px";
+                        } else if (isFirstInChain) {
+                          bubbleBorderRadius = "18px 18px 4px 18px";
+                        } else if (isLastInChain) {
+                          bubbleBorderRadius = "18px 4px 18px 18px";
+                        } else {
+                          bubbleBorderRadius = "18px 4px 4px 18px";
+                        }
+                      } else {
+                        if (isFirstInChain && isLastInChain) {
+                          bubbleBorderRadius = "18px 18px 18px 4px";
+                        } else if (isFirstInChain) {
+                          bubbleBorderRadius = "18px 18px 18px 4px";
+                        } else if (isLastInChain) {
+                          bubbleBorderRadius = "4px 18px 18px 18px";
+                        } else {
+                          bubbleBorderRadius = "4px 18px 18px 4px";
+                        }
+                      }
 
                       return (
                         <div
@@ -674,21 +734,23 @@ const ChatButton: React.FC = () => {
                             justifyContent: isUser ? "flex-end" : "flex-start",
                             alignItems: "flex-end",
                             gap: 8,
-                            marginTop: isFirstInChain ? (index === 0 ? 0 : 6) : -4,
+                            marginTop: isFirstInChain ? (index === 0 ? 0 : 12) : 3,
                           }}
                         >
                           {!isUser && (
                             isLastInChain ? (
                               <Avatar
                                 size={28}
+                                src={msg.avatar}
                                 style={{
                                   backgroundColor: "#131118",
                                   color: "#ffffff",
                                   flexShrink: 0,
                                   fontSize: 12,
+                                  marginBottom: isLastInChain && timeStr ? 16 : 0,
                                 }}
                               >
-                                CSKH
+                                {msg.username ? msg.username.charAt(0).toUpperCase() : "CSKH"}
                               </Avatar>
                             ) : (
                               <div style={{ width: 28, flexShrink: 0 }} />
@@ -703,12 +765,12 @@ const ChatButton: React.FC = () => {
                               alignItems: isUser ? "flex-end" : "flex-start",
                             }}
                           >
-                            {!isUser && isLastInChain && (
+                            {!isUser && isFirstInChain && (
                               <span
                                 style={{
                                   fontSize: 11,
                                   color: isDarkMode ? "#A1A1AA" : "#6B7280",
-                                  marginBottom: 2,
+                                  marginBottom: 3,
                                   marginLeft: 4,
                                   fontWeight: 500,
                                 }}
@@ -718,11 +780,10 @@ const ChatButton: React.FC = () => {
                             )}
 
                             <div
+                              title={timeStr || undefined}
                               style={{
                                 padding: "9px 13px",
-                                borderRadius: isUser
-                                  ? "16px 16px 4px 16px"
-                                  : "16px 16px 16px 4px",
+                                borderRadius: bubbleBorderRadius,
                                 backgroundColor: isUser
                                   ? "#131118"
                                   : isDarkMode
@@ -740,6 +801,7 @@ const ChatButton: React.FC = () => {
                                 boxShadow: isUser
                                   ? "0 2px 6px rgba(19, 17, 24, 0.2)"
                                   : "0 1px 3px rgba(0, 0, 0, 0.05)",
+                                transition: "border-radius 0.2s ease",
                               }}
                             >
                               {msg.content}
