@@ -12,7 +12,7 @@ interface UseLoginReturn {
   isEmailVerificationMode: boolean;
   emailVerificationCode: string;
   otpCode: string[];
-  login: (values: { email: string; password: string }) => Promise<void>;
+  login: (values: { email: string; password: string; captchaToken?: string }) => Promise<void>;
   verifyMFA: (code: string) => Promise<void>;
   sendEmailCode: () => Promise<void>;
   handleVerifyEmailCode: (code: string) => Promise<void>;
@@ -42,7 +42,7 @@ export const useLogin = (): UseLoginReturn => {
   const id = searchParams?.get("productId");
   const slug = searchParams?.get("slug");
 
-  const login = async (values: { email: string; password: string }) => {
+  const login = async (values: { email: string; password: string; captchaToken?: string }) => {
     setIsLoading(true);
     try {
       const result = await authLogin(values);

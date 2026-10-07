@@ -16,6 +16,7 @@ export interface AuthUser {
 export interface LoginCredentials {
   email: string;
   password: string;
+  captchaToken?: string;
 }
 
 export interface SignupData {
@@ -24,6 +25,7 @@ export interface SignupData {
   firstName: string;
   lastName: string;
   role?: string;
+  captchaToken?: string;
 }
 
 export const authService = {
@@ -49,8 +51,8 @@ export const authService = {
     return res.data;
   },
 
-  sendVerificationCode: async (email: string): Promise<any> => {
-    const res = await handleAPI("/auth/send-code-email", { email }, "post");
+  sendVerificationCode: async (email: string, captchaToken?: string): Promise<any> => {
+    const res = await handleAPI("/auth/send-code-email", { email, captchaToken }, "post");
     return res.data;
   },
 

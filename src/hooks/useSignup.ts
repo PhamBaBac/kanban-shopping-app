@@ -10,6 +10,7 @@ interface SignUpData {
   email: string;
   password: string;
   role: "USER";
+  captchaToken?: string;
 }
 
 interface UseSignupReturn {

@@ -267,7 +267,7 @@ const HomePage = (props: Props) => {
                         <div className="hp-hero-overlay" />
                         <div className="hp-hero-content">
                           <div className="hp-hero-badge">
-                            <BsLightningFill size={12} /> Hàng mới về 2025
+                            <BsLightningFill size={12} /> Hàng mới về
                           </div>
                           <h1 className="hp-hero-title">Phong Cách Định Hình Bởi Bạn</h1>
                           <p className="hp-hero-desc">
@@ -633,7 +633,7 @@ const HomePage = (props: Props) => {
                     marginBottom: 14,
                   }}
                 >
-                  Lookbook 2025
+                  Lookbook
                 </span>
                 <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)", fontWeight: 800, margin: "0 0 14px", color: "#fff" }}>
                   Tự Tin Khẳng Định Bản Sắc Cá Nhân

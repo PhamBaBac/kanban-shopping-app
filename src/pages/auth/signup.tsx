@@ -2,9 +2,10 @@
 
 import { Button, Checkbox, Divider, Form, Input, Typography } from "antd";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { BsArrowLeft, BsClockHistory, BsArrowRepeat } from "react-icons/bs";
 import { useSignup } from "@/hooks";
+import { TurnstileWidget } from "@/components";
 
 interface SignUp {
   firstName: string;
@@ -23,6 +24,7 @@ const formatTime = (seconds: number) => {
 const SignUp = () => {
   const [form] = Form.useForm();
   const refs = useRef<Array<any>>([]);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
 
   const {
     isLoading,
@@ -44,6 +46,7 @@ const SignUp = () => {
       firstName: values.firstName?.trim(),
       lastName: values.lastName?.trim(),
       email: values.email?.trim(),
+      captchaToken: captchaToken || undefined,
     });
     form.resetFields();
   };
@@ -291,7 +294,14 @@ const SignUp = () => {
                   </Checkbox>
                 </div>
 
-                <div className="mt-4">
+                <div className="my-3">
+                  <TurnstileWidget
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken("")}
+                  />
+                </div>
+
+                <div className="mt-3">
                   <Button
                     loading={isLoading}
                     type="primary"

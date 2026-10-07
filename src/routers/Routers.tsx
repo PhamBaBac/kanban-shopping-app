@@ -89,9 +89,29 @@ const Routers = ({ Component, pageProps }: any) => {
     }
   };
 
+  // Không hiển thị Header và Footer khi ở trang lỗi (404, 500, NotFound, ServerError) hoặc trang yêu cầu noLayout
+  const isErrorRoute =
+    router.pathname === "/404" ||
+    router.pathname === "/500" ||
+    router.pathname === "/NotFound" ||
+    router.pathname === "/ServerError" ||
+    router.pathname === "/_error" ||
+    path === "/404" ||
+    path === "/500" ||
+    path === "/NotFound" ||
+    path === "/ServerError" ||
+    Boolean(Component?.noLayout) ||
+    Boolean(Component?.isErrorPage) ||
+    pageProps?.statusCode === 404 ||
+    pageProps?.statusCode === 500;
+
   return (
     <>
-      {path?.includes("/auth") ? (
+      {isErrorRoute ? (
+        <main style={{ minHeight: "100vh", width: "100%", margin: 0, padding: 0 }}>
+          <Component {...pageProps} pageProps={pageProps} />
+        </main>
+      ) : path?.includes("/auth") ? (
         <Layout>
           <Component {...pageProps} pageProps={pageProps} />
         </Layout>

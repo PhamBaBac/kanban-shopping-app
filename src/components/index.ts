@@ -14,6 +14,7 @@ import ChatProductCard from "./ChatProductCard";
 import NotificationPopover from "./NotificationPopover";
 import ProfileNotifications from "./ProfileNotifications";
 import ProfileWishlist from "./ProfileWishlist";
+import TurnstileWidget from "./TurnstileWidget";
 
 export {
   TabbarComponent,
@@ -30,4 +31,5 @@ export {
   NotificationPopover,
   ProfileNotifications,
   ProfileWishlist,
+  TurnstileWidget,
 };

@@ -2,16 +2,19 @@
 
 import { Button, Divider, Form, Input, Typography, Space } from "antd";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import SocialLogin from "./components/SocialLogin";
 import { BsArrowLeft } from "react-icons/bs";
 import { useLogin } from "@/hooks";
+import { TurnstileWidget } from "@/components";
 
 const { Title, Paragraph } = Typography;
 
 const Login = () => {
   const [form] = Form.useForm();
   const inputRefs = useRef<HTMLInputElement[]>([]);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const [showCaptcha, setShowCaptcha] = useState<boolean>(false);
 
   const {
     isLoading,
@@ -31,7 +34,15 @@ const Login = () => {
   } = useLogin();
 
   const handleLogin = async (values: { email: string; password: string }) => {
-    await login(values);
+    try {
+      await login({
+        ...values,
+        captchaToken: captchaToken || undefined,
+      });
+    } catch (error: any) {
+      // Bật Captcha nếu nhập sai mật khẩu hoặc server yêu cầu
+      setShowCaptcha(true);
+    }
   };
 
   const handleOtpChange = (val: string, index: number) => {
@@ -158,6 +169,19 @@ const Login = () => {
                   <div className="text-right">
                     <Link href="/auth/forgot-password">Quên mật khẩu?</Link>
                   </div>
+
+                  {showCaptcha && (
+                    <div className="my-3 text-center">
+                      <Typography.Text type="danger" style={{ fontSize: 13, display: "block", marginBottom: 6 }}>
+                        Vui lòng hoàn thành xác thực bảo mật bên dưới:
+                      </Typography.Text>
+                      <TurnstileWidget
+                        onVerify={(token) => setCaptchaToken(token)}
+                        onExpire={() => setCaptchaToken("")}
+                      />
+                    </div>
+                  )}
+
                   <div className="mb-4"></div>
                   <Button
                     type="primary"

@@ -20,7 +20,7 @@ interface UseAuthReturn {
     code: string,
     accessToken: string
   ) => Promise<void>;
-  sendVerificationCode: (email: string) => Promise<void>;
+  sendVerificationCode: (email: string, captchaToken?: string) => Promise<void>;
   verifyEmailCode: (email: string, code: string) => Promise<void>;
   resetPassword: (
     email: string,
@@ -156,10 +156,10 @@ export const useAuth = (): UseAuthReturn => {
     }
   };
 
-  const sendVerificationCode = async (email: string) => {
+  const sendVerificationCode = async (email: string, captchaToken?: string) => {
     setIsLoading(true);
     try {
-      await authService.sendVerificationCode(email);
+      await authService.sendVerificationCode(email, captchaToken);
       message.success("Mã xác thực đã được gửi đến email của bạn.");
     } catch (error: any) {
       showErrorMessage(error, "Không thể gửi mã xác thực. Vui lòng thử lại sau!");

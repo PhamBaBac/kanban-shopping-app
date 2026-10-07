@@ -1,13 +1,15 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect } from "react";
 import HomePage from "./HomePage";
 import { useHome } from "@/hooks";
 import { homeService } from "@/services";
 import { Skeleton } from "antd";
-import ServerError500Page from "./500";
+import { useRouter } from "next/router";
+import ServerError from "./ServerError";
 
 const Home = (props: any) => {
+  const router = useRouter();
   const initialData = props?.promotions ? props : (props?.pageProps || props);
   const {
     promotions,
@@ -22,7 +24,7 @@ const Home = (props: any) => {
   } = useHome(initialData);
 
   if (error && !promotions.length && !categories.length && !bestSellers.length) {
-    return <ServerError500Page />;
+    return <ServerError />;
   }
 
   const hasData = Boolean(

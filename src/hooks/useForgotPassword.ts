@@ -11,7 +11,7 @@ interface UseForgotPasswordReturn {
   step: Step;
   email: string;
   otpCode: string[];
-  sendCode: (values: { email: string }) => Promise<void>;
+  sendCode: (values: { email: string; captchaToken?: string }) => Promise<void>;
   verifyCode: () => Promise<void>;
   resetPassword: (values: {
     password: string;
@@ -33,11 +33,11 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
     resetPassword: authResetPassword,
   } = useAuth();
 
-  const sendCode = async (values: { email: string }) => {
+  const sendCode = async (values: { email: string; captchaToken?: string }) => {
     setIsLoading(true);
     const normalizedEmail = values.email?.trim() || "";
     try {
-      await sendVerificationCode(normalizedEmail);
+      await sendVerificationCode(normalizedEmail, values.captchaToken);
       message.success(`Mã xác thực đã được gửi đến ${normalizedEmail}.`);
       setEmail(normalizedEmail);
       setStep("verify-code");

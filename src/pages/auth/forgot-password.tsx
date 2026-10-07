@@ -1,13 +1,15 @@
 import { Button, Form, Input, Typography } from "antd";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { BsArrowLeft } from "react-icons/bs";
 import { useForgotPassword } from "@/hooks";
+import { TurnstileWidget } from "@/components";
 
 const { Title, Paragraph } = Typography;
 
 const ForgotPassword = () => {
   const inputRefs = useRef<HTMLInputElement[]>([]);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
 
   const {
     isLoading,
@@ -21,7 +23,10 @@ const ForgotPassword = () => {
   } = useForgotPassword();
 
   const handleSendCode = async (values: { email: string }) => {
-    await sendCode(values);
+    await sendCode({
+      ...values,
+      captchaToken: captchaToken || undefined,
+    });
   };
 
   const handleVerifyCode = async () => {
@@ -61,6 +66,14 @@ const ForgotPassword = () => {
         >
           <Input allowClear autoFocus />
         </Form.Item>
+
+        <div className="my-3">
+          <TurnstileWidget
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken("")}
+          />
+        </div>
+
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block>
             Gửi mã xác thực
