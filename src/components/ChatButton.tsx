@@ -11,12 +11,15 @@ import {
   Tag,
   Spin,
   message,
+  Image,
+  Tooltip,
 } from "antd";
 import {
   BsHeadset,
   BsSend,
   BsX,
   BsCheckAll,
+  BsImages,
 } from "react-icons/bs";
 import { RiSparklingFill, RiCustomerService2Fill } from "react-icons/ri";
 import { useSelector } from "react-redux";
@@ -26,6 +29,11 @@ import { useChat } from "@/hooks/useChat";
 import { useChatMessage } from "@/hooks/useChatMessage";
 import { themeSelector } from "@/redux/reducers/themeSlice";
 import { ChatProductCard } from "./ChatProductCard";
+import {
+  validateChatImages,
+  uploadChatImageToCloudinary,
+  MAX_CHAT_IMAGES,
+} from "@/utils/chatImageHelper";
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -50,6 +58,9 @@ const ChatButton: React.FC = () => {
   const [aiInput, setAiInput] = useState("");
   const [isLiveFocused, setIsLiveFocused] = useState(false);
   const [isAiFocused, setIsAiFocused] = useState(false);
+  const [pendingImages, setPendingImages] = useState<{ file: File; previewUrl: string }[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const auth = useSelector(authSelector);
   const themeState = useSelector(themeSelector);
@@ -109,9 +120,44 @@ const ChatButton: React.FC = () => {
     }
   };
 
-  const handleSendLive = (customText?: string) => {
+  const handleSelectImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const { validFiles, errors } = validateChatImages(files, pendingImages.length);
+
+    if (errors.length > 0) {
+      errors.forEach((err) => message.warning(err));
+    }
+
+    if (validFiles.length > 0) {
+      const newItems = validFiles.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
+      setPendingImages((prev) => [...prev, ...newItems].slice(0, MAX_CHAT_IMAGES));
+    }
+
+    if (e.target) {
+      e.target.value = "";
+    }
+  };
+
+  const handleRemovePendingImage = (indexToRemove: number) => {
+    setPendingImages((prev) => {
+      const target = prev[indexToRemove];
+      if (target?.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return prev.filter((_, idx) => idx !== indexToRemove);
+    });
+  };
+
+  const handleSendLive = async (customText?: string) => {
     const textToSend = (customText || liveInput).trim();
-    if (!textToSend) return;
+    const hasImages = pendingImages.length > 0;
+
+    if (!textToSend && !hasImages) return;
 
     if (!currentUserId) {
       message.info("Vui lòng đăng nhập để gửi tin nhắn tới nhân viên hỗ trợ");
@@ -119,7 +165,37 @@ const ChatButton: React.FC = () => {
       return;
     }
 
-    sendLiveMessage(textToSend);
+    if (isUploadingImages) return;
+
+    let uploadedUrls: string[] = [];
+
+    if (hasImages) {
+      setIsUploadingImages(true);
+      try {
+        const uploadPromises = pendingImages.map((item) =>
+          uploadChatImageToCloudinary(item.file)
+        );
+        uploadedUrls = await Promise.all(uploadPromises);
+      } catch (err: any) {
+        console.error("Lỗi khi tải ảnh:", err);
+        message.error(err.message || "Tải ảnh thất bại, vui lòng thử lại!");
+        setIsUploadingImages(false);
+        return;
+      } finally {
+        setIsUploadingImages(false);
+      }
+    }
+
+    sendLiveMessage(
+      textToSend,
+      uploadedUrls.length > 0 ? uploadedUrls : undefined,
+      uploadedUrls.length > 0 ? "IMAGE" : "TEXT"
+    );
+
+    pendingImages.forEach((item) => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    });
+    setPendingImages([]);
     setLiveInput("");
     sendTyping(false);
   };
@@ -782,7 +858,7 @@ const ChatButton: React.FC = () => {
                             <div
                               title={timeStr || undefined}
                               style={{
-                                padding: "9px 13px",
+                                padding: (msg.images && msg.images.length > 0) ? "6px" : "9px 13px",
                                 borderRadius: bubbleBorderRadius,
                                 backgroundColor: isUser
                                   ? "#131118"
@@ -804,7 +880,60 @@ const ChatButton: React.FC = () => {
                                 transition: "border-radius 0.2s ease",
                               }}
                             >
-                              {msg.content}
+                              {msg.images && msg.images.length > 0 && (
+                                <Image.PreviewGroup
+                                  preview={{
+                                    maskClosable: true,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns:
+                                        msg.images.length === 1
+                                          ? "1fr"
+                                          : msg.images.length === 2
+                                          ? "repeat(2, 1fr)"
+                                          : "repeat(3, 1fr)",
+                                      gap: 6,
+                                      maxWidth: msg.images.length === 1 ? 240 : 270,
+                                      borderRadius: 10,
+                                      overflow: "hidden",
+                                      marginBottom: msg.content ? 6 : 0,
+                                    }}
+                                  >
+                                    {msg.images.map((imgUrl, imgIdx) => (
+                                      <div
+                                        key={imgIdx}
+                                        style={{
+                                          borderRadius: 8,
+                                          overflow: "hidden",
+                                          background: "rgba(0,0,0,0.06)",
+                                        }}
+                                      >
+                                        <Image
+                                          src={imgUrl}
+                                          alt={`Ảnh ${imgIdx + 1}`}
+                                          style={{
+                                            width: "100%",
+                                            maxHeight: msg.images!.length === 1 ? 220 : 90,
+                                            height: msg.images!.length === 1 ? "auto" : 90,
+                                            objectFit: "cover",
+                                            display: "block",
+                                            borderRadius: 8,
+                                          }}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </Image.PreviewGroup>
+                              )}
+
+                              {msg.content && (
+                                <div style={{ padding: (msg.images && msg.images.length > 0) ? "4px 6px 2px 6px" : 0 }}>
+                                  {msg.content}
+                                </div>
+                              )}
                             </div>
 
                             {isLastInChain && (
@@ -906,11 +1035,112 @@ const ChatButton: React.FC = () => {
                       backgroundColor: isDarkMode ? "#1f1f23" : "#ffffff",
                     }}
                   >
+                    {/* Hidden file input */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleSelectImages}
+                      multiple
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      style={{ display: "none" }}
+                    />
+
+                    {/* Preview Bar trước khi gửi (Chưa tải lên Cloudinary) */}
+                    {pendingImages.length > 0 && (
+                      <div
+                        style={{
+                          marginBottom: 8,
+                          padding: "8px 10px",
+                          borderRadius: 12,
+                          background: isDarkMode ? "#27272A" : "#F4F4F5",
+                          border: isDarkMode ? "1px solid #3F3F46" : "1px solid #E5E7EB",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          overflowX: "auto",
+                          position: "relative",
+                        }}
+                      >
+                        {isUploadingImages && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              background: isDarkMode ? "rgba(24,24,27,0.7)" : "rgba(255,255,255,0.75)",
+                              backdropFilter: "blur(2px)",
+                              borderRadius: 12,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              zIndex: 10,
+                            }}
+                          >
+                            <Spin size="small" />
+                          </div>
+                        )}
+                        {pendingImages.map((item, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: "relative",
+                              width: 48,
+                              height: 48,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              flexShrink: 0,
+                              border: isDarkMode ? "1px solid #52525B" : "1px solid #CBD5E1",
+                            }}
+                          >
+                            <img
+                              src={item.previewUrl}
+                              alt={`Preview ${idx + 1}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                            {!isUploadingImages && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePendingImage(idx)}
+                                style={{
+                                  position: "absolute",
+                                  top: 2,
+                                  right: 2,
+                                  background: "rgba(0,0,0,0.65)",
+                                  color: "#fff",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: 16,
+                                  height: 16,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                }}
+                              >
+                                <BsX size={13} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: isDarkMode ? "#A1A1AA" : "#6B7280",
+                            marginLeft: "auto",
+                            flexShrink: 0,
+                            fontWeight: 500,
+                          }}
+                        >
+                          {pendingImages.length}/{MAX_CHAT_IMAGES} ảnh
+                        </span>
+                      </div>
+                    )}
+
                     <div
                       style={{
                         display: "flex",
                         alignItems: "flex-end",
-                        gap: 8,
+                        gap: 6,
                         backgroundColor: isLiveFocused
                           ? isDarkMode
                             ? "#222226"
@@ -919,7 +1149,7 @@ const ChatButton: React.FC = () => {
                           ? "#27272A"
                           : "#F3F4F6",
                         borderRadius: 16,
-                        padding: "6px 8px 6px 14px",
+                        padding: "6px 8px 6px 10px",
                         border: isLiveFocused
                           ? isDarkMode
                             ? "1px solid #60A5FA"
@@ -935,6 +1165,29 @@ const ChatButton: React.FC = () => {
                         transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                       }}
                     >
+                      {/* Nút đính kèm ảnh */}
+                      <Tooltip title={`Đính kèm ảnh (Tối đa ${MAX_CHAT_IMAGES} ảnh, <= 10MB)`}>
+                        <Button
+                          type="text"
+                          icon={<BsImages size={16} />}
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingImages || pendingImages.length >= MAX_CHAT_IMAGES}
+                          style={{
+                            borderRadius: 10,
+                            width: 32,
+                            height: 32,
+                            minWidth: 32,
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: isDarkMode ? "#A1A1AA" : "#64748B",
+                            border: "none",
+                            marginBottom: 2,
+                          }}
+                        />
+                      </Tooltip>
+
                       <TextArea
                         value={liveInput}
                         onChange={handleLiveInputChange}
@@ -965,7 +1218,8 @@ const ChatButton: React.FC = () => {
                         type="primary"
                         icon={<BsSend size={15} />}
                         onClick={() => handleSendLive()}
-                        disabled={!liveInput.trim()}
+                        disabled={(!liveInput.trim() && pendingImages.length === 0) || isUploadingImages}
+                        loading={isUploadingImages}
                         style={{
                           borderRadius: 12,
                           width: 36,
@@ -975,20 +1229,20 @@ const ChatButton: React.FC = () => {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          background: liveInput.trim()
+                          background: (liveInput.trim() || pendingImages.length > 0) && !isUploadingImages
                             ? "linear-gradient(135deg, #131118 0%, #27272A 100%)"
                             : isDarkMode
                             ? "#38383E"
                             : "#E5E7EB",
                           borderColor: "transparent",
-                          color: liveInput.trim()
+                          color: (liveInput.trim() || pendingImages.length > 0) && !isUploadingImages
                             ? "#ffffff"
                             : isDarkMode
                             ? "#71717A"
                             : "#9CA3AF",
-                          cursor: liveInput.trim() ? "pointer" : "not-allowed",
+                          cursor: (liveInput.trim() || pendingImages.length > 0) && !isUploadingImages ? "pointer" : "not-allowed",
                           transition: "all 0.2s ease",
-                          transform: liveInput.trim() ? "scale(1)" : "scale(0.96)",
+                          transform: (liveInput.trim() || pendingImages.length > 0) && !isUploadingImages ? "scale(1)" : "scale(0.96)",
                         }}
                       />
                     </div>

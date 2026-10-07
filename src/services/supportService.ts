@@ -9,6 +9,8 @@ export interface SupportMessage {
   avatar?: string;
   role: "USER" | "ADMIN" | "MANAGER";
   content: string;
+  type?: "TEXT" | "IMAGE" | "FILE";
+  images?: string[];
   status: "PENDING" | "SENT" | "ANSWERED" | "READ" | "DELIVERED";
   createdAt: string;
   updatedAt?: string;
@@ -22,6 +24,8 @@ export interface SendMessageRequest {
   avatar?: string;
   role: "USER" | "ADMIN" | "MANAGER";
   content: string;
+  type?: "TEXT" | "IMAGE" | "FILE";
+  images?: string[];
 }
 
 export const supportService = {

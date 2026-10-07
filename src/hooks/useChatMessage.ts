@@ -139,9 +139,12 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
   }, [userId, accessToken, conversationId, loadHistory]);
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      const trimmed = content.trim();
-      if (!trimmed || !userId) return;
+    async (content: string, images?: string[], type?: "TEXT" | "IMAGE" | "FILE") => {
+      const trimmed = content ? content.trim() : "";
+      const hasImages = Array.isArray(images) && images.length > 0;
+      if ((!trimmed && !hasImages) || !userId) return;
+
+      const messageType: "TEXT" | "IMAGE" | "FILE" = type || (hasImages ? "IMAGE" : "TEXT");
 
       const payload: SendMessageRequest = {
         conversationId,
@@ -151,6 +154,8 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
         avatar: avatar || "",
         role: "USER",
         content: trimmed,
+        type: messageType,
+        images: hasImages ? images.slice(0, 5) : undefined,
       };
 
       const optimisticMsg: SupportMessage = {
@@ -169,7 +174,9 @@ export const useChatMessage = (options: UseLiveSupportOptions) => {
           if (saved) {
             setMessages((prev) =>
               prev.map((m) =>
-                !m.id && m.content === trimmed ? { ...m, id: saved.id } : m
+                !m.id && (m.content === trimmed || (hasImages && m.images === images))
+                  ? { ...m, id: saved.id, images: saved.images, type: saved.type }
+                  : m
               )
             );
           }
