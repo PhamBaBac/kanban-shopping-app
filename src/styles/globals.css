@@ -3495,5 +3495,15 @@ body[data-theme="dark"] .hp-review-card {
   transform: scale(1.08) !important;
 }
 
+.hide-thumbnail-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-thumbnail-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+
 
 

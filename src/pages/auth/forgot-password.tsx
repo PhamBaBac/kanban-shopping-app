@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { BsArrowLeft } from "react-icons/bs";
 import { useForgotPassword } from "@/hooks";
 import { TurnstileWidget } from "@/components";
+import HeadComponent from "@/components/HeadComponent";
 
 const { Title, Paragraph } = Typography;
 
@@ -197,7 +198,12 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
+    <>
+      <HeadComponent
+        title="Quên Mật Khẩu | Kanban Fashion"
+        noindex={true}
+      />
+      <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
       <div className="row g-0" style={{ minHeight: "100vh" }}>
         <div
           className="d-none d-md-block col-md-6 p-0"
@@ -241,6 +247,7 @@ const ForgotPassword = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { BsArrowLeft, BsClockHistory, BsArrowRepeat } from "react-icons/bs";
 import { useSignup } from "@/hooks";
 import { TurnstileWidget } from "@/components";
+import HeadComponent from "@/components/HeadComponent";
 
 interface SignUp {
   firstName: string;
@@ -75,7 +76,12 @@ const SignUp = () => {
   };
 
   return (
-    <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
+    <>
+      <HeadComponent
+        title="Đăng Ký Tài Khoản | Kanban Fashion"
+        noindex={true}
+      />
+      <div className="container-fluid p-0" style={{ minHeight: "100vh" }}>
       <div className="row g-0" style={{ minHeight: "100vh" }}>
         <div
           className="d-none d-md-block col-md-6 p-0"
@@ -328,6 +334,7 @@ const SignUp = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

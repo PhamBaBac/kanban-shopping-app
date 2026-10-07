@@ -23,6 +23,7 @@ import {
 
 import { ProductItem } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
+import { appInfo } from "@/constants/appInfos";
 import { CategoyModel, ProductModel } from "@/models/Products";
 import { PromotionModel } from "@/models/PromotionModel";
 import { ReviewModel } from "@/models/ReviewModel";
@@ -196,7 +197,19 @@ const HomePage = (props: Props) => {
 
   return (
     <>
-      <HeadComponent title="Trang chủ | Kanban Fashion" />
+      <HeadComponent
+        title="Kanban Fashion - Thời Trang Đẳng Cấp & Phong Cách Hiện Đại"
+        description="Khám phá bộ sưu tập thời trang nam nữ cao cấp, xu hướng mới nhất tại Kanban Fashion. Mua sắm online tiện lợi, giao hàng nhanh chóng, ưu đãi ngập tràn."
+        url={appInfo.siteUrl}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Kanban Fashion",
+          url: appInfo.siteUrl,
+          logo: appInfo.logo,
+          description: appInfo.description,
+        }}
+      />
 
       <div className="hp-root">
         {/* ================= 1. HERO SECTION (SPLIT EDITORIAL) ================= */}

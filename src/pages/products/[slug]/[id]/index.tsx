@@ -775,12 +775,43 @@ const ProductDetail = (props: any) => {
     );
   }
 
+  const productImageUrl = product.images?.[0] || subProducts?.[0]?.images?.[0] || appInfo.logo;
+  const canonicalProductUrl = `${appInfo.siteUrl}/products/${product.slug}/${product.id}`;
+  const lowestPrice = subProducts?.length
+    ? Math.min(...subProducts.map((sp) => (sp.discount && sp.discount > 0 ? sp.discount : sp.price || 0)))
+    : 0;
+  const totalStock = subProducts?.reduce((sum, sp) => sum + (sp.stock || 0), 0) || 0;
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    image: product.images?.length ? product.images : [productImageUrl],
+    description: product.description || product.title,
+    sku: subProducts?.[0]?.sku || product.id,
+    brand: {
+      "@type": "Brand",
+      name: "Kanban Fashion",
+    },
+    offers: {
+      "@type": "Offer",
+      url: canonicalProductUrl,
+      priceCurrency: "VND",
+      price: lowestPrice,
+      availability: totalStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
   return (
     <div>
       <HeadComponent
-        title={product.title}
-        description={product.description}
-        url={`${appInfo.baseUrl}/public/products/${product.slug}/${product.id}`}
+        title={`${product.title} | Kanban Fashion`}
+        description={product.description || `Mua ngay ${product.title} cao cấp chính hãng tại Kanban Fashion.`}
+        image={productImageUrl}
+        url={canonicalProductUrl}
+        type="product"
+        structuredData={productSchema}
       />
       <div className="container mt-2 mb-5">
           {/* Breadcrumb Navigation */}

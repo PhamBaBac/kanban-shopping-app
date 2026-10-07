@@ -8,7 +8,13 @@ import type { DocumentContext } from 'next/document';
 const MyDocument = () => (
 	<Html lang='vi'>
 		<Head>
+			<meta charSet="utf-8" />
 			<meta name="referrer" content="no-referrer" />
+			<meta name="theme-color" content="#131118" />
+			<meta name="format-detection" content="telephone=no" />
+			<link rel="icon" href="/favicon.ico" sizes="any" />
+			<link rel="icon" type="image/svg+xml" href="/kanban-logo.svg" />
+			<link rel="apple-touch-icon" href="/favicon.ico" />
 			<link rel="preconnect" href="https://fonts.googleapis.com" />
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 			<link

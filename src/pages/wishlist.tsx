@@ -9,7 +9,7 @@ import Link from "next/link";
 const WishlistPage = () => {
   return (
     <>
-      <HeadComponent title="Bộ sưu tập yêu thích | Kanban Shop" />
+      <HeadComponent title="Bộ Sưu Tập Yêu Thích | Kanban Fashion" noindex={true} />
       <div className="container py-4" style={{ minHeight: "70vh" }}>
         <div className="mb-3">
           <Breadcrumb

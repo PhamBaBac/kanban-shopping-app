@@ -1,6 +1,8 @@
 /** @format */
 
 import { ProductItem, FilterPanel } from "@/components";
+import HeadComponent from "@/components/HeadComponent";
+import { appInfo } from "@/constants/appInfos";
 import { ProductModel } from "@/models/Products";
 import {
   Breadcrumb,
@@ -402,7 +404,13 @@ const ShopPageContent = () => {
   }
 
   return (
-    <div className="container py-3">
+    <>
+      <HeadComponent
+        title="Cửa Hàng Thời Trang | Bộ Sưu Tập Kanban"
+        description="Khám phá toàn bộ sản phẩm thời trang nam nữ, áo thun, sơ mi, quần jean, phụ kiện mới nhất với nhiều mức giá ưu đãi tại Kanban Fashion."
+        url={`${appInfo.siteUrl}/shop`}
+      />
+      <div className="container py-3">
       <div className="py-2 mb-3 border-bottom" style={{ borderColor: isDark ? "#303030" : "#F3F4F6" }}>
         <Breadcrumb
           items={[
@@ -922,6 +930,7 @@ const ShopPageContent = () => {
         )}
       </Drawer>
     </div>
+    </>
   );
 };
 

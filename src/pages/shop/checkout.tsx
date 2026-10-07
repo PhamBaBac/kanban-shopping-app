@@ -2,6 +2,7 @@
 
 import { paymentService, orderService } from "@/services";
 import { promotionService } from "@/services";
+import HeadComponent from "@/components/HeadComponent";
 import { CartItemModel, removeCarts, removeSelectedItems } from "@/redux/reducers/cartReducer";
 import { showErrorMessage } from "@/utils/errorHandler";
 import { DateTime } from "@/utils/dateTime";
@@ -609,7 +610,12 @@ const CheckoutPage = () => {
       : 0;
 
   return (
-    <div className="checkout-page-wrapper" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "16px 0", overflowX: "hidden" }}>
+    <>
+      <HeadComponent
+        title="Thanh Toán Đơn Hàng | Kanban Fashion"
+        noindex={true}
+      />
+      <div className="checkout-page-wrapper" style={{ background: "#FAFAFA", minHeight: "100vh", padding: "16px 0", overflowX: "hidden" }}>
       <div className="container" style={{ maxWidth: "1200px" }}>
         {/* Step Indicator */}
         <div
@@ -938,6 +944,7 @@ const CheckoutPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

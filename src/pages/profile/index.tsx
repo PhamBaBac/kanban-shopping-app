@@ -16,6 +16,7 @@ import { useNotification } from "@/hooks/useNotification";
 import { useWishlist } from "@/hooks/useWishlist";
 import { authService } from "@/services";
 import { localDataNames } from "@/constants/appInfos";
+import HeadComponent from "@/components/HeadComponent";
 
 import { useRouter } from "next/router";
 
@@ -253,7 +254,12 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mt-2 mt-md-3 mb-3 mb-md-4">
+    <>
+      <HeadComponent
+        title="Tài Khoản Của Tôi | Kanban Fashion"
+        noindex={true}
+      />
+      <div className="container mt-2 mt-md-3 mb-3 mb-md-4">
       <Typography.Title
         level={2}
         style={{
@@ -286,6 +292,7 @@ const ProfilePage = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 
