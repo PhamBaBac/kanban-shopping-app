@@ -191,6 +191,13 @@ axiosClient.interceptors.response.use(
       (error.response?.status >= 500 && error.response?.status <= 599);
 
     if (isServerErrorOrOffline && !isLoginRequest && !isRefreshRequest) {
+      console.error("[AxiosClient 500 Error]", {
+        url: originalRequest.url,
+        method: originalRequest.method,
+        status: error.response?.status,
+        response: error.response?.data,
+        message: error.message,
+      });
       trigger500Redirect();
     }
 

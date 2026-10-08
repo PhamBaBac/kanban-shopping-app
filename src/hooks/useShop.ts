@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { shopService, ShopFilters, FilterValues } from "@/services";
 import { ProductModel } from "@/models/Products";
 import { CategoyModel } from "@/models/Products";
+import { shopFilterCache, buildFilterCacheKey } from "@/utils/clientCache";
 
 interface UseShopProps {
   initialFilters?: ShopFilters;
@@ -35,6 +36,16 @@ export const useShop = ({
   const requestRef = useRef(0);
 
   const fetchProducts = useCallback(async (filters: ShopFilters) => {
+    const cacheKey = buildFilterCacheKey(filters as Record<string, any>);
+    const cached = shopFilterCache.get(cacheKey);
+    if (cached) {
+      setProducts(cached.data);
+      setTotalItems(cached.totalElements);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     const currentReq = ++requestRef.current;
     setIsLoading(true);
     setError(null);
@@ -43,6 +54,10 @@ export const useShop = ({
       if (currentReq === requestRef.current) {
         setProducts(result.data);
         setTotalItems(result.totalElements);
+        shopFilterCache.set(cacheKey, {
+          data: result.data,
+          totalElements: result.totalElements,
+        });
       }
     } catch (error: any) {
       if (currentReq === requestRef.current) {

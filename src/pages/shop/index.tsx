@@ -91,6 +91,16 @@ const ShopPageContent = () => {
     return "Giá";
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    if (typeof window !== "undefined") {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const { products, totalItems, isLoading, error, fetchProducts } = useShop();
 
   const handleRemovePriceFilter = () => {
@@ -345,7 +355,7 @@ const ShopPageContent = () => {
 
     const filters: any = {
       page,
-      pageSize: 12,
+      pageSize: 8,
       sortBy,
     };
 
@@ -789,8 +799,8 @@ const ShopPageContent = () => {
                     <Pagination
                       current={page}
                       total={totalItems}
-                      onChange={(val) => setPage(val)}
-                      pageSize={12}
+                      onChange={handlePageChange}
+                      pageSize={8}
                       showSizeChanger={false}
                       className="custom-pagination"
                       responsive
@@ -800,8 +810,9 @@ const ShopPageContent = () => {
                 </>
               ) : (
                 <div
-                  className="rounded-3 border p-5 text-center shadow-sm"
+                  className="rounded-3 border p-5 text-center shadow-sm d-flex flex-column justify-content-center align-items-center"
                   style={{
+                    minHeight: 480,
                     borderColor: isDark ? "#303030" : "#E5E7EB",
                     backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
                   }}
@@ -829,27 +840,12 @@ const ShopPageContent = () => {
                           }}
                         >
                           {hasActivePrice
-                            ? "Khoảng giá bạn chọn có thể chưa có sản phẩm nào. Hãy thử điều chỉnh hoặc bấm nút xóa bộ lọc giá."
-                            : "Vui lòng chọn danh mục khác hoặc xóa bộ lọc để xem các sản phẩm có sẵn."}
+                            ? "Khoảng giá bạn chọn có thể chưa có sản phẩm nào. Hãy thử điều chỉnh hoặc chọn khoảng giá khác."
+                            : "Vui lòng chọn danh mục khác để xem các sản phẩm có sẵn."}
                         </Typography.Text>
                       </div>
                     }
-                  >
-                    <Button
-                      type="primary"
-                      onClick={handleClearAllFilters}
-                      style={{
-                        marginTop: 16,
-                        backgroundColor: isDark ? "#FFFFFF" : "#131118",
-                        borderColor: isDark ? "#FFFFFF" : "#131118",
-                        color: isDark ? "#131118" : "#FFFFFF",
-                        borderRadius: 8,
-                        fontWeight: 500,
-                      }}
-                    >
-                      Xóa tất cả bộ lọc
-                    </Button>
-                  </Empty>
+                  />
                 </div>
               )}
             </Spin>

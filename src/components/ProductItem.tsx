@@ -429,6 +429,10 @@ const ProductItem = (props: Props) => {
     router.push(`/products/${slug}/${item.id}`);
   };
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
   const getPriceRange = () => {
     const originalPrices = availableSubProducts
       .map((sub) => (typeof sub.price === "number" ? sub.price : Number(sub.price) || 0))
@@ -537,7 +541,7 @@ const ProductItem = (props: Props) => {
       >
         <div
           onClick={handleClick}
-          onMouseEnter={() => setIsHovered(true)}
+          onMouseEnter={handleMouseEnter}
           onMouseLeave={() => setIsHovered(false)}
           ref={ref}
           className="cursor-pointer product-item"
