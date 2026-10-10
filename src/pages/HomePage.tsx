@@ -246,9 +246,11 @@ const HomePage = (props: Props) => {
                               {item.title || "Bộ Sưu Tập Mới 2025"}
                             </h1>
                             <p className="hp-hero-desc">
-                              {item.type === "PERCENT"
-                                ? `Giảm ngay ${item.numOfAvailable || item.value}% toàn sàn`
-                                : "Khám phá các thiết kế thời trang hiện đại đẳng cấp."}
+                              {item.type === "PERCENT" && item.value != null
+                                ? `Giảm ngay ${item.value}% toàn sàn`
+                                : item.type === "DISCOUNT" && item.value != null
+                                ? `Giảm ngay ${Number(item.value).toLocaleString("vi-VN")}đ toàn sàn`
+                                : item.description || "Khám phá các thiết kế thời trang hiện đại đẳng cấp."}
                               {item.code && (
                                 <>
                                   {" — Nhập mã: "}

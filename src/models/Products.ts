@@ -26,12 +26,14 @@ export interface ProductModel {
   updatedAt: string;
   v: number;
   isDeleted: boolean | null;
+  isNew?: boolean;
   subItems?: SubProductModel[];
   subProducts?: SubProductModel[];
   price?: number[];
 }
 
 export interface SubProductModel {
+  sku?: string
   size: string;
   color: string;
   price: number;

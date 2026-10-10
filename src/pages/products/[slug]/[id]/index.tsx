@@ -1518,7 +1518,7 @@ const ProductDetail = (props: any) => {
                   orentation="text-start"
                   right={
                     product.categories && product.categories.length > 0 ? (
-                      <div className="col-auto d-flex align-items-center">
+                      <div className="d-flex align-items-center">
                         <Link
                           href={`/shop?catId=${typeof product.categories[
                               product.categories.length - 1
@@ -1532,7 +1532,7 @@ const ProductDetail = (props: any) => {
                             }`}
                           style={{
                             fontSize: 14,
-                            color: "#131118",
+                            color: "var(--color-foreground, #131118)",
                             fontWeight: 600,
                             textDecoration: "none",
                           }}

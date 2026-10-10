@@ -17,16 +17,24 @@ const TabbarComponent = (props: Props) => {
 
 	return (
 		<div>
-			<div className='row'>
+			<div
+				className='d-flex align-items-center justify-content-between'
+				style={{ width: '100%', marginBottom: 16 }}>
 				<div
-					className={`col ${
+					className={
 						orentation ? orentation : !right ? '' : 'text-center'
-					}`}>
-					<Title style={{ fontWeight: 300 }} level={level ?? 2}>
+					}>
+					<Title style={{ fontWeight: 300, margin: 0 }} level={level ?? 2}>
 						{title}
 					</Title>
 				</div>
-				{right && right}
+				{right && (
+					<div
+						className='d-flex align-items-center'
+						style={{ marginLeft: 'auto' }}>
+						{right}
+					</div>
+				)}
 			</div>
 		</div>
 	);

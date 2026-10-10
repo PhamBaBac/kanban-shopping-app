@@ -9,6 +9,8 @@ export const ERROR_CODE_MAP: Record<number, string> = {
   1001: "Khóa hoặc trường dữ liệu không hợp lệ.",
   1002: "Dữ liệu đầu vào không hợp lệ.",
   1003: "Đã xảy ra lỗi không xác định.",
+  1013: "Xác thực Captcha không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
+  1014: "Phát hiện đăng nhập sai nhiều lần. Vui lòng xác thực mã bảo vệ Captcha.",
   1999: "Lỗi hệ thống chưa được phân loại. Vui lòng thử lại sau.",
 
   2001: "Không tìm thấy thông tin tài khoản.",
@@ -46,6 +48,9 @@ export const ERROR_CODE_MAP: Record<number, string> = {
   4004: "Mã khuyến mãi đã hết hạn sử dụng.",
   4005: "Loại khuyến mãi không hợp lệ.",
   4006: "Giá trị khuyến mãi không hợp lệ.",
+  4007: "Mã khuyến mãi này đã tồn tại trong hệ thống.",
+  4008: "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã khuyến mãi này.",
+  4009: "Mã khuyến mãi chưa đến thời gian áp dụng.",
 
   5001: "Không tìm thấy giỏ hàng của bạn.",
   5002: "Số lượng sản phẩm trong kho không đủ đáp ứng.",

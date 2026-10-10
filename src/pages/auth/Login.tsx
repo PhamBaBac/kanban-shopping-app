@@ -35,14 +35,23 @@ const Login = () => {
   } = useLogin();
 
   const handleLogin = async (values: { email: string; password: string }) => {
+    if (showCaptcha && !captchaToken) {
+      message.error("Vui lòng hoàn thành xác thực mã bảo vệ (Captcha)!");
+      return;
+    }
+
     try {
       await login({
         ...values,
         captchaToken: captchaToken || undefined,
       });
     } catch (error: any) {
-      // Bật Captcha nếu nhập sai mật khẩu hoặc server yêu cầu
-      setShowCaptcha(true);
+      // Chỉ bật Captcha nếu server yêu cầu (sai từ 3 lần hoặc lỗi xác thực Captcha)
+      const code = error?.code || error?.response?.data?.code;
+      if (code === 1014 || code === 1013) {
+        setShowCaptcha(true);
+      }
+      setCaptchaToken("");
     }
   };
 

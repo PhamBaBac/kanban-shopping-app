@@ -607,6 +607,34 @@ const ProductItem = (props: Props) => {
               </div>
             )}
 
+            {/* Badge Hàng mới */}
+            {(() => {
+              const isNewBadge = item.isNew ||
+                (item.createdAt && (Date.now() - new Date(item.createdAt).getTime()) <= 30 * 24 * 60 * 60 * 1000);
+              return isNewBadge ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    background: "linear-gradient(135deg, #000000, #000000)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "3px 8px",
+                    borderRadius: 20,
+                    letterSpacing: 0.3,
+                    boxShadow: "0 2px 6px rgba(29, 31, 30, 0.4)",
+                    zIndex: 5,
+                    pointerEvents: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Hàng mới
+                </div>
+              ) : null;
+            })()}
+
             <div className="button-container">
               <div
                 className="btn-list text-right pr-2"

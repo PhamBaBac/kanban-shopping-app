@@ -106,6 +106,7 @@ const ChangePassword = () => {
             await axios.post(`http://localhost:8080/api/v1/auth/logout`, null, {
               headers: {
                 Authorization: `Bearer ${auth?.accessToken}`,
+                "X-Client-Type": "user",
               },
               withCredentials: true,
             });

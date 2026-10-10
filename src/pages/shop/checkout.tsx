@@ -124,6 +124,17 @@ const CheckoutPage = () => {
       const res = await promotionService.checkPromotionCode(cleanCode, auth?.userId);
       if (res) {
         const detail = await promotionService.getPromotionByCode(cleanCode);
+        const now = Date.now();
+        if (detail.startAt && new Date(detail.startAt).getTime() > now) {
+          message.warning("Mã khuyến mãi này chưa đến thời gian áp dụng!");
+          setDiscountValue(undefined);
+          return;
+        }
+        if (detail.endAt && new Date(detail.endAt).getTime() < now) {
+          message.warning("Mã khuyến mãi này đã hết hạn sử dụng!");
+          setDiscountValue(undefined);
+          return;
+        }
         if (detail.minOrderAmount && subtotal < detail.minOrderAmount) {
           message.warning(
             `Mã này chỉ áp dụng cho đơn hàng từ ${detail.minOrderAmount.toLocaleString("vi-VN")}đ. Đơn của bạn hiện là ${subtotal.toLocaleString("vi-VN")}đ.`
