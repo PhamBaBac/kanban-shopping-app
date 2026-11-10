@@ -6,6 +6,9 @@ import { shopFilterCache, buildFilterCacheKey } from "@/utils/clientCache";
 
 interface UseShopProps {
   initialFilters?: ShopFilters;
+  initialProducts?: ProductModel[];
+  initialTotalItems?: number;
+  initialCategories?: CategoyModel[];
 }
 
 interface UseShopReturn {
@@ -21,19 +24,33 @@ interface UseShopReturn {
 
 export const useShop = ({
   initialFilters,
+  initialProducts,
+  initialTotalItems,
+  initialCategories,
 }: UseShopProps = {}): UseShopReturn => {
-  const [products, setProducts] = useState<ProductModel[]>([]);
-  const [categories, setCategories] = useState<CategoyModel[]>([]);
+  const [products, setProducts] = useState<ProductModel[]>(initialProducts || []);
+  const [categories, setCategories] = useState<CategoyModel[]>(initialCategories || []);
   const [filterValues, setFilterValues] = useState<FilterValues>({
     colors: [],
     sizes: [],
     prices: [],
   });
-  const [totalItems, setTotalItems] = useState(0);
+  const [totalItems, setTotalItems] = useState(initialTotalItems || (initialProducts ? initialProducts.length : 0));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const requestRef = useRef(0);
+
+  // Pre-seed cache with SSR data if provided
+  useEffect(() => {
+    if (initialProducts && initialFilters) {
+      const cacheKey = buildFilterCacheKey(initialFilters as Record<string, any>);
+      shopFilterCache.set(cacheKey, {
+        data: initialProducts,
+        totalElements: initialTotalItems || initialProducts.length,
+      });
+    }
+  }, []);
 
   const fetchProducts = useCallback(async (filters: ShopFilters) => {
     const cacheKey = buildFilterCacheKey(filters as Record<string, any>);
@@ -94,6 +111,17 @@ export const useShop = ({
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      // If we already have initial products from SSR, just load filter values silently in the background
+      if (initialProducts && initialProducts.length > 0) {
+        try {
+          const filterValuesRes = await shopService.getFilterValues();
+          setFilterValues(filterValuesRes);
+        } catch (error: any) {
+          console.error("Lỗi khi lấy filter values:", error);
+        }
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       try {
@@ -112,7 +140,7 @@ export const useShop = ({
     };
 
     fetchInitialData();
-  }, [initialFilters, fetchProducts]);
+  }, [initialFilters, fetchProducts, initialProducts]);
 
   return {
     products,

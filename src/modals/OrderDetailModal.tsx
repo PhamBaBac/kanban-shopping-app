@@ -87,8 +87,43 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
       fetchOrder();
     }
   }, [visible, orderDetail?.id]);
-  const getOrderStatusBadge = (status: string) => {
+  const getOrderStatusBadge = (
+    status: string,
+    trackingCode?: string,
+    shippingStatus?: string
+  ) => {
     const s = (status || "PENDING").toUpperCase();
+    const isShipping = Boolean(
+      trackingCode ||
+      (shippingStatus && !["cancel", "cancelled"].includes(shippingStatus.toLowerCase()))
+    );
+
+    if (s === "PROCESSING") {
+      if (isShipping) {
+        return {
+          bg: "#F0F9FF",
+          color: "#0284C7",
+          border: "#BAE6FD",
+          text: "Đang giao hàng",
+        };
+      }
+      return {
+        bg: "#EFF6FF",
+        color: "#2563EB",
+        border: "#BFDBFE",
+        text: "Đang chuẩn bị hàng",
+      };
+    }
+
+    if (s === "SHIPPING") {
+      return {
+        bg: "#F0F9FF",
+        color: "#0284C7",
+        border: "#BAE6FD",
+        text: "Đang giao hàng",
+      };
+    }
+
     switch (s) {
       case "COMPLETED":
         return {
@@ -96,13 +131,6 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           color: "#059669",
           border: "#A7F3D0",
           text: "Đã hoàn thành",
-        };
-      case "PROCESSING":
-        return {
-          bg: "#EFF6FF",
-          color: "#2563EB",
-          border: "#BFDBFE",
-          text: "Đang xử lý",
         };
       case "PENDING":
         return {
@@ -218,7 +246,13 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
     );
   };
 
-  const statusBadge = orderDetail ? getOrderStatusBadge(orderDetail.orderStatus) : null;
+  const statusBadge = orderDetail
+    ? getOrderStatusBadge(
+        orderDetail.orderStatus,
+        orderDetail.trackingCode,
+        orderDetail.shippingStatus
+      )
+    : null;
 
   return (
     <Modal

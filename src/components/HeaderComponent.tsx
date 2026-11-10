@@ -278,6 +278,10 @@ const HeaderComponent = () => {
                   destroyPopupOnHide={false}
                   mouseEnterDelay={0.12}
                   mouseLeaveDelay={0.25}
+                  getPopupContainer={(triggerNode) =>
+                    (triggerNode.closest(".site-header-wrapper") as HTMLElement) ||
+                    document.body
+                  }
                   popupRender={() => <CategoriesListCard type="card" />}
                 >
                   <Link
@@ -386,7 +390,7 @@ const HeaderComponent = () => {
                 overflowCount={99}
                 size="small"
                 offset={[-2, 4]}
-                color="#131118"
+                color="#EF4444"
               >
                 <Button
                   className="header-action-btn"
@@ -405,6 +409,10 @@ const HeaderComponent = () => {
                 trigger={["click"]}
                 open={cartDropdownOpen}
                 onOpenChange={setCartDropdownOpen}
+                getPopupContainer={(triggerNode) =>
+                  (triggerNode.closest(".site-header-wrapper") as HTMLElement) ||
+                  document.body
+                }
                 popupRender={() => (
                   <Card
                     className="cart-dropdown-card"
@@ -445,16 +453,37 @@ const HeaderComponent = () => {
                           <List.Item
                             key={item.id}
                             extra={
-                              <div style={{ display: "flex", gap: 4 }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "flex-end",
+                                  gap: 6,
+                                }}
+                              >
                                 <Button
+                                  type="text"
                                   size="small"
                                   onClick={() => {
                                     setProductSeleted(item);
                                     setVisibleModalTransationProduct(true);
+                                    setCartDropdownOpen(false);
+                                    setIsCartDrawerOpen(false);
+                                  }}
+                                  title="Đổi biến thể sản phẩm"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 28,
+                                    height: 28,
+                                    minWidth: 28,
+                                    padding: 0,
+                                    borderRadius: 6,
                                   }}
                                   icon={
                                     <AiOutlineTransaction
-                                      size={18}
+                                      size={17}
                                       className="text-muted"
                                     />
                                   }
@@ -641,7 +670,7 @@ const HeaderComponent = () => {
                   overflowCount={99}
                   size="small"
                   offset={[-2, 4]}
-                  color="#131118"
+                  color="#EF4444"
                 >
                   <Button
                     className={`header-action-btn ${cartDropdownOpen ? "active" : ""}`}
@@ -670,6 +699,10 @@ const HeaderComponent = () => {
                 placement="bottomRight"
                 overlayStyle={{ minWidth: 200 }}
                 menu={{ items: userMenuItems }}
+                getPopupContainer={(triggerNode) =>
+                  (triggerNode.closest(".site-header-wrapper") as HTMLElement) ||
+                  document.body
+                }
               >
                 <Avatar
                   src={
@@ -1096,19 +1129,34 @@ const HeaderComponent = () => {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 4,
+                        justifyContent: "flex-end",
+                        gap: 6,
                         marginLeft: 8,
                       }}
                     >
                       <Button
+                        type="text"
                         size="small"
                         onClick={() => {
                           setProductSeleted(item);
                           setVisibleModalTransationProduct(true);
+                          setIsCartDrawerOpen(false);
+                          setCartDropdownOpen(false);
+                        }}
+                        title="Đổi biến thể sản phẩm"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 28,
+                          height: 28,
+                          minWidth: 28,
+                          padding: 0,
+                          borderRadius: 6,
                         }}
                         icon={
                           <AiOutlineTransaction
-                            size={16}
+                            size={17}
                             className="text-muted"
                           />
                         }
@@ -1249,7 +1297,10 @@ const HeaderComponent = () => {
         {productSeleted && (
           <TransationSubProductModal
             visible={visibleModalTransationProduct}
-            onClose={() => setVisibleModalTransationProduct(false)}
+            onClose={() => {
+              setVisibleModalTransationProduct(false);
+              setProductSeleted(undefined);
+            }}
             productSelected={productSeleted}
           />
         )}

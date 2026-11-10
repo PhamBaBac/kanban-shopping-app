@@ -1,6 +1,6 @@
 /** @format */
 
-import { Form, Input, Button, Upload, UploadFile } from "antd";
+import { Form, Input, Button, Upload, UploadFile, message } from "antd";
 import { BiCamera, BiEdit } from "react-icons/bi";
 import { FaLocationDot } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +9,7 @@ import { uploadFile } from "@/utils/uploadFile";
 import { AddressModel } from "@/models/Products";
 import AddressModal from "./AddNewAddress";
 import { addressService, userService } from "@/services";
+import { localDataNames } from "@/constants/appInfos";
 import { useEffect, useState } from "react";
 
 const PersionalInfomations = () => {
@@ -23,19 +24,25 @@ const PersionalInfomations = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    form.setFieldsValue(auth);
-    if (auth.avatar) {
+    form.setFieldsValue({
+      firstName: auth?.firstName || auth?.firstname || "",
+      lastName: auth?.lastName || auth?.lastname || "",
+      email: auth?.email || "",
+      phoneNumber: auth?.phoneNumber || "",
+    });
+    if (auth?.avatar || auth?.avatarUrl) {
+      const avatarUrl = auth?.avatar || auth?.avatarUrl;
       setAvatarList([
         {
           uid: "-1",
           name: "avatar",
           status: "done",
-          url: auth.avatar,
+          url: avatarUrl,
         } as UploadFile,
       ]);
     }
     getAddress();
-  }, [auth.avatar]);
+  }, [auth]);
 
   const getAddress = async () => {
     try {
@@ -45,7 +52,9 @@ const PersionalInfomations = () => {
           res.find((addr: AddressModel) => addr.isDefault) || res[0];
         setAddress(defaultAddress);
         form.setFieldValue("address", defaultAddress.address);
-        form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
+        if (!form.getFieldValue("phoneNumber") && defaultAddress.phoneNumber) {
+          form.setFieldValue("phoneNumber", defaultAddress.phoneNumber);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -59,41 +68,49 @@ const PersionalInfomations = () => {
       data[i] = values[i] ?? "";
     }
 
+    setIsUpdating(true);
     try {
-      if (avatarList.length > 0) {
+      // Tải ảnh lên Cloudinary nếu người dùng đã chọn một tệp mới từ máy
+      if (avatarList.length > 0 && avatarList[0]?.originFileObj) {
         delete data.photoUrl;
         const file = avatarList[0];
-        const url = await uploadFile(file.originFileObj);
+        const url = await uploadFile(file.originFileObj, "avatars");
 
         data.photoURL = url;
-
-        await updateProfile(data);
-      } else {
-        await updateProfile(data);
+        data.avatarUrl = url;
+      } else if (auth?.avatar || auth?.avatarUrl) {
+        data.photoURL = auth?.avatar || auth?.avatarUrl;
+        data.avatarUrl = auth?.avatar || auth?.avatarUrl;
       }
-    } catch (error) {
-      console.log(error);
+
+      await updateProfile(data);
+      message.success("Cập nhật thông tin cá nhân thành công!");
+    } catch (error: any) {
+      console.error("Cập nhật profile lỗi:", error);
+      message.error(error?.message || "Cập nhật thông tin thất bại!");
+    } finally {
       setIsUpdating(false);
     }
   };
 
   const updateProfile = async (data: any) => {
-    try {
-      const res = await userService.updateProfile({
-        ...data,
-        name: `${data.firstName} ${data.lastName}`,
-      });
+    const res = await userService.updateProfile({
+      ...data,
+      name: `${data.firstName || ""} ${data.lastName || ""}`.trim(),
+    });
 
-      const updatedAuth = { ...auth, ...res };
-      if (data.photoURL) {
-        updatedAuth.avatar = data.photoURL;
-      }
+    const updatedAuth = {
+      ...auth,
+      ...(res || {}),
+      firstName: data.firstName || res?.firstname || auth.firstName,
+      lastName: data.lastName || res?.lastname || auth.lastName,
+      avatar: data.photoURL || res?.avatarUrl || auth.avatar,
+      avatarUrl: data.photoURL || res?.avatarUrl || auth.avatar,
+    };
 
-      dispatch(addAuth(updatedAuth));
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsUpdating(false);
+    dispatch(addAuth(updatedAuth));
+    if (typeof window !== "undefined") {
+      localStorage.setItem(localDataNames.authData, JSON.stringify(updatedAuth));
     }
   };
 
@@ -185,7 +202,7 @@ const PersionalInfomations = () => {
             </div>
             <div>
               <Form.Item name={"email"} label="Địa chỉ email">
-                <Input allowClear />
+                <Input disabled />
               </Form.Item>
             </div>
             <div className="grid-col-full">

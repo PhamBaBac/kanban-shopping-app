@@ -10,7 +10,6 @@ interface SignUpData {
   email: string;
   password: string;
   role: "USER";
-  captchaToken?: string;
 }
 
 interface UseSignupReturn {
@@ -98,8 +97,17 @@ export const useSignup = (): UseSignupReturn => {
       const code = numsOfCode.join("");
       try {
         await verifyEmailCode(signValues.email, code);
-        message.success("Xác thực tài khoản thành công!");
-        router.push("/");
+        message.success("Xác thực tài khoản thành công! Vui lòng đăng nhập.");
+        if (typeof window !== "undefined" && signValues?.email) {
+          localStorage.setItem(
+            `first_login_pending_${signValues.email.toLowerCase()}`,
+            "true"
+          );
+        }
+        router.push({
+          pathname: "/auth/login",
+          query: signValues?.email ? { email: signValues.email } : undefined,
+        });
       } catch (error: any) {
         showErrorMessage(error, "Mã xác thực OTP không đúng hoặc đã hết hạn!");
       }

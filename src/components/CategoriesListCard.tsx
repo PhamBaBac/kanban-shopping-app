@@ -103,7 +103,10 @@ const CategoriesListCard = (props: Props) => {
         : Math.min(Math.max((width || 1200) * 0.55, 640), 800);
 
     return (
-      <div style={{ paddingTop: 8 }}>
+      <div
+        style={{ paddingTop: 8 }}
+        onWheel={(e) => e.stopPropagation()}
+      >
         <div
           className="shadow"
           style={{
@@ -128,6 +131,7 @@ const CategoriesListCard = (props: Props) => {
                 minHeight: 220,
                 maxHeight: "calc(80vh - 140px)",
                 overflowY: "auto",
+                overscrollBehavior: "contain",
               }}
             >
               {/* Categories Section */}
@@ -160,8 +164,22 @@ const CategoriesListCard = (props: Props) => {
                           href={`/shop?catId=${item.id}`}
                           onClick={onItemClick}
                           className="mega-menu-category-title"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
                         >
-                          {item.title}
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              style={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: 4,
+                                objectFit: "cover",
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          <span>{item.title}</span>
                         </Link>
                         <div className="mega-menu-category-underline" />
                       </div>
@@ -181,6 +199,7 @@ const CategoriesListCard = (props: Props) => {
                               style={{
                                 display: "flex",
                                 alignItems: "center",
+                                gap: 6,
                                 padding: "6px 10px",
                                 borderRadius: 6,
                                 fontSize: "0.88rem",
@@ -202,6 +221,19 @@ const CategoriesListCard = (props: Props) => {
                                 e.currentTarget.style.transform = "none";
                               }}
                             >
+                              {chil.image && (
+                                <img
+                                  src={chil.image}
+                                  alt={chil.title}
+                                  style={{
+                                    width: 16,
+                                    height: 16,
+                                    borderRadius: 3,
+                                    objectFit: "cover",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              )}
                               <span>{chil.title}</span>
                             </Link>
                           ))}
@@ -395,8 +427,22 @@ const CategoriesListCard = (props: Props) => {
                   textDecoration: "none",
                   display: "flex",
                   alignItems: "center",
+                  gap: 8,
                 }}
               >
+                {item.image && (
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 4,
+                      objectFit: "cover",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
                 <span>{item.title}</span>
               </Link>
 
@@ -446,7 +492,9 @@ const CategoriesListCard = (props: Props) => {
                     onClick={onItemClick}
                     className="drawer-subcategory-link"
                     style={{
-                      display: "block",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
                       padding: "6px 10px",
                       borderRadius: 6,
                       fontSize: "0.88rem",
@@ -455,7 +503,20 @@ const CategoriesListCard = (props: Props) => {
                       textDecoration: "none",
                     }}
                   >
-                    {child.title}
+                    {child.image && (
+                      <img
+                        src={child.image}
+                        alt={child.title}
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 3,
+                          objectFit: "cover",
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <span>{child.title}</span>
                   </Link>
                 ))}
               </div>

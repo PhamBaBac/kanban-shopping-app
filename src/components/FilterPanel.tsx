@@ -468,15 +468,22 @@ const FilterPanel = ({
     >
       {!isDrawer && (
         <div
-          className="d-flex align-items-center gap-2 pb-3 mb-2 border-bottom"
-          style={{ borderColor: isDark ? "#2b2836" : "#F3F4F6" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            paddingBottom: 16,
+            marginBottom: 14,
+            borderBottom: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+          }}
         >
-          <BsFilterLeft size={18} color={isDark ? "#ffffff" : "#131118"} />
+          <BsFilterLeft size={20} color={isDark ? "#ffffff" : "#131118"} />
           <span
             style={{
               fontFamily: "var(--font-heading)",
               fontWeight: 600,
-              fontSize: "0.98rem",
+              fontSize: "1rem",
+              lineHeight: 1.4,
               color: isDark ? "#ffffff" : "#131118",
             }}
           >

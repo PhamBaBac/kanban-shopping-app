@@ -29,6 +29,8 @@ import { PromotionModel } from "@/models/PromotionModel";
 import { ReviewModel } from "@/models/ReviewModel";
 import { themeSelector } from "@/redux/reducers/themeSlice";
 import { homeService } from "@/services";
+import Image from "next/image";
+import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
 
 interface Props {
   promotions: PromotionModel[];
@@ -230,12 +232,17 @@ const HomePage = (props: Props) => {
                     promotions.map((item, idx) => (
                       <div key={item.id || idx}>
                         <div className="hp-hero-slide">
-                          <img
+                          <Image
                             src={
                               item.imageURL ||
                               "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=80"
                             }
+                            loader={cloudinaryLoader}
                             alt={item.title || "Ưu đãi"}
+                            fill
+                            priority={idx === 0}
+                            sizes="(max-width: 991px) 100vw, 70vw"
+                            style={{ objectFit: "cover" }}
                           />
                           <div className="hp-hero-overlay" />
                           <div className="hp-hero-content">
@@ -275,9 +282,14 @@ const HomePage = (props: Props) => {
                   ) : (
                     <div>
                       <div className="hp-hero-slide">
-                        <img
+                        <Image
                           src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1600&q=80"
+                          loader={cloudinaryLoader}
                           alt="Hero Kanban"
+                          fill
+                          priority
+                          sizes="(max-width: 991px) 100vw, 70vw"
+                          style={{ objectFit: "cover" }}
                         />
                         <div className="hp-hero-overlay" />
                         <div className="hp-hero-content">
@@ -322,9 +334,13 @@ const HomePage = (props: Props) => {
                   className="hp-side-card"
                   onClick={() => router.push("/shop")}
                 >
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80"
+                    loader={cloudinaryLoader}
                     alt="Side Banner 1"
+                    fill
+                    sizes="(max-width: 991px) 50vw, 30vw"
+                    style={{ objectFit: "cover" }}
                   />
                   <div className="hp-side-overlay" />
                   <div className="hp-side-content">
@@ -344,9 +360,13 @@ const HomePage = (props: Props) => {
                   className="hp-side-card"
                   onClick={() => router.push("/shop")}
                 >
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80"
+                    loader={cloudinaryLoader}
                     alt="Side Banner 2"
+                    fill
+                    sizes="(max-width: 991px) 50vw, 30vw"
+                    style={{ objectFit: "cover" }}
                   />
                   <div className="hp-side-overlay" />
                   <div className="hp-side-content">
@@ -503,10 +523,13 @@ const HomePage = (props: Props) => {
                       className="hp-cat-card"
                       onClick={() => router.push(`/shop?catId=${cat.id}`)}
                     >
-                      <img
+                      <Image
                         src={cat.image || CAT_FALLBACK_IMAGES[i % CAT_FALLBACK_IMAGES.length]}
+                        loader={cloudinaryLoader}
                         alt={cat.title}
-                        loading="lazy"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        style={{ objectFit: "cover" }}
                       />
                       <div className="hp-cat-overlay" />
                       <div className="hp-cat-label">
@@ -615,16 +638,13 @@ const HomePage = (props: Props) => {
                 padding: "48px 36px",
               }}
             >
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600&q=80"
+                loader={cloudinaryLoader}
                 alt="Lookbook"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
+                fill
+                sizes="100vw"
+                style={{ objectFit: "cover" }}
               />
               <div
                 style={{

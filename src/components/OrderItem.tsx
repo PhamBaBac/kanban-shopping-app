@@ -127,8 +127,43 @@ const OrderItem: React.FC<OrderItemProps> = ({
   const [cancelLoading, setCancelLoading] = useState(false);
   const [reviewingItem, setReviewingItem] = useState<any | null>(null);
 
-  const getOrderStatusBadge = (status: string) => {
+  const getOrderStatusBadge = (
+    status: string,
+    trackingCode?: string,
+    shippingStatus?: string
+  ) => {
     const s = (status || "PENDING").toUpperCase();
+    const isShipping = Boolean(
+      trackingCode ||
+      (shippingStatus && !["cancel", "cancelled"].includes(shippingStatus.toLowerCase()))
+    );
+
+    if (s === "PROCESSING") {
+      if (isShipping) {
+        return {
+          bg: "#F0F9FF",
+          color: "#0284C7",
+          border: "#BAE6FD",
+          text: "Đang giao hàng",
+        };
+      }
+      return {
+        bg: "#EFF6FF",
+        color: "#2563EB",
+        border: "#BFDBFE",
+        text: "Đang chuẩn bị hàng",
+      };
+    }
+
+    if (s === "SHIPPING") {
+      return {
+        bg: "#F0F9FF",
+        color: "#0284C7",
+        border: "#BAE6FD",
+        text: "Đang giao hàng",
+      };
+    }
+
     switch (s) {
       case "COMPLETED":
         return {
@@ -136,13 +171,6 @@ const OrderItem: React.FC<OrderItemProps> = ({
           color: "#059669",
           border: "#A7F3D0",
           text: "Đã hoàn thành",
-        };
-      case "PROCESSING":
-        return {
-          bg: "#EFF6FF",
-          color: "#2563EB",
-          border: "#BFDBFE",
-          text: "Đang xử lý",
         };
       case "PENDING":
         return {
@@ -175,13 +203,31 @@ const OrderItem: React.FC<OrderItemProps> = ({
     }
   };
 
-  const getOrderStatusDescription = (status: string) => {
+  const getOrderStatusDescription = (
+    status: string,
+    trackingCode?: string,
+    shippingStatus?: string
+  ) => {
     if (!status) return "";
-    switch (status.toUpperCase()) {
+    const s = status.toUpperCase();
+    const isShipping = Boolean(
+      trackingCode ||
+      (shippingStatus && !["cancel", "cancelled"].includes(shippingStatus.toLowerCase()))
+    );
+
+    if (s === "PROCESSING") {
+      if (isShipping) {
+        return "Đơn hàng đã xuất kho và đang trên đường giao đến bạn";
+      }
+      return "Đơn hàng đang được người bán chuẩn bị và đóng gói";
+    }
+    if (s === "SHIPPING") {
+      return "Đơn hàng đã xuất kho và đang trên đường giao đến bạn";
+    }
+
+    switch (s) {
       case "PENDING":
         return "Đang chờ cửa hàng xác nhận";
-      case "PROCESSING":
-        return "Đơn hàng đang được chuẩn bị và đóng gói";
       case "COMPLETED":
         return "Đơn hàng đã được giao thành công";
       case "CANCELLED":
@@ -244,8 +290,12 @@ const OrderItem: React.FC<OrderItemProps> = ({
     }
   };
 
-  const statusBadge = getOrderStatusBadge(order.orderStatus);
   const trackingCode = order.trackingCode || order.items?.[0]?.trackingCode;
+  const statusBadge = getOrderStatusBadge(
+    order.orderStatus,
+    trackingCode,
+    (order as any).shippingStatus
+  );
 
   return (
     <>
@@ -502,7 +552,11 @@ const OrderItem: React.FC<OrderItemProps> = ({
           >
             <div>
               <span style={{ fontSize: "13px", color: "#6B7280" }}>
-                {getOrderStatusDescription(order.orderStatus)}
+                {getOrderStatusDescription(
+                  order.orderStatus,
+                  trackingCode,
+                  (order as any).shippingStatus
+                )}
               </span>
             </div>
 

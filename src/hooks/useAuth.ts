@@ -20,7 +20,7 @@ interface UseAuthReturn {
     code: string,
     accessToken: string
   ) => Promise<void>;
-  sendVerificationCode: (email: string, captchaToken?: string) => Promise<void>;
+  sendVerificationCode: (email: string) => Promise<void>;
   verifyEmailCode: (email: string, code: string) => Promise<void>;
   resetPassword: (
     email: string,
@@ -39,6 +39,49 @@ export const useAuth = (): UseAuthReturn => {
 
   const dispatch = useDispatch();
   const router = useRouter();
+
+  const getPostLoginDestination = (
+    userId?: string,
+    email?: string,
+    serverIsFirstLogin?: boolean
+  ): string => {
+    const { id, slug } = router.query;
+    const defaultDestination = id && slug ? `/products/${slug}/${id}` : "/";
+
+    if (typeof window === "undefined") {
+      return defaultDestination;
+    }
+
+    const userLoggedInKey = userId ? `kanban_has_logged_in_${userId}` : null;
+    const pendingSignupKey = email
+      ? `first_login_pending_${email.toLowerCase()}`
+      : null;
+
+    let isFirstTime = false;
+
+    if (serverIsFirstLogin !== undefined && serverIsFirstLogin !== null) {
+      isFirstTime = Boolean(serverIsFirstLogin);
+    } else {
+      const hasLoggedInBefore =
+        userLoggedInKey && localStorage.getItem(userLoggedInKey) === "true";
+      const wasPendingFirstLogin =
+        pendingSignupKey && localStorage.getItem(pendingSignupKey) === "true";
+
+      if (!hasLoggedInBefore || wasPendingFirstLogin) {
+        isFirstTime = true;
+      }
+    }
+
+    // Đánh dấu đã từng đăng nhập tài khoản này
+    if (userLoggedInKey) {
+      localStorage.setItem(userLoggedInKey, "true");
+    }
+    if (pendingSignupKey) {
+      localStorage.removeItem(pendingSignupKey);
+    }
+
+    return isFirstTime ? "/profile" : defaultDestination;
+  };
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
@@ -67,8 +110,12 @@ export const useAuth = (): UseAuthReturn => {
       localStorage.setItem(localDataNames.authData, JSON.stringify(user));
       localStorage.removeItem("sessionId");
 
-      const { id, slug } = router.query;
-      router.push(id && slug ? `/products/${slug}/${id}` : "/");
+      const destination = getPostLoginDestination(
+        user.userId,
+        user.email,
+        res?.firstLogin ?? userInfo?.firstLogin
+      );
+      router.replace(destination);
     } catch (error: any) {
       showErrorMessage(error, "Đăng nhập thất bại, vui lòng kiểm tra lại thông tin!");
       throw error;
@@ -108,8 +155,12 @@ export const useAuth = (): UseAuthReturn => {
       localStorage.setItem(localDataNames.authData, JSON.stringify(user));
       localStorage.removeItem("sessionId");
 
-      const { id, slug } = router.query;
-      router.push(id && slug ? `/products/${slug}/${id}` : "/");
+      const destination = getPostLoginDestination(
+        user.userId,
+        user.email,
+        res?.firstLogin ?? userInfo?.firstLogin
+      );
+      router.replace(destination);
     } catch (error: any) {
       showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
       throw error;
@@ -145,8 +196,13 @@ export const useAuth = (): UseAuthReturn => {
 
       await authService.syncRedisCart(userInfo.id);
 
+      const destination = getPostLoginDestination(
+        user.userId,
+        user.email,
+        userInfo?.firstLogin
+      );
       setTimeout(() => {
-        router.replace("/");
+        router.replace(destination);
       }, 300);
     } catch (error: any) {
       showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
@@ -156,13 +212,11 @@ export const useAuth = (): UseAuthReturn => {
     }
   };
 
-  const sendVerificationCode = async (email: string, captchaToken?: string) => {
+  const sendVerificationCode = async (email: string) => {
     setIsLoading(true);
     try {
-      await authService.sendVerificationCode(email, captchaToken);
-      message.success("Mã xác thực đã được gửi đến email của bạn.");
+      await authService.sendVerificationCode(email);
     } catch (error: any) {
-      showErrorMessage(error, "Không thể gửi mã xác thực. Vui lòng thử lại sau!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -173,9 +227,7 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(true);
     try {
       await authService.verifyEmailCode(email, code);
-      message.success("Xác thực email thành công.");
     } catch (error: any) {
-      showErrorMessage(error, "Xác thực email thất bại!");
       throw error;
     } finally {
       setIsLoading(false);
@@ -228,8 +280,13 @@ export const useAuth = (): UseAuthReturn => {
       localStorage.setItem(localDataNames.authData, JSON.stringify(user));
       localStorage.removeItem("sessionId");
 
+      const destination = getPostLoginDestination(
+        user.userId,
+        user.email,
+        userInfo?.firstLogin
+      );
       setTimeout(() => {
-        router.replace(redirectTo || "/");
+        router.replace(redirectTo || destination);
       }, 300);
       return { mfaEnabled: false, userInfo };
     } catch (error: any) {

@@ -9,8 +9,6 @@ export const ERROR_CODE_MAP: Record<number, string> = {
   1001: "Khóa hoặc trường dữ liệu không hợp lệ.",
   1002: "Dữ liệu đầu vào không hợp lệ.",
   1003: "Đã xảy ra lỗi không xác định.",
-  1013: "Xác thực Captcha không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
-  1014: "Phát hiện đăng nhập sai nhiều lần. Vui lòng xác thực mã bảo vệ Captcha.",
   1999: "Lỗi hệ thống chưa được phân loại. Vui lòng thử lại sau.",
 
   2001: "Không tìm thấy thông tin tài khoản.",

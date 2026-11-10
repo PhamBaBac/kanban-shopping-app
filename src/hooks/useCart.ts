@@ -43,7 +43,11 @@ export const useCart = ({
   }, [subProductSelected]);
 
   useEffect(() => {
-    const item = cart.find((el) => el.subProductId === subProductSelected?.id);
+    const targetSubProductId =
+      subProductSelected?.id ||
+      (subProductSelected as any)?._id ||
+      (subProductSelected as any)?.subProductId;
+    const item = cart.find((el) => el.subProductId === targetSubProductId);
     if (subProductSelected) {
       if (item) {
         setInstockQuantity(subProductSelected.stock - item.count);
@@ -54,8 +58,13 @@ export const useCart = ({
   }, [cart, subProductSelected]);
 
   const handleCart = async (): Promise<boolean> => {
-    if (!subProductSelected) {
-      message.error("Vui lòng chọn phân loại / biến thể sản phẩm!");
+    const targetSubProductId =
+      subProductSelected?.id ||
+      (subProductSelected as any)?._id ||
+      (subProductSelected as any)?.subProductId;
+
+    if (!subProductSelected || !targetSubProductId) {
+      message.error("Vui lòng chọn đầy đủ phân loại / biến thể sản phẩm!");
       return false;
     }
 
@@ -133,7 +142,7 @@ export const useCart = ({
     const value = {
       createdBy: isLoggedIn ? auth.userId : sessionId,
       count,
-      subProductId: subProductSelected.id,
+      subProductId: targetSubProductId,
       size: resolvedSize,
       title: product.title,
       color: resolvedColor,

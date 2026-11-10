@@ -16,6 +16,9 @@ import { VND } from "@/utils/handleCurrency";
 import { Button, Divider, message, Modal, Space, Tag, Tooltip, Typography } from "antd";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Image from "next/image";
+import { cloudinaryLoader } from "@/utils/imageOptimizer";
+import { sortVariantValues, sortAttributeKeys } from "@/utils/variantSorter";
 
 interface Props {
   visible: boolean;
@@ -126,9 +129,7 @@ const TransationSubProductModal = ({
       const attrs = getSubProductAttributes(sp);
       Object.keys(attrs).forEach((k) => keysSet.add(k));
     });
-    return Array.from(keysSet).sort(
-      (a, b) => getAttributeOrder(a) - getAttributeOrder(b)
-    );
+    return sortAttributeKeys(Array.from(keysSet));
   }, [subProducts]);
 
   const currentAttributes: Record<string, string> = useMemo(() => {
@@ -144,7 +145,7 @@ const TransationSubProductModal = ({
         valuesSet.add(attrs[key].trim());
       }
     });
-    return Array.from(valuesSet);
+    return sortVariantValues(Array.from(valuesSet), key);
   };
 
   const isHexColor = (val: string) =>
@@ -245,6 +246,7 @@ const TransationSubProductModal = ({
 
     const updatedItem: CartItemModel = {
       ...productSelected,
+      createdBy: auth.userId || productSelected.createdBy,
       count: newCount,
       subProductId: item.id,
       size: resolvedSize,
@@ -256,8 +258,8 @@ const TransationSubProductModal = ({
     };
 
     try {
-      if (auth.userId) {
-        await cartService.updateCartItem(productSelected.id!, updatedItem);
+      if (auth.userId && productSelected.id) {
+        await cartService.updateCartItem(productSelected.id, updatedItem);
 
         try {
           const freshCart = await cartService.getCart();
@@ -342,22 +344,39 @@ const TransationSubProductModal = ({
           borderBottom: "1px solid #f0f0f0",
         }}
       >
-        <img
-          src={
-            itemSelected?.images?.[0] ||
-            itemSelected?.imgURL ||
-            productSelected.image ||
-            ""
-          }
-          alt={productSelected.title}
-          style={{
-            width: 80,
-            height: 80,
-            objectFit: "cover",
-            borderRadius: 8,
-            border: "1px solid #eaeaea",
-          }}
-        />
+        {Boolean(
+          itemSelected?.images?.[0] ||
+          itemSelected?.imgURL ||
+          productSelected.image
+        ) ? (
+          <Image
+            src={
+              itemSelected?.images?.[0] ||
+              itemSelected?.imgURL ||
+              productSelected.image ||
+              ""
+            }
+            loader={cloudinaryLoader}
+            alt={productSelected.title}
+            width={80}
+            height={80}
+            style={{
+              objectFit: "cover",
+              borderRadius: 8,
+              border: "1px solid #eaeaea",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 80,
+              height: 80,
+              backgroundColor: "#f5f5f5",
+              borderRadius: 8,
+              border: "1px solid #eaeaea",
+            }}
+          />
+        )}
         <div>
           <Typography.Title level={5} style={{ margin: 0 }}>
             {productSelected.title}

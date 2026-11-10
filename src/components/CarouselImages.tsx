@@ -3,6 +3,8 @@
 import { SubProductModel } from "@/models/Products";
 import React, { useEffect, useRef, useState } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import Image from "next/image";
+import { cloudinaryLoader } from "@/utils/imageOptimizer";
 
 export interface CarouselImageItem {
   id?: string;
@@ -210,6 +212,9 @@ const CarouselImages: React.FC<Props> = ({ items, onClick, selectedImageUrl }) =
               data-img-url={encodeURIComponent(item.imgURL)}
               onClick={() => handleItemClick(item)}
               style={{
+                position: "relative",
+                width: 76,
+                height: 76,
                 flexShrink: 0,
                 cursor: "pointer",
                 borderRadius: 10,
@@ -222,16 +227,16 @@ const CarouselImages: React.FC<Props> = ({ items, onClick, selectedImageUrl }) =
                 transform: isSelected ? "scale(1.02)" : "scale(1)",
               }}
             >
-              <img
+              <Image
                 src={item.imgURL}
+                loader={cloudinaryLoader}
                 alt={item.title || `Ảnh sản phẩm ${idx + 1}`}
                 draggable={false}
+                fill
+                sizes="76px"
                 style={{
-                  width: "clamp(60px, 14vw, 76px)",
-                  height: "clamp(60px, 14vw, 76px)",
                   objectFit: "cover",
                   borderRadius: 7,
-                  display: "block",
                   pointerEvents: "none",
                 }}
               />

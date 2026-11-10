@@ -8,7 +8,7 @@ import { addAuth, removeAuth } from "../redux/reducers/authReducer";
 import { store } from "../redux/store";
 import { getErrorMessage } from "../utils/errorHandler";
 
-const baseURL = `http://localhost:8080/api/v1`;
+const baseURL = process.env.NEXT_PUBLIC_API_URL || `http://localhost:8080/api/v1`;
 
 let isRedirectingTo500 = false;
 
@@ -115,13 +115,48 @@ const refreshToken = async (): Promise<string | null> => {
 
 const axiosClient = axios.create({
   baseURL,
+  withCredentials: true,
   paramsSerializer: (params) => queryString.stringify(params),
 });
 
-axiosClient.interceptors.request.use((config: any) => {
-  const token = getAccessToken();
+const parseJwt = (token: string) => {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
+axiosClient.interceptors.request.use(async (config: any) => {
+  let token = getAccessToken();
 
   if (token) {
+    const isRefreshRequest = config.url?.includes("/auth/refresh-token");
+    if (!isRefreshRequest && typeof window !== "undefined") {
+      const payload = parseJwt(token);
+      if (payload?.exp) {
+        const expiresInSec = payload.exp - Math.floor(Date.now() / 1000);
+        // Nếu token sắp hết hạn trong vòng 90 giây, chủ động refresh ngầm trước
+        if (expiresInSec > 0 && expiresInSec < 90) {
+          try {
+            const refreshedToken = await refreshToken();
+            if (refreshedToken) {
+              token = refreshedToken;
+            }
+          } catch {}
+        }
+      }
+    }
+
     config.headers = {
       ...config.headers,
       Authorization: `Bearer ${token}`,
@@ -179,7 +214,15 @@ axiosClient.interceptors.response.use(
         const newToken = await refreshToken();
         if (!newToken) return Promise.reject(formatRejectedError("Phiên đăng nhập đã hết hạn"));
 
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        if (originalRequest.headers) {
+          if (typeof originalRequest.headers.set === "function") {
+            originalRequest.headers.set("Authorization", `Bearer ${newToken}`);
+          } else {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            originalRequest.headers["authorization"] = `Bearer ${newToken}`;
+          }
+        }
+
         return axiosClient(originalRequest);
       } catch (refreshError) {
         return Promise.reject(formatRejectedError(refreshError));
@@ -198,7 +241,11 @@ axiosClient.interceptors.response.use(
         response: error.response?.data,
         message: error.message,
       });
-      trigger500Redirect();
+      // Chỉ điều hướng toàn trang sang /500 nếu là yêu cầu tải trang cốt lõi (critical)
+      // Tránh đá văng người dùng khỏi trang khi đang mở modal xem nhanh, giỏ hàng hoặc thao tác phụ
+      if (originalRequest.isCriticalPageLoad) {
+        trigger500Redirect();
+      }
     }
 
     return Promise.reject(formatRejectedError(error));

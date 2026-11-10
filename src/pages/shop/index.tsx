@@ -46,7 +46,25 @@ import ServerError from "../ServerError";
 
 const { Sider, Content } = Layout;
 
-const ShopPageContent = () => {
+interface ShopPageProps {
+  initialProducts?: ProductModel[];
+  initialTotalItems?: number;
+  initialCategories?: any[];
+  initialFilters?: any;
+  initialPage?: number;
+  initialSortBy?: "relevance" | "latest" | "topsales" | "price_asc" | "price_desc";
+  categoryTitle?: string;
+}
+
+const ShopPageContent: React.FC<ShopPageProps> = ({
+  initialProducts = [],
+  initialTotalItems = 0,
+  initialCategories = [],
+  initialFilters,
+  initialPage = 1,
+  initialSortBy = "relevance",
+  categoryTitle,
+}) => {
   const router = useRouter();
   const { isReady, query } = router;
   const dispatch = useDispatch();
@@ -56,12 +74,12 @@ const ShopPageContent = () => {
   const rootCatId = useSelector((state: RootState) => state.filter.rootCatId);
   const { mode } = useSelector(themeSelector);
   const isDark = mode === "dark";
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [sortBy, setSortBy] = useState<"relevance" | "latest" | "topsales" | "price_asc" | "price_desc">("relevance");
+  const [sortBy, setSortBy] = useState<"relevance" | "latest" | "topsales" | "price_asc" | "price_desc">(initialSortBy);
   const [priceDropdownOpen, setPriceDropdownOpen] = useState(false);
-  const lastFiltersRef = useRef<string>("");
+  const lastFiltersRef = useRef<string>(initialFilters ? JSON.stringify(initialFilters) : "");
 
   const handleSortChange = (
     newSort: "relevance" | "latest" | "topsales" | "price_asc" | "price_desc"
@@ -101,7 +119,12 @@ const ShopPageContent = () => {
     }
   };
 
-  const { products, totalItems, isLoading, error, fetchProducts } = useShop();
+  const { products, totalItems, isLoading, error, fetchProducts } = useShop({
+    initialProducts,
+    initialTotalItems,
+    initialCategories,
+    initialFilters,
+  });
 
   const handleRemovePriceFilter = () => {
     const updated = { ...filterValues };
@@ -188,10 +211,10 @@ const ShopPageContent = () => {
   );
   const hasActiveCategories = Boolean(
     filterValues.catIds &&
-      filterValues.catIds.length > 0 &&
-      (!rootCatId ||
-        filterValues.catIds.length > 1 ||
-        filterValues.catIds[0] !== rootCatId)
+    filterValues.catIds.length > 0 &&
+    (!rootCatId ||
+      filterValues.catIds.length > 1 ||
+      filterValues.catIds[0] !== rootCatId)
   );
   const hasActiveFilters =
     hasActivePrice ||
@@ -395,10 +418,15 @@ const ShopPageContent = () => {
     String(query.search || query.q || filterValues.search || "").trim()
   );
 
+  const hasLoadedProducts = Boolean(products && products.length > 0);
+
   if (
-    !isReady ||
-    isRedirecting ||
-    (!hasUrlOrFilterSearch && !query.catId && (!filterValues.catIds || filterValues.catIds.length === 0))
+    !hasLoadedProducts &&
+    (!isReady ||
+      isRedirecting ||
+      (!hasUrlOrFilterSearch &&
+        !query.catId &&
+        (!filterValues.catIds || filterValues.catIds.length === 0)))
   ) {
     return (
       <div
@@ -413,118 +441,125 @@ const ShopPageContent = () => {
     );
   }
 
+  const currentCategoryName =
+    categoryTitle ||
+    (filterValues.catIds && filterValues.catIds.length > 0 && initialCategories.length > 0
+      ? initialCategories.find(
+        (c: any) => String(c.id || c._id) === String(filterValues.catIds?.[0])
+      )?.title
+      : undefined);
+
+  const pageTitle = currentCategoryName
+    ? `${currentCategoryName} - Thời Trang Cao Cấp | KANBAN`
+    : query.search
+      ? `Tìm kiếm: "${query.search}" | KANBAN Shop`
+      : "Cửa Hàng Thời Trang | Bộ Sưu Tập Kanban";
+
+  const pageDescription = currentCategoryName
+    ? `Khám phá bộ sưu tập ${currentCategoryName} mới nhất tại KANBAN. Chất liệu cao cấp, kiểu dáng thời thượng, ưu đãi hấp dẫn.`
+    : "Khám phá toàn bộ sản phẩm thời trang nam nữ, áo thun, sơ mi, quần jean, phụ kiện mới nhất với nhiều mức giá ưu đãi tại Kanban Fashion.";
+
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Trang chủ",
+          item: appInfo.siteUrl || "https://kanban-app.com",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: currentCategoryName || "Cửa hàng",
+          item: `${appInfo.siteUrl || "https://kanban-app.com"}/shop`,
+        },
+      ],
+    },
+    ...(products && products.length > 0
+      ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: pageTitle,
+          itemListElement: products.slice(0, 10).map((prod, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: prod.title,
+            url: `${appInfo.siteUrl || "https://kanban-app.com"}/products/${prod.slug || prod.id
+              }/${prod.id}`,
+          })),
+        },
+      ]
+      : []),
+  ];
+
   return (
     <>
       <HeadComponent
-        title="Cửa Hàng Thời Trang | Bộ Sưu Tập Kanban"
-        description="Khám phá toàn bộ sản phẩm thời trang nam nữ, áo thun, sơ mi, quần jean, phụ kiện mới nhất với nhiều mức giá ưu đãi tại Kanban Fashion."
+        title={pageTitle}
+        description={pageDescription}
         url={`${appInfo.siteUrl}/shop`}
+        structuredData={structuredData}
       />
       <div className="container py-3">
-      <div className="py-2 mb-3 border-bottom" style={{ borderColor: isDark ? "#303030" : "#F3F4F6" }}>
-        <Breadcrumb
-          items={[
-            {
-              title: (
-                <Link
-                  href={"/"}
-                  style={{ color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", textDecoration: "none" }}
-                >
-                  Trang chủ
-                </Link>
-              ),
-            },
-            {
-              title: (
-                <span style={{ color: isDark ? "rgba(255,255,255,0.85)" : "#131118", fontWeight: 600 }}>Cửa hàng</span>
-              ),
-            },
-          ]}
-        />
-      </div>
+        <div className="py-2 mb-3 border-bottom" style={{ borderColor: isDark ? "#303030" : "#F3F4F6" }}>
+          <Breadcrumb
+            items={[
+              {
+                title: (
+                  <Link
+                    href={"/"}
+                    style={{ color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", textDecoration: "none" }}
+                  >
+                    Trang chủ
+                  </Link>
+                ),
+              },
+              {
+                title: (
+                  <span style={{ color: isDark ? "rgba(255,255,255,0.85)" : "#131118", fontWeight: 600 }}>Cửa hàng</span>
+                ),
+              },
+            ]}
+          />
+        </div>
 
-      <Layout style={{ background: "transparent" }}>
-        <Sider
-          width={280}
-          className="d-none d-lg-block"
-          style={{ background: "transparent", paddingRight: 24 }}
-        >
-          <FilterPanel />
-        </Sider>
-
-        <Content style={{ padding: 0, minHeight: 800 }}>
-          <div
-            className="rounded-3 border shadow-sm mb-4"
-            style={{
-              borderColor: isDark ? "#303030" : "#E5E7EB",
-              backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
-              padding: "12px 14px",
-              borderRadius: 14,
-            }}
+        <Layout style={{ background: "transparent" }}>
+          <Sider
+            width={280}
+            className="d-none d-lg-block"
+            style={{ background: "transparent", paddingRight: 24 }}
           >
-            {/* Toolbar: Sort by bar & Mobile Filter toggle */}
+            <FilterPanel />
+          </Sider>
+
+          <Content style={{ padding: 0, minHeight: 800 }}>
             <div
-              className="shop-toolbar-wrapper"
+              className="rounded-3 border shadow-sm mb-4"
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 10,
+                borderColor: isDark ? "#303030" : "#E5E7EB",
+                backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
+                padding: "12px 14px",
+                borderRadius: 14,
               }}
             >
-              {/* Mobile Toolbar (< 576px): Filter button on Left, Sort Select on Right */}
-              <div className="d-flex d-sm-none align-items-center justify-content-between w-100 gap-2">
-                <Button
-                  icon={<BsFilterLeft size={18} />}
-                  onClick={() => setDrawerVisible(true)}
-                  style={{
-                    borderRadius: 8,
-                    borderColor: isDark ? "#424242" : "#E5E7EB",
-                    backgroundColor: isDark ? "#2a2a2a" : "#FFFFFF",
-                    color: isDark ? "#FFFFFF" : "#131118",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    height: 36,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  Bộ lọc
-                  {hasActiveFilters && (
-                    <span
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        backgroundColor: "#1677ff",
-                        display: "inline-block",
-                      }}
-                    />
-                  )}
-                </Button>
-
-                <Select
-                  value={sortBy}
-                  onChange={(val) => handleSortChange(val)}
-                  style={{ width: 165, height: 36 }}
-                  popupMatchSelectWidth={false}
-                  options={[
-                    { label: "Sắp xếp: Liên quan", value: "relevance" },
-                    { label: "Sắp xếp: Mới nhất", value: "latest" },
-                    { label: "Sắp xếp: Bán chạy", value: "topsales" },
-                    { label: "Giá: Thấp đến Cao", value: "price_asc" },
-                    { label: "Giá: Cao đến Thấp", value: "price_desc" },
-                  ]}
-                />
-              </div>
-
-              {/* Tablet & Desktop Toolbar (>= 576px): Filter Button + Sort Chips */}
-              <div className="d-none d-sm-flex align-items-center justify-content-between flex-wrap gap-2 w-100">
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              {/* Toolbar: Sort by bar & Mobile Filter toggle */}
+              <div
+                className="shop-toolbar-wrapper"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 10,
+                }}
+              >
+                {/* Mobile Toolbar (< 576px): Filter button on Left, Sort Select on Right */}
+                <div className="d-flex d-sm-none align-items-center justify-content-between w-100 gap-2">
                   <Button
-                    className="d-lg-none"
                     icon={<BsFilterLeft size={18} />}
                     onClick={() => setDrawerVisible(true)}
                     style={{
@@ -534,398 +569,447 @@ const ShopPageContent = () => {
                       color: isDark ? "#FFFFFF" : "#131118",
                       fontWeight: 600,
                       fontSize: "0.85rem",
-                      flexShrink: 0,
-                      height: 34,
+                      height: 36,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
                     }}
                   >
                     Bộ lọc
+                    {hasActiveFilters && (
+                      <span
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          backgroundColor: "#1677ff",
+                          display: "inline-block",
+                        }}
+                      />
+                    )}
                   </Button>
 
-                  <span
-                    style={{
-                      color: isDark ? "#9CA3AF" : "#6B7280",
-                      fontWeight: 500,
-                      fontSize: "0.88rem",
-                      marginRight: 2,
-                      flexShrink: 0,
-                    }}
-                  >
-                    Sắp xếp:
-                  </span>
+                  <Select
+                    value={sortBy}
+                    onChange={(val) => handleSortChange(val)}
+                    style={{ width: 165, height: 36 }}
+                    popupMatchSelectWidth={false}
+                    options={[
+                      { label: "Sắp xếp: Liên quan", value: "relevance" },
+                      { label: "Sắp xếp: Mới nhất", value: "latest" },
+                      { label: "Sắp xếp: Bán chạy", value: "topsales" },
+                      { label: "Giá: Thấp đến Cao", value: "price_asc" },
+                      { label: "Giá: Cao đến Thấp", value: "price_desc" },
+                    ]}
+                  />
+                </div>
 
-                  {/* Relevance */}
-                  <button
-                    onClick={() => handleSortChange("relevance")}
-                    style={{
-                      padding: "5px 14px",
-                      borderRadius: 8,
-                      border: sortBy === "relevance" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                      backgroundColor: sortBy === "relevance" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                      color: sortBy === "relevance" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Liên quan
-                  </button>
+                {/* Tablet & Desktop Toolbar (>= 576px): Filter Button + Sort Chips */}
+                <div className="d-none d-sm-flex align-items-center justify-content-between flex-wrap gap-2 w-100">
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <Button
+                      className="d-lg-none"
+                      icon={<BsFilterLeft size={18} />}
+                      onClick={() => setDrawerVisible(true)}
+                      style={{
+                        borderRadius: 8,
+                        borderColor: isDark ? "#424242" : "#E5E7EB",
+                        backgroundColor: isDark ? "#2a2a2a" : "#FFFFFF",
+                        color: isDark ? "#FFFFFF" : "#131118",
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        flexShrink: 0,
+                        height: 34,
+                      }}
+                    >
+                      Bộ lọc
+                    </Button>
 
-                  {/* Latest */}
-                  <button
-                    onClick={() => handleSortChange("latest")}
-                    style={{
-                      padding: "5px 14px",
-                      borderRadius: 8,
-                      border: sortBy === "latest" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                      backgroundColor: sortBy === "latest" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                      color: sortBy === "latest" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Mới nhất
-                  </button>
+                    <span
+                      style={{
+                        color: isDark ? "#9CA3AF" : "#6B7280",
+                        fontWeight: 500,
+                        fontSize: "0.88rem",
+                        marginRight: 2,
+                        flexShrink: 0,
+                      }}
+                    >
+                      Sắp xếp:
+                    </span>
 
-                  {/* Top Sales */}
-                  <button
-                    onClick={() => handleSortChange("topsales")}
-                    style={{
-                      padding: "5px 14px",
-                      borderRadius: 8,
-                      border: sortBy === "topsales" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                      backgroundColor: sortBy === "topsales" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                      color: sortBy === "topsales" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Bán chạy
-                  </button>
-
-                  {/* Price dropdown */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    {/* Relevance */}
                     <button
-                      onClick={() => setPriceDropdownOpen((v) => !v)}
+                      onClick={() => handleSortChange("relevance")}
                       style={{
                         padding: "5px 14px",
                         borderRadius: 8,
-                        border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
-                        backgroundColor: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
-                        color: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                        border: sortBy === "relevance" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                        backgroundColor: sortBy === "relevance" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                        color: sortBy === "relevance" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
                         fontWeight: 500,
                         fontSize: "0.85rem",
                         cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
                         whiteSpace: "nowrap",
+                        flexShrink: 0,
                         transition: "all 0.15s ease",
                       }}
                     >
-                      {getPriceButtonLabel()}
-                      <BsArrowDown
-                        size={13}
-                        style={{
-                          transition: "transform 0.2s",
-                          transform: priceDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                        }}
-                      />
+                      Liên quan
                     </button>
-                    {priceDropdownOpen && (
-                      <div
+
+                    {/* Latest */}
+                    <button
+                      onClick={() => handleSortChange("latest")}
+                      style={{
+                        padding: "5px 14px",
+                        borderRadius: 8,
+                        border: sortBy === "latest" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                        backgroundColor: sortBy === "latest" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                        color: sortBy === "latest" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                        fontWeight: 500,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      Mới nhất
+                    </button>
+
+                    {/* Top Sales */}
+                    <button
+                      onClick={() => handleSortChange("topsales")}
+                      style={{
+                        padding: "5px 14px",
+                        borderRadius: 8,
+                        border: sortBy === "topsales" ? "none" : `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                        backgroundColor: sortBy === "topsales" ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                        color: sortBy === "topsales" ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                        fontWeight: 500,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      Bán chạy
+                    </button>
+
+                    {/* Price dropdown */}
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <button
+                        onClick={() => setPriceDropdownOpen((v) => !v)}
                         style={{
-                          position: "absolute",
-                          top: "calc(100% + 4px)",
-                          left: 0,
-                          backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
-                          border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                          padding: "5px 14px",
                           borderRadius: 8,
-                          boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)",
-                          minWidth: 160,
-                          zIndex: 100,
-                          overflow: "hidden",
+                          border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                          backgroundColor: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#fff" : "#131118") : (isDark ? "#242424" : "#FFFFFF"),
+                          color: (sortBy === "price_asc" || sortBy === "price_desc") ? (isDark ? "#131118" : "#FFFFFF") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                          fontWeight: 500,
+                          fontSize: "0.85rem",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          whiteSpace: "nowrap",
+                          transition: "all 0.15s ease",
                         }}
                       >
-                        {[
-                          { label: "Giá: Thấp đến Cao", value: "price_asc" as const },
-                          { label: "Giá: Cao đến Thấp", value: "price_desc" as const },
-                        ].map((opt) => (
-                          <div
-                            key={opt.value}
-                            onClick={() => handleSortChange(opt.value)}
-                            style={{
-                              padding: "10px 16px",
-                              fontSize: "0.88rem",
-                              fontWeight: sortBy === opt.value ? 600 : 400,
-                              color: sortBy === opt.value ? (isDark ? "#fff" : "#131118") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
-                              cursor: "pointer",
-                              backgroundColor: sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"),
-                              transition: "background 0.15s",
-                            }}
-                            onMouseEnter={(e) => { if (sortBy !== opt.value) (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark ? "#252525" : "#F9FAFB"; }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"); }}
-                          >
-                            {opt.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                        {getPriceButtonLabel()}
+                        <BsArrowDown
+                          size={13}
+                          style={{
+                            transition: "transform 0.2s",
+                            transform: priceDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          }}
+                        />
+                      </button>
+                      {priceDropdownOpen && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "calc(100% + 4px)",
+                            left: 0,
+                            backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
+                            border: `1px solid ${isDark ? "#424242" : "#E5E7EB"}`,
+                            borderRadius: 8,
+                            boxShadow: isDark ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)",
+                            minWidth: 160,
+                            zIndex: 100,
+                            overflow: "hidden",
+                          }}
+                        >
+                          {[
+                            { label: "Giá: Thấp đến Cao", value: "price_asc" as const },
+                            { label: "Giá: Cao đến Thấp", value: "price_desc" as const },
+                          ].map((opt) => (
+                            <div
+                              key={opt.value}
+                              onClick={() => handleSortChange(opt.value)}
+                              style={{
+                                padding: "10px 16px",
+                                fontSize: "0.88rem",
+                                fontWeight: sortBy === opt.value ? 600 : 400,
+                                color: sortBy === opt.value ? (isDark ? "#fff" : "#131118") : (isDark ? "rgba(255,255,255,0.75)" : "#374151"),
+                                cursor: "pointer",
+                                backgroundColor: sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"),
+                                transition: "background 0.15s",
+                              }}
+                              onMouseEnter={(e) => { if (sortBy !== opt.value) (e.currentTarget as HTMLDivElement).style.backgroundColor = isDark ? "#252525" : "#F9FAFB"; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = sortBy === opt.value ? (isDark ? "#2a2a2a" : "#F3F4F6") : (isDark ? "#1d1d1d" : "#FFFFFF"); }}
+                            >
+                              {opt.label}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {totalItems !== undefined && (
+                    <span
+                      style={{
+                        color: isDark ? "#9CA3AF" : "#6B7280",
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {totalItems} sản phẩm
+                    </span>
+                  )}
                 </div>
-
-                {totalItems !== undefined && (
-                  <span
-                    style={{
-                      color: isDark ? "#9CA3AF" : "#6B7280",
-                      fontSize: "0.85rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {totalItems} sản phẩm
-                  </span>
-                )}
               </div>
-            </div>
 
-            {/* Active filter tags */}
-            {hasActiveFilters && (
-              <div
-                className="d-flex align-items-center gap-2 flex-wrap mt-2 pt-2"
-                style={{ borderTop: `1px solid ${isDark ? "#303030" : "#F3F4F6"}` }}
-              >
-                <span style={{ color: isDark ? "#9CA3AF" : "#6B7280", fontWeight: 500, fontSize: "0.85rem" }}>
-                  Bộ lọc đang áp dụng:
-                </span>
-                {hasActivePrice && (
-                  <Tag
-                    closable
-                    onClose={handleRemovePriceFilter}
-                    style={{
-                      padding: "3px 8px",
-                      borderRadius: 6,
-                      backgroundColor: isDark ? "#2a2a2a" : "#F3F4F6",
-                      borderColor: isDark ? "#424242" : "#E5E7EB",
-                      color: isDark ? "rgba(255,255,255,0.85)" : "#1F2937",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Giá: {VND.format(filterValues.price![0])} - {VND.format(filterValues.price![1])}
-                  </Tag>
-                )}
-                {hasActiveSearch && (
-                  <Tag
-                    closable
-                    onClose={handleRemoveSearchFilter}
-                    style={{
-                      padding: "3px 8px",
-                      borderRadius: 6,
-                      backgroundColor: isDark ? "#2a2a2a" : "#F3F4F6",
-                      borderColor: isDark ? "#424242" : "#E5E7EB",
-                      color: isDark ? "rgba(255,255,255,0.85)" : "#1F2937",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Tìm kiếm: "{filterValues.search}"
-                  </Tag>
-                )}
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={handleClearAllFilters}
-                  style={{ padding: 0, color: "#DC2626", fontWeight: 500, marginLeft: 4 }}
-                >
-                  Xóa tất cả bộ lọc
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {error && products.length === 0 ? (
-            <div style={{ width: "100%", padding: "20px 0" }}>
-              <ServerError />
-            </div>
-          ) : error ? (
-            <div
-              className="rounded-3 border p-4 text-center text-danger"
-              style={{
-                borderColor: "#FECACA",
-                backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
-              }}
-            >
-              Lỗi: {error}
-            </div>
-          ) : isLoading && products.length === 0 ? (
-            <div className="row mx-0 g-2 g-sm-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="col-6 col-md-4 col-lg-3 mb-3 mb-md-4 px-1 px-sm-2">
-                  <div
-                    className="p-3 rounded-3 border shadow-sm"
-                    style={{
-                      height: 350,
-                      backgroundColor: isDark ? "#1f1f1f" : "#FFFFFF",
-                      borderColor: isDark ? "#303030" : "#E5E7EB",
-                    }}
-                  >
-                    <Skeleton.Image
-                      active
-                      style={{ width: "100%", height: 180, display: "block" }}
-                    />
-                    <Skeleton
-                      active
-                      paragraph={{ rows: 2 }}
-                      style={{ marginTop: 16 }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Spin spinning={isLoading} size="large">
-              {products.length > 0 ? (
-                <>
-                  <ProductList products={products} />
-                  <div className="mt-4 mb-4 d-flex justify-content-center justify-content-md-end">
-                    <Pagination
-                      current={page}
-                      total={totalItems}
-                      onChange={handlePageChange}
-                      pageSize={8}
-                      showSizeChanger={false}
-                      className="custom-pagination"
-                      responsive
-                      size="default"
-                    />
-                  </div>
-                </>
-              ) : (
+              {/* Active filter tags */}
+              {hasActiveFilters && (
                 <div
-                  className="rounded-3 border p-5 text-center shadow-sm d-flex flex-column justify-content-center align-items-center"
-                  style={{
-                    minHeight: 480,
-                    borderColor: isDark ? "#303030" : "#E5E7EB",
-                    backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
-                  }}
+                  className="d-flex align-items-center gap-2 flex-wrap mt-2 pt-2"
+                  style={{ borderTop: `1px solid ${isDark ? "#303030" : "#F3F4F6"}` }}
                 >
-                  <Empty
-                    description={
-                      <div style={{ marginTop: 8 }}>
-                        <Typography.Text
-                          style={{
-                            color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
-                            fontSize: "0.95rem",
-                            fontWeight: 500,
-                            display: "block",
-                          }}
-                        >
-                          Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.
-                        </Typography.Text>
-                        <Typography.Text
-                          type="secondary"
-                          style={{
-                            fontSize: "0.85rem",
-                            marginTop: 4,
-                            display: "block",
-                            color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
-                          }}
-                        >
-                          {hasActivePrice
-                            ? "Khoảng giá bạn chọn có thể chưa có sản phẩm nào. Hãy thử điều chỉnh hoặc chọn khoảng giá khác."
-                            : "Vui lòng chọn danh mục khác để xem các sản phẩm có sẵn."}
-                        </Typography.Text>
-                      </div>
-                    }
-                  />
+                  <span style={{ color: isDark ? "#9CA3AF" : "#6B7280", fontWeight: 500, fontSize: "0.85rem" }}>
+                    Bộ lọc đang áp dụng:
+                  </span>
+                  {hasActivePrice && (
+                    <Tag
+                      closable
+                      onClose={handleRemovePriceFilter}
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        backgroundColor: isDark ? "#2a2a2a" : "#F3F4F6",
+                        borderColor: isDark ? "#424242" : "#E5E7EB",
+                        color: isDark ? "rgba(255,255,255,0.85)" : "#1F2937",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Giá: {VND.format(filterValues.price![0])} - {VND.format(filterValues.price![1])}
+                    </Tag>
+                  )}
+                  {hasActiveSearch && (
+                    <Tag
+                      closable
+                      onClose={handleRemoveSearchFilter}
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                        backgroundColor: isDark ? "#2a2a2a" : "#F3F4F6",
+                        borderColor: isDark ? "#424242" : "#E5E7EB",
+                        color: isDark ? "rgba(255,255,255,0.85)" : "#1F2937",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Tìm kiếm: "{filterValues.search}"
+                    </Tag>
+                  )}
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={handleClearAllFilters}
+                    style={{ padding: 0, color: "#DC2626", fontWeight: 500, marginLeft: 4 }}
+                  >
+                    Xóa tất cả bộ lọc
+                  </Button>
                 </div>
               )}
-            </Spin>
-          )}
-        </Content>
-      </Layout>
+            </div>
 
-      <Drawer
-        title="Bộ lọc sản phẩm"
-        placement="right"
-        width="min(380px, 92vw)"
-        onClose={() => setDrawerVisible(false)}
-        open={drawerVisible}
-        className="d-lg-none shop-filter-drawer"
-        destroyOnClose
-        styles={{
-          body: { padding: "16px 16px", overflowY: "auto", overflowX: "hidden" },
-          content: { backgroundColor: isDark ? "#16151a" : "#FFFFFF" },
-          header: {
-            backgroundColor: isDark ? "#1c1a22" : "#FFFFFF",
-            borderBottom: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
-            color: isDark ? "#FFFFFF" : "#131118",
-          },
-          footer: {
-            padding: "12px 16px",
-            borderTop: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
-            backgroundColor: isDark ? "#16151a" : "#FFFFFF",
-          },
-        }}
-        footer={
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {hasActiveFilters && (
-              <Button
-                onClick={() => {
-                  handleClearAllFilters();
-                  setDrawerVisible(false);
+            {error && products.length === 0 ? (
+              <div style={{ width: "100%", padding: "20px 0" }}>
+                <ServerError />
+              </div>
+            ) : error ? (
+              <div
+                className="rounded-3 border p-4 text-center text-danger"
+                style={{
+                  borderColor: "#FECACA",
+                  backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
                 }}
+              >
+                Lỗi: {error}
+              </div>
+            ) : isLoading && products.length === 0 ? (
+              <div className="row mx-0 g-2 g-sm-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="col-6 col-md-4 col-lg-3 mb-3 mb-md-4 px-1 px-sm-2">
+                    <div
+                      className="p-3 rounded-3 border shadow-sm"
+                      style={{
+                        height: 350,
+                        backgroundColor: isDark ? "#1f1f1f" : "#FFFFFF",
+                        borderColor: isDark ? "#303030" : "#E5E7EB",
+                      }}
+                    >
+                      <Skeleton.Image
+                        active
+                        style={{ width: "100%", height: 180, display: "block" }}
+                      />
+                      <Skeleton
+                        active
+                        paragraph={{ rows: 2 }}
+                        style={{ marginTop: 16 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Spin spinning={isLoading} size="large">
+                {products.length > 0 ? (
+                  <>
+                    <ProductList products={products} />
+                    <div className="mt-4 mb-4 d-flex justify-content-center justify-content-md-end">
+                      <Pagination
+                        current={page}
+                        total={totalItems}
+                        onChange={handlePageChange}
+                        pageSize={8}
+                        showSizeChanger={false}
+                        className="custom-pagination"
+                        responsive
+                        size="default"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="rounded-3 border p-5 text-center shadow-sm d-flex flex-column justify-content-center align-items-center"
+                    style={{
+                      minHeight: 480,
+                      borderColor: isDark ? "#303030" : "#E5E7EB",
+                      backgroundColor: isDark ? "#1d1d1d" : "#FFFFFF",
+                    }}
+                  >
+                    <Empty
+                      description={
+                        <div style={{ marginTop: 8 }}>
+                          <Typography.Text
+                            style={{
+                              color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                              fontSize: "0.95rem",
+                              fontWeight: 500,
+                              display: "block",
+                            }}
+                          >
+                            Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.
+                          </Typography.Text>
+                          <Typography.Text
+                            type="secondary"
+                            style={{
+                              fontSize: "0.85rem",
+                              marginTop: 4,
+                              display: "block",
+                              color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
+                            }}
+                          >
+                            {hasActivePrice
+                              ? "Khoảng giá bạn chọn có thể chưa có sản phẩm nào. Hãy thử điều chỉnh hoặc chọn khoảng giá khác."
+                              : "Vui lòng chọn danh mục khác để xem các sản phẩm có sẵn."}
+                          </Typography.Text>
+                        </div>
+                      }
+                    />
+                  </div>
+                )}
+              </Spin>
+            )}
+          </Content>
+        </Layout>
+
+        <Drawer
+          title="Bộ lọc sản phẩm"
+          placement="right"
+          width="min(380px, 92vw)"
+          onClose={() => setDrawerVisible(false)}
+          open={drawerVisible}
+          className="d-lg-none shop-filter-drawer"
+          destroyOnClose
+          styles={{
+            body: { padding: "16px 16px", overflowY: "auto", overflowX: "hidden" },
+            content: { backgroundColor: isDark ? "#16151a" : "#FFFFFF" },
+            header: {
+              backgroundColor: isDark ? "#1c1a22" : "#FFFFFF",
+              borderBottom: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+              color: isDark ? "#FFFFFF" : "#131118",
+            },
+            footer: {
+              padding: "12px 16px",
+              borderTop: `1px solid ${isDark ? "#2b2836" : "#E5E7EB"}`,
+              backgroundColor: isDark ? "#16151a" : "#FFFFFF",
+            },
+          }}
+          footer={
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {hasActiveFilters && (
+                <Button
+                  onClick={() => {
+                    handleClearAllFilters();
+                    setDrawerVisible(false);
+                  }}
+                  style={{
+                    height: 44,
+                    borderRadius: 8,
+                    fontWeight: 500,
+                    borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
+                    backgroundColor: isDark ? "#24222c" : "#fff",
+                    color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                  }}
+                >
+                  Xóa tất cả
+                </Button>
+              )}
+              <Button
+                type="primary"
+                block
+                onClick={() => setDrawerVisible(false)}
                 style={{
                   height: 44,
                   borderRadius: 8,
-                  fontWeight: 500,
-                  borderColor: isDark ? "#3e3b4a" : "#d9d9d9",
-                  backgroundColor: isDark ? "#24222c" : "#fff",
-                  color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+                  backgroundColor: isDark ? "#ffffff" : "#131118",
+                  borderColor: isDark ? "#ffffff" : "#131118",
+                  color: isDark ? "#131118" : "#ffffff",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  flex: 1,
                 }}
               >
-                Xóa tất cả
+                {typeof totalItems === "number"
+                  ? `Xem ${totalItems} sản phẩm`
+                  : "Xem kết quả"}
               </Button>
-            )}
-            <Button
-              type="primary"
-              block
-              onClick={() => setDrawerVisible(false)}
-              style={{
-                height: 44,
-                borderRadius: 8,
-                backgroundColor: isDark ? "#ffffff" : "#131118",
-                borderColor: isDark ? "#ffffff" : "#131118",
-                color: isDark ? "#131118" : "#ffffff",
-                fontWeight: 600,
-                fontSize: "0.95rem",
-                flex: 1,
-              }}
-            >
-              {typeof totalItems === "number"
-                ? `Xem ${totalItems} sản phẩm`
-                : "Xem kết quả"}
-            </Button>
-          </div>
-        }
-      >
-        {drawerVisible && (
-          <FilterPanel
-            isDrawer
-            onClose={() => setDrawerVisible(false)}
-            totalProducts={totalItems}
-          />
-        )}
-      </Drawer>
-    </div>
+            </div>
+          }
+        >
+          {drawerVisible && (
+            <FilterPanel
+              isDrawer
+              onClose={() => setDrawerVisible(false)}
+              totalProducts={totalItems}
+            />
+          )}
+        </Drawer>
+      </div>
     </>
   );
 };
@@ -934,11 +1018,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { query } = context;
   const rawCatId = query.catId;
   const rawSearch = query.search || query.q;
+  const page = parseInt((query.page as string) || "1", 10) || 1;
+  const sortBy = ((query.sortBy as string) || "relevance") as
+    | "relevance"
+    | "latest"
+    | "topsales"
+    | "price_asc"
+    | "price_desc";
+
+  const apiBase =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
   if (!rawCatId && !rawSearch) {
     try {
       const res = await axios.get(
-        "http://localhost:8080/api/v1/public/categories/all",
+        `${apiBase}/public/categories/all`,
         { timeout: 3000 }
       );
       const categories = res.data?.data || [];
@@ -966,9 +1060,80 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  return {
-    props: {},
-  };
+  try {
+    const catIdsArray = Array.isArray(rawCatId)
+      ? rawCatId
+      : typeof rawCatId === "string" && rawCatId.includes(",")
+        ? rawCatId.split(",").map((s) => s.trim())
+        : rawCatId
+          ? [rawCatId]
+          : [];
+
+    const searchParam = rawSearch ? String(rawSearch).trim() : undefined;
+
+    const filters: any = {
+      page,
+      pageSize: 8,
+      sortBy,
+    };
+    if (catIdsArray.length > 0) {
+      filters.catIds = catIdsArray;
+    }
+    if (searchParam) {
+      filters.search = searchParam;
+    }
+
+    let initialProducts: any[] = [];
+    let initialTotalItems = 0;
+    let categories: any[] = [];
+
+    // Fetch categories and products in parallel on server for SEO
+    const [catRes, prodRes] = await Promise.allSettled([
+      axios.get(`${apiBase}/public/categories/all`, { timeout: 3500 }),
+      shopService.getProductsByFilter(filters),
+    ]);
+
+    if (catRes.status === "fulfilled") {
+      categories = catRes.value.data?.data || [];
+    }
+
+    if (prodRes.status === "fulfilled") {
+      initialProducts = prodRes.value.data || [];
+      initialTotalItems = prodRes.value.totalElements || 0;
+    }
+
+    // Resolve category title for SEO
+    let categoryTitle = "";
+    if (catIdsArray.length > 0 && categories.length > 0) {
+      const activeCat = categories.find(
+        (c: any) => String(c.id || c._id) === String(catIdsArray[0])
+      );
+      if (activeCat) {
+        categoryTitle = activeCat.title || activeCat.name || "";
+      }
+    }
+
+    return {
+      props: {
+        initialProducts,
+        initialTotalItems,
+        initialCategories: categories,
+        initialFilters: filters,
+        initialPage: page,
+        initialSortBy: sortBy,
+        categoryTitle,
+      },
+    };
+  } catch (error) {
+    console.error("getServerSideProps /shop fetch error:", error);
+    return {
+      props: {
+        initialProducts: [],
+        initialTotalItems: 0,
+        initialCategories: [],
+      },
+    };
+  }
 };
 
 export default ShopPageContent;

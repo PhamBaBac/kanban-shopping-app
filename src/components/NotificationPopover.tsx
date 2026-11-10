@@ -665,6 +665,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
           placement="bottomRight"
           overlayClassName="notification-popover-overlay"
           arrow={false}
+          getPopupContainer={(triggerNode) =>
+            (triggerNode.closest(".site-header-wrapper") as HTMLElement) ||
+            document.body
+          }
           overlayInnerStyle={{ padding: 0, borderRadius: 12 }}
         >
           <Badge

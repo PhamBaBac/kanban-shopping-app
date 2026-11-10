@@ -40,7 +40,7 @@ export const userService = {
   },
 
   updateProfile: async (data: UpdateProfileData): Promise<any> => {
-    const res = await handleAPI("/customers/update", data, "put");
+    const res = await handleAPI("/users/profile", data, "put");
     return res.data;
   },
 

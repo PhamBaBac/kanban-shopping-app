@@ -1,16 +1,32 @@
 import { Button, Form, Input, Typography } from "antd";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { BsArrowLeft } from "react-icons/bs";
 import { useForgotPassword } from "@/hooks";
-import { TurnstileWidget } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
+import { localDataNames } from "@/constants/appInfos";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 const { Title, Paragraph } = Typography;
 
 const ForgotPassword = () => {
+  const router = useRouter();
   const inputRefs = useRef<HTMLInputElement[]>([]);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(localDataNames.authData);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed?.accessToken) {
+            router.replace("/");
+          }
+        } catch {}
+      }
+    }
+  }, []);
 
   const {
     isLoading,
@@ -24,10 +40,7 @@ const ForgotPassword = () => {
   } = useForgotPassword();
 
   const handleSendCode = async (values: { email: string }) => {
-    await sendCode({
-      ...values,
-      captchaToken: captchaToken || undefined,
-    });
+    await sendCode(values);
   };
 
   const handleVerifyCode = async () => {
@@ -68,12 +81,6 @@ const ForgotPassword = () => {
           <Input allowClear autoFocus />
         </Form.Item>
 
-        <div className="my-3">
-          <TurnstileWidget
-            onVerify={(token) => setCaptchaToken(token)}
-            onExpire={() => setCaptchaToken("")}
-          />
-        </div>
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block>

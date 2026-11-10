@@ -45,11 +45,6 @@ const Routers = ({ Component, pageProps }: any) => {
     }
   }, [auth.userId]);
 
-  useEffect(() => {
-    if (auth.accessToken && path?.includes("/auth")) {
-      router.push("/");
-    }
-  }, [auth.accessToken, path]);
 
   const getData = () => {
     const savedCart = getSavedCartFromStorage();

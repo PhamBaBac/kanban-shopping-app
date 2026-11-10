@@ -11,7 +11,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BiHeart, BiSolidHeart, BiTransfer } from "react-icons/bi";
 import { BsEye, BsBagCheckFill } from "react-icons/bs";
 import { FiShoppingCart } from "react-icons/fi";
-import { FaRegStar } from "react-icons/fa";
 import { MdImage } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { authSelector } from "@/redux/reducers/authReducer";
@@ -20,6 +19,9 @@ import { productService } from "@/services";
 import { userService } from "@/services/userService";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCart } from "@/hooks/useCart";
+import Image from "next/image";
+import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
+import { sortVariantValues, sortAttributeKeys } from "@/utils/variantSorter";
 
 interface Props {
   item: ProductModel;
@@ -87,7 +89,10 @@ const ProductItem = (props: Props) => {
   }, [item.supplierId]);
 
   useEffect(() => {
-    if (availableSubProducts.length === 0 && item.id) {
+    const hasValidSubProduct = availableSubProducts.some(
+      (sp) => sp.id || (sp as any)._id
+    );
+    if (!hasValidSubProduct && item.id) {
       productService
         .getSubProductsByProductId(item.id)
         .then((res) => {
@@ -97,7 +102,7 @@ const ProductItem = (props: Props) => {
         })
         .catch((err) => console.log("Error loading sub-products for item:", err));
     }
-  }, [item.id, availableSubProducts.length]);
+  }, [item.id, availableSubProducts]);
 
   const fetchSupplierInfo = async () => {
     try {
@@ -114,11 +119,19 @@ const ProductItem = (props: Props) => {
     setQuickViewLoading(true);
     try {
       const res = await productService.getSubProductsByProductId(item.id);
-      if (res) {
+      if (res && res.length > 0) {
         setSubProducts(res);
-        if (res.length > 0) {
-          setSelectedSubProduct((prev) => prev || res[0]);
-        }
+        setSelectedSubProduct((prev) => {
+          if (prev) {
+            const found = res.find(
+              (r) =>
+                (prev.id && r.id === prev.id) ||
+                (r.color === prev.color && r.size === prev.size)
+            );
+            return found || res[0];
+          }
+          return res[0];
+        });
       }
     } catch (error) {
       console.log("Error fetching sub-products:", error);
@@ -188,93 +201,13 @@ const ProductItem = (props: Props) => {
       const attrs = getSubProductAttributes(sp);
       Object.keys(attrs).forEach((k) => keysSet.add(k));
     });
-    return Array.from(keysSet).sort(
-      (a, b) => getAttributeOrder(a) - getAttributeOrder(b)
-    );
+    return sortAttributeKeys(Array.from(keysSet));
   }, [currentSubProducts]);
 
   const currentAttributes: Record<string, string> = useMemo(() => {
     if (!selectedSubProduct) return {};
     return getSubProductAttributes(selectedSubProduct);
   }, [selectedSubProduct]);
-
-  const sortAttributeValues = (key: string, values: string[]): string[] => {
-    const sizeOrder: Record<string, number> = {
-      XXS: 1,
-      "2XS": 1,
-      XS: 2,
-      S: 3,
-      M: 4,
-      L: 5,
-      XL: 6,
-      XXL: 7,
-      "2XL": 7,
-      XXXL: 8,
-      "3XL": 8,
-      "4XL": 9,
-      "5XL": 10,
-      "6XL": 11,
-      FREESIZE: 99,
-      "FREE SIZE": 99,
-      OS: 99,
-      "ONE SIZE": 99,
-    };
-
-    const cleanSizeStr = (s: string): string => {
-      return s
-        .trim()
-        .replace(/^(size|cỡ|kích\s*cỡ|kích\s*thước)\s*:?\s*/i, "")
-        .trim()
-        .toUpperCase();
-    };
-
-    const getStorageBytes = (str: string): number | null => {
-      const match = str.trim().toUpperCase().match(/^(\d+(?:\.\d+)?)\s*(GB|TB|MB|KB)$/);
-      if (!match) return null;
-      const num = parseFloat(match[1]);
-      const unit = match[2];
-      if (unit === "KB") return num * 1024;
-      if (unit === "MB") return num * 1024 * 1024;
-      if (unit === "GB") return num * 1024 * 1024 * 1024;
-      if (unit === "TB") return num * 1024 * 1024 * 1024 * 1024;
-      return null;
-    };
-
-    return [...values].sort((a, b) => {
-      const aClean = cleanSizeStr(a);
-      const bClean = cleanSizeStr(b);
-
-      // 1. Quần áo size chữ: S, M, L, XL, XXL...
-      const aRank = sizeOrder[aClean];
-      const bRank = sizeOrder[bClean];
-      if (aRank !== undefined && bRank !== undefined) {
-        return aRank - bRank;
-      }
-      if (aRank !== undefined) return -1;
-      if (bRank !== undefined) return 1;
-
-      // 2. Dung lượng bộ nhớ: GB, TB...
-      const aBytes = getStorageBytes(a);
-      const bBytes = getStorageBytes(b);
-      if (aBytes !== null && bBytes !== null) {
-        return aBytes - bBytes;
-      }
-
-      // 3. Size số: 28, 29, 30, 31, 32 hoặc size giày: 38, 39, 40...
-      const aNum = parseFloat(aClean);
-      const bNum = parseFloat(bClean);
-      const isANum = !isNaN(aNum) && String(aNum) === aClean;
-      const isBNum = !isNaN(bNum) && String(bNum) === bClean;
-      if (isANum && isBNum) {
-        return aNum - bNum;
-      }
-      if (isANum) return -1;
-      if (isBNum) return 1;
-
-      // 4. Mặc định theo thứ tự tự nhiên locale
-      return a.localeCompare(b, "vi", { numeric: true, sensitivity: "base" });
-    });
-  };
 
   const getAvailableValuesForKey = (key: string): string[] => {
     const valuesSet = new Set<string>();
@@ -284,12 +217,13 @@ const ProductItem = (props: Props) => {
         valuesSet.add(attrs[key].trim());
       }
     });
-    return sortAttributeValues(key, Array.from(valuesSet));
+    return sortVariantValues(Array.from(valuesSet), key);
   };
 
   const handleBuyNow = async () => {
-    if (!selectedSubProduct) {
-      message.warning("Vui lòng chọn phân loại sản phẩm!");
+    const targetId = selectedSubProduct?.id || (selectedSubProduct as any)?._id;
+    if (!selectedSubProduct || !targetId) {
+      message.warning("Vui lòng chọn phân loại sản phẩm hợp lệ!");
       return;
     }
 
@@ -303,7 +237,7 @@ const ProductItem = (props: Props) => {
       const isSuccess = await handleCart();
       if (isSuccess) {
         setShowQuickView(false);
-        router.push(`/shop/checkout?buyNowId=${selectedSubProduct.id}`);
+        router.push(`/shop/checkout?buyNowId=${targetId}`);
       }
     } catch (err: any) {
       console.error("Lỗi khi mua ngay:", err);
@@ -313,8 +247,9 @@ const ProductItem = (props: Props) => {
   };
 
   const handleAddToCart = async () => {
-    if (!selectedSubProduct) {
-      message.warning("Vui lòng chọn phân loại sản phẩm!");
+    const targetId = selectedSubProduct?.id || (selectedSubProduct as any)?._id;
+    if (!selectedSubProduct || !targetId) {
+      message.warning("Vui lòng chọn phân loại sản phẩm hợp lệ!");
       return;
     }
 
@@ -556,30 +491,28 @@ const ProductItem = (props: Props) => {
           >
             {primaryImage ? (
               <>
-                <img
+                <Image
+                  src={primaryImage}
+                  loader={cloudinaryLoader}
+                  alt={item.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
                     objectFit: "contain",
                     padding: "8px 8px 0 8px",
                     transition: "opacity 0.35s ease, transform 0.35s ease",
                     opacity: isHovered && secondaryImage ? 0 : 1,
                     transform: isHovered && !secondaryImage ? "scale(1.04)" : "scale(1)",
                   }}
-                  src={primaryImage}
-                  alt={item.title}
                 />
                 {secondaryImage && (
-                  <img
+                  <Image
+                    src={secondaryImage}
+                    loader={cloudinaryLoader}
+                    alt={`${item.title} - 2`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
                       objectFit: "contain",
                       padding: "8px 8px 0 8px",
                       transition: "opacity 0.35s ease, transform 0.35s ease",
@@ -587,8 +520,6 @@ const ProductItem = (props: Props) => {
                       transform: isHovered ? "scale(1.04)" : "scale(1)",
                       pointerEvents: "none",
                     }}
-                    src={secondaryImage}
-                    alt={`${item.title} - 2`}
                   />
                 )}
               </>
@@ -656,15 +587,6 @@ const ProductItem = (props: Props) => {
                   <Button
                     size="large"
                     className="btn-icon"
-                    icon={<FaRegStar size={20} className="text-muted" />}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                  />
-                  <Button
-                    size="large"
-                    className="btn-icon"
                     icon={
                       isFav ? (
                         <BiSolidHeart size={20} style={{ color: "#EF4444" }} />
@@ -687,8 +609,11 @@ const ProductItem = (props: Props) => {
                       e.preventDefault();
                       e.stopPropagation();
                       setShowQuickView(true);
-                      if (!selectedSubProduct && availableSubProducts.length > 0) {
-                        setSelectedSubProduct(availableSubProducts[0]);
+                      const validFirst = availableSubProducts.find(
+                        (sp) => sp.id || (sp as any)._id
+                      );
+                      if (!selectedSubProduct && validFirst) {
+                        setSelectedSubProduct(validFirst);
                       }
                       fetchSubProducts();
                     }}
@@ -753,27 +678,34 @@ const ProductItem = (props: Props) => {
           <div className="quickview-image-col">
             <div
               style={{
+                position: "relative",
                 width: "100%",
                 height: 320,
                 background: isDark ? "#242428" : "#f8f9fa",
                 borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 overflow: "hidden",
               }}
             >
-              <img
-                src={
-                  selectedSubProduct?.imgURL ||
-                  (selectedSubProduct?.images && selectedSubProduct.images.length > 0
-                    ? selectedSubProduct.images[0]
-                    : null) ||
-                  (item.images && item.images.length > 0 ? item.images[0] : "")
-                }
-                alt={item.title}
-                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-              />
+              {(selectedSubProduct?.imgURL ||
+                (selectedSubProduct?.images && selectedSubProduct.images.length > 0
+                  ? selectedSubProduct.images[0]
+                  : null) ||
+                (item.images && item.images.length > 0 ? item.images[0] : null)) ? (
+                <Image
+                  src={
+                    selectedSubProduct?.imgURL ||
+                    (selectedSubProduct?.images && selectedSubProduct.images.length > 0
+                      ? selectedSubProduct.images[0]
+                      : null) ||
+                    (item.images && item.images.length > 0 ? item.images[0] : "")
+                  }
+                  loader={cloudinaryLoader}
+                  alt={item.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  style={{ objectFit: "contain", padding: 12 }}
+                />
+              ) : null}
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>

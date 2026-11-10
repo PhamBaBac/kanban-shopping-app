@@ -5,6 +5,8 @@ import { Typography, Button, Tag } from "antd";
 import { VND } from "@/utils/handleCurrency";
 import { BsBagCheckFill, BsArrowRight } from "react-icons/bs";
 import { MdImage } from "react-icons/md";
+import Image from "next/image";
+import { cloudinaryLoader } from "@/utils/imageOptimizer";
 
 const { Text, Paragraph } = Typography;
 
@@ -125,14 +127,15 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
           justifyContent: "center",
         }}
       >
-        {image ? (
-          <img
+        {image && !imageError ? (
+          <Image
             src={image}
+            loader={cloudinaryLoader}
             alt={product.title}
+            fill
+            sizes="160px"
             onError={() => setImageError(true)}
             style={{
-              width: "100%",
-              height: "100%",
               objectFit: "contain",
               padding: 6,
               transition: "transform 0.35s ease",

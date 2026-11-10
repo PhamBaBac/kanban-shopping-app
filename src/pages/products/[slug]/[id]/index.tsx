@@ -34,6 +34,9 @@ import { FiTruck, FiShield, FiRefreshCw, FiShoppingCart } from "react-icons/fi";
 import { HiOutlineHome } from "react-icons/hi2";
 import { useSelector } from "react-redux";
 import { useWishlist } from "@/hooks/useWishlist";
+import Image from "next/image";
+import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
+import { sortVariantValues, sortAttributeKeys } from "@/utils/variantSorter";
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -246,62 +249,13 @@ const ProductDetail = (props: any) => {
       const attrs = getSubProductAttributes(sp);
       Object.keys(attrs).forEach((k) => keysSet.add(k));
     });
-    return Array.from(keysSet).sort(
-      (a, b) => getAttributeOrder(a) - getAttributeOrder(b)
-    );
+    return sortAttributeKeys(Array.from(keysSet));
   }, [subProducts]);
 
   const currentAttributes: Record<string, string> = useMemo(() => {
     if (!subProductSelected) return {};
     return getSubProductAttributes(subProductSelected);
   }, [subProductSelected]);
-
-  const sortSizeValues = (values: string[]): string[] => {
-    const sizeOrder: Record<string, number> = {
-      XXS: 1,
-      "2XS": 1,
-      XS: 2,
-      S: 3,
-      M: 4,
-      L: 5,
-      XL: 6,
-      XXL: 7,
-      "2XL": 7,
-      XXXL: 8,
-      "3XL": 8,
-      "4XL": 9,
-      "5XL": 10,
-      FREESIZE: 99,
-      OS: 99,
-    };
-
-    return [...values].sort((a, b) => {
-      const aUpper = a.trim().toUpperCase();
-      const bUpper = b.trim().toUpperCase();
-
-      const aRank = sizeOrder[aUpper];
-      const bRank = sizeOrder[bUpper];
-
-      if (aRank !== undefined && bRank !== undefined) {
-        return aRank - bRank;
-      }
-      if (aRank !== undefined) return -1;
-      if (bRank !== undefined) return 1;
-
-      const aNum = parseFloat(aUpper);
-      const bNum = parseFloat(bUpper);
-      if (!isNaN(aNum) && !isNaN(bNum) && String(aNum) === aUpper && String(bNum) === bUpper) {
-        return aNum - bNum;
-      }
-
-      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-    });
-  };
-
-  const isSizeAttribute = (key: string) => {
-    const k = key.trim().toLowerCase();
-    return k.includes("size") || k.includes("kích") || k.includes("cỡ");
-  };
 
   const getAvailableValuesForKey = (key: string): string[] => {
     const valuesSet = new Set<string>();
@@ -311,11 +265,7 @@ const ProductDetail = (props: any) => {
         valuesSet.add(attrs[key].trim());
       }
     });
-    const list = Array.from(valuesSet);
-    if (isSizeAttribute(key)) {
-      return sortSizeValues(list);
-    }
-    return list;
+    return sortVariantValues(Array.from(valuesSet), key);
   };
 
   const isHexColor = (val: string) =>
@@ -904,16 +854,26 @@ const ProductDetail = (props: any) => {
                 }}
               >
                 {currentImage ? (
-                  <img
+                  <div
                     style={{
-                      maxWidth: "100%",
-                      maxHeight: "clamp(260px, 45vw, 440px)",
-                      objectFit: "contain",
-                      transition: "transform 0.3s ease",
+                      position: "relative",
+                      width: "100%",
+                      height: "clamp(260px, 45vw, 440px)",
                     }}
-                    src={currentImage}
-                    alt={product.title}
-                  />
+                  >
+                    <Image
+                      src={currentImage}
+                      loader={cloudinaryLoader}
+                      alt={product.title}
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, 550px"
+                      style={{
+                        objectFit: "contain",
+                        transition: "transform 0.3s ease",
+                      }}
+                    />
+                  </div>
                 ) : (
                   <PiCableCar size={48} className="text-muted" />
                 )}
@@ -1145,12 +1105,13 @@ const ProductDetail = (props: any) => {
                                       }}
                                     >
                                       {thumbnailUrl ? (
-                                        <img
+                                        <Image
                                           src={thumbnailUrl}
+                                          loader={cloudinaryLoader}
                                           alt={colorVal}
+                                          width={36}
+                                          height={36}
                                           style={{
-                                            width: "90%",
-                                            height: "90%",
                                             objectFit: "contain",
                                           }}
                                         />
@@ -1482,13 +1443,14 @@ const ProductDetail = (props: any) => {
                                   <div className="d-flex gap-2 mt-2">
                                     {review.images.map(
                                       (img: any, idx: any) => (
-                                        <img
+                                        <Image
                                           key={idx}
                                           src={img}
+                                          loader={cloudinaryLoader}
                                           alt="review-img"
+                                          width={64}
+                                          height={64}
                                           style={{
-                                            width: 64,
-                                            height: 64,
                                             objectFit: "cover",
                                             borderRadius: 6,
                                             border: "1px solid #E5E7EB",
@@ -1498,6 +1460,38 @@ const ProductDetail = (props: any) => {
                                     )}
                                   </div>
                                 )}
+
+                              {(review as any).shopReply && (
+                                <div
+                                  style={{
+                                    marginTop: 10,
+                                    padding: "10px 14px",
+                                    background: "#f0fdf4",
+                                    borderLeft: "3px solid #16a34a",
+                                    borderRadius: "0 8px 8px 0",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      fontSize: "0.82rem",
+                                      fontWeight: 600,
+                                      color: "#15803d",
+                                      marginBottom: 4,
+                                    }}
+                                  >
+                                    Phản hồi của Người Bán
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "0.88rem",
+                                      color: "#166534",
+                                      lineHeight: 1.5,
+                                    }}
+                                  >
+                                    {(review as any).shopReply}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))

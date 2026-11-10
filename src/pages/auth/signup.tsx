@@ -2,11 +2,13 @@
 
 import { Button, Checkbox, Divider, Form, Input, Typography } from "antd";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { BsArrowLeft, BsClockHistory, BsArrowRepeat } from "react-icons/bs";
 import { useSignup } from "@/hooks";
-import { TurnstileWidget } from "@/components";
 import HeadComponent from "@/components/HeadComponent";
+import { localDataNames } from "@/constants/appInfos";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 interface SignUp {
   firstName: string;
@@ -23,9 +25,23 @@ const formatTime = (seconds: number) => {
 };
 
 const SignUp = () => {
+  const router = useRouter();
   const [form] = Form.useForm();
   const refs = useRef<Array<any>>([]);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(localDataNames.authData);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed?.accessToken) {
+            router.replace("/");
+          }
+        } catch {}
+      }
+    }
+  }, []);
 
   const {
     isLoading,
@@ -47,7 +63,6 @@ const SignUp = () => {
       firstName: values.firstName?.trim(),
       lastName: values.lastName?.trim(),
       email: values.email?.trim(),
-      captchaToken: captchaToken || undefined,
     });
     form.resetFields();
   };
@@ -300,12 +315,6 @@ const SignUp = () => {
                   </Checkbox>
                 </div>
 
-                <div className="my-3">
-                  <TurnstileWidget
-                    onVerify={(token) => setCaptchaToken(token)}
-                    onExpire={() => setCaptchaToken("")}
-                  />
-                </div>
 
                 <div className="mt-3">
                   <Button

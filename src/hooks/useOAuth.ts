@@ -64,6 +64,20 @@ export const useOAuth = () => {
         } catch (e) {
           // ignore
         }
+
+        const userLoggedInKey = user.id ? `kanban_has_logged_in_${user.id}` : null;
+        const isFirstOAuth =
+          authData?.firstLogin !== undefined
+            ? Boolean(authData.firstLogin)
+            : userLoggedInKey && localStorage.getItem(userLoggedInKey) !== "true";
+
+        if (userLoggedInKey) {
+          localStorage.setItem(userLoggedInKey, "true");
+        }
+
+        if (isFirstOAuth) {
+          router.push("/profile");
+        }
       } catch (err: any) {
         console.error("OAuth exchange error:", err);
         message.error(err?.message || "Đăng nhập thất bại hoặc liên kết đã hết hạn!");
@@ -121,9 +135,23 @@ export const useOAuth = () => {
         // ignore
       }
 
+      const userLoggedInKey = user.id ? `kanban_has_logged_in_${user.id}` : null;
+      const isFirstOAuth =
+        res?.firstLogin !== undefined
+          ? Boolean(res.firstLogin)
+          : userLoggedInKey && localStorage.getItem(userLoggedInKey) !== "true";
+
+      if (userLoggedInKey) {
+        localStorage.setItem(userLoggedInKey, "true");
+      }
+
       setIsMfaModalVisible(false);
       setOtpCode(Array(6).fill(""));
       message.success("Xác thực 2 bước thành công!");
+
+      if (isFirstOAuth) {
+        router.push("/profile");
+      }
     } catch (error: any) {
       message.error(error?.response?.data?.message || error?.message || "Mã xác thực OTP không chính xác!");
     } finally {

@@ -2,20 +2,40 @@
 
 import { Button, Divider, Form, Input, Typography, Space } from "antd";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useRef, useState } from "react";
 import SocialLogin from "./components/SocialLogin";
 import { BsArrowLeft } from "react-icons/bs";
 import { useLogin } from "@/hooks";
-import { TurnstileWidget } from "@/components";
+import { localDataNames } from "@/constants/appInfos";
 import HeadComponent from "@/components/HeadComponent";
 
 const { Title, Paragraph } = Typography;
 
 const Login = () => {
+  const router = useRouter();
   const [form] = Form.useForm();
   const inputRefs = useRef<HTMLInputElement[]>([]);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
-  const [showCaptcha, setShowCaptcha] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(localDataNames.authData);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed?.accessToken) {
+            router.replace("/");
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (router.query.email && typeof router.query.email === "string") {
+      form.setFieldsValue({ email: router.query.email });
+    }
+  }, [router.query.email, form]);
 
   const {
     isLoading,
@@ -35,24 +55,9 @@ const Login = () => {
   } = useLogin();
 
   const handleLogin = async (values: { email: string; password: string }) => {
-    if (showCaptcha && !captchaToken) {
-      message.error("Vui lòng hoàn thành xác thực mã bảo vệ (Captcha)!");
-      return;
-    }
-
     try {
-      await login({
-        ...values,
-        captchaToken: captchaToken || undefined,
-      });
-    } catch (error: any) {
-      // Chỉ bật Captcha nếu server yêu cầu (sai từ 3 lần hoặc lỗi xác thực Captcha)
-      const code = error?.code || error?.response?.data?.code;
-      if (code === 1014 || code === 1013) {
-        setShowCaptcha(true);
-      }
-      setCaptchaToken("");
-    }
+      await login(values);
+    } catch (error: any) {}
   };
 
   const handleOtpChange = (val: string, index: number) => {
@@ -185,17 +190,6 @@ const Login = () => {
                     <Link href="/auth/forgot-password">Quên mật khẩu?</Link>
                   </div>
 
-                  {showCaptcha && (
-                    <div className="my-3 text-center">
-                      <Typography.Text type="danger" style={{ fontSize: 13, display: "block", marginBottom: 6 }}>
-                        Vui lòng hoàn thành xác thực bảo mật bên dưới:
-                      </Typography.Text>
-                      <TurnstileWidget
-                        onVerify={(token) => setCaptchaToken(token)}
-                        onExpire={() => setCaptchaToken("")}
-                      />
-                    </div>
-                  )}
 
                   <div className="mb-4"></div>
                   <Button
