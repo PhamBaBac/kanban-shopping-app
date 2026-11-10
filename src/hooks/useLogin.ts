@@ -68,7 +68,6 @@ export const useLogin = (): UseLoginReturn => {
     try {
       await authVerifyMFA(emailMfa, code);
       message.success("Xác thực thành công!");
-      router.push(id && slug ? `/products/${slug}/${id}` : "/");
     } catch (error) {
       showErrorMessage(error, "Mã xác thực OTP không chính xác!");
       router.push("/auth/login");

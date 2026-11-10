@@ -6,6 +6,7 @@ import { authService, LoginCredentials, SignupData } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
 import { showErrorMessage } from "@/utils/errorHandler";
+import { completePendingBuyNowAfterLogin } from "@/utils/authRedirect";
 
 interface UseAuthReturn {
   isLoading: boolean;
@@ -115,7 +116,11 @@ export const useAuth = (): UseAuthReturn => {
         user.email,
         res?.firstLogin ?? userInfo?.firstLogin
       );
-      router.replace(destination);
+      const buyNowRedirect = await completePendingBuyNowAfterLogin(
+        user.userId,
+        dispatch
+      );
+      router.replace(buyNowRedirect || destination);
     } catch (error: any) {
       showErrorMessage(error, "Đăng nhập thất bại, vui lòng kiểm tra lại thông tin!");
       throw error;
@@ -160,7 +165,11 @@ export const useAuth = (): UseAuthReturn => {
         user.email,
         res?.firstLogin ?? userInfo?.firstLogin
       );
-      router.replace(destination);
+      const buyNowRedirect = await completePendingBuyNowAfterLogin(
+        user.userId,
+        dispatch
+      );
+      router.replace(buyNowRedirect || destination);
     } catch (error: any) {
       showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
       throw error;
@@ -201,8 +210,12 @@ export const useAuth = (): UseAuthReturn => {
         user.email,
         userInfo?.firstLogin
       );
+      const buyNowRedirect = await completePendingBuyNowAfterLogin(
+        user.userId,
+        dispatch
+      );
       setTimeout(() => {
-        router.replace(destination);
+        router.replace(buyNowRedirect || destination);
       }, 300);
     } catch (error: any) {
       showErrorMessage(error, "Xác thực hai yếu tố (2FA) thất bại!");
@@ -285,8 +298,12 @@ export const useAuth = (): UseAuthReturn => {
         user.email,
         userInfo?.firstLogin
       );
+      const buyNowRedirect = await completePendingBuyNowAfterLogin(
+        user.userId,
+        dispatch
+      );
       setTimeout(() => {
-        router.replace(redirectTo || destination);
+        router.replace(buyNowRedirect || redirectTo || destination);
       }, 300);
       return { mfaEnabled: false, userInfo };
     } catch (error: any) {

@@ -22,6 +22,8 @@ import { useCart } from "@/hooks/useCart";
 import Image from "next/image";
 import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
 import { sortVariantValues, sortAttributeKeys } from "@/utils/variantSorter";
+import { requireAuthForAction } from "@/utils/authRedirect";
+import { buildCartItemPayload } from "@/utils/cartItemHelper";
 
 interface Props {
   item: ProductModel;
@@ -229,6 +231,26 @@ const ProductItem = (props: Props) => {
 
     if (selectedSubProduct.stock <= 0) {
       message.warning("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    const pendingBuyNowItem = buildCartItemPayload({
+      subProduct: selectedSubProduct,
+      product: item,
+      count,
+      createdBy: auth?.userId || "",
+    });
+
+    if (
+      !requireAuthForAction(
+        auth,
+        router,
+        "Vui lòng đăng nhập để mua ngay!",
+        { id: item.id, slug: item.slug },
+        pendingBuyNowItem
+      )
+    ) {
+      setShowQuickView(false);
       return;
     }
 

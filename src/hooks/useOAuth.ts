@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { authService } from "@/services";
 import { addAuth } from "@/redux/reducers/authReducer";
 import { localDataNames } from "@/constants/appInfos";
+import { completePendingBuyNowAfterLogin } from "@/utils/authRedirect";
 
 export const useOAuth = () => {
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
@@ -73,6 +74,16 @@ export const useOAuth = () => {
 
         if (userLoggedInKey) {
           localStorage.setItem(userLoggedInKey, "true");
+        }
+
+        const buyNowRedirect = await completePendingBuyNowAfterLogin(
+          user.id,
+          dispatch
+        );
+        if (buyNowRedirect) {
+          hasCleanedUrlRef.current = true;
+          router.replace(buyNowRedirect);
+          return;
         }
 
         if (isFirstOAuth) {
@@ -148,6 +159,15 @@ export const useOAuth = () => {
       setIsMfaModalVisible(false);
       setOtpCode(Array(6).fill(""));
       message.success("Xác thực 2 bước thành công!");
+
+      const buyNowRedirect = await completePendingBuyNowAfterLogin(
+        user.id,
+        dispatch
+      );
+      if (buyNowRedirect) {
+        router.replace(buyNowRedirect);
+        return;
+      }
 
       if (isFirstOAuth) {
         router.push("/profile");

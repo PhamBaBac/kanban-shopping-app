@@ -11,6 +11,7 @@ import {
 } from "@/redux/reducers/cartReducer";
 import { cartService } from "@/services/cartService";
 import { getOrCreateSessionId } from "@/utils/session";
+import { buildCartItemPayload } from "@/utils/cartItemHelper";
 import { SubProductModel, ProductModel } from "@/models/Products";
 
 interface UseCartProps {
@@ -71,86 +72,12 @@ export const useCart = ({
     const isLoggedIn = auth.userId && auth.accessToken;
     const sessionId = getOrCreateSessionId();
 
-    let attrs: Record<string, any> = {};
-    if (subProductSelected.attributes) {
-      if (typeof subProductSelected.attributes === "string") {
-        try {
-          attrs = JSON.parse(subProductSelected.attributes);
-        } catch (e) {
-          attrs = {};
-        }
-      } else if (typeof subProductSelected.attributes === "object") {
-        attrs = subProductSelected.attributes;
-      }
-    }
-
-    let resolvedColor = subProductSelected.color || "";
-    if (!resolvedColor) {
-      for (const [key, val] of Object.entries(attrs)) {
-        const lowerKey = key.trim().toLowerCase();
-        if (
-          lowerKey.includes("màu") ||
-          lowerKey.includes("color") ||
-          lowerKey.includes("colour")
-        ) {
-          resolvedColor = String(val);
-          break;
-        }
-      }
-    }
-
-    const isSystemAttr = (k: string) => {
-      const lower = k.trim().toLowerCase();
-      return (
-        lower === "discounttype" ||
-        lower === "discountvalue" ||
-        lower === "discountamount" ||
-        lower === "discount" ||
-        lower === "price" ||
-        lower === "cost" ||
-        lower === "stock" ||
-        lower === "qty"
-      );
-    };
-
-    const nonColorList: string[] = [];
-    for (const [key, val] of Object.entries(attrs)) {
-      const lowerKey = key.trim().toLowerCase();
-      if (
-        !isSystemAttr(key) &&
-        !lowerKey.includes("màu") &&
-        !lowerKey.includes("color") &&
-        !lowerKey.includes("colour")
-      ) {
-        if (val) nonColorList.push(String(val));
-      }
-    }
-
-    let resolvedSize = "";
-    if (nonColorList.length > 0) {
-      resolvedSize = nonColorList.join(" - ");
-    } else if (subProductSelected.size) {
-      resolvedSize = subProductSelected.size;
-    }
-
-    const resolvedImage =
-      subProductSelected.imgURL ||
-      subProductSelected.images?.[0] ||
-      product.images?.[0] ||
-      "";
-
-    const value = {
-      createdBy: isLoggedIn ? auth.userId : sessionId,
+    const value = buildCartItemPayload({
+      subProduct: subProductSelected,
+      product,
       count,
-      subProductId: targetSubProductId,
-      size: resolvedSize,
-      title: product.title,
-      color: resolvedColor,
-      price: subProductSelected.discount ?? subProductSelected.price,
-      qty: subProductSelected.stock,
-      productId: product.id,
-      image: resolvedImage,
-    };
+      createdBy: isLoggedIn ? auth.userId : sessionId,
+    });
 
     const index = cart.findIndex(
       (el) => el.subProductId === value.subProductId

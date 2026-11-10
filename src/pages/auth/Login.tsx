@@ -9,6 +9,7 @@ import { BsArrowLeft } from "react-icons/bs";
 import { useLogin } from "@/hooks";
 import { localDataNames } from "@/constants/appInfos";
 import HeadComponent from "@/components/HeadComponent";
+import { clearPendingBuyNow } from "@/utils/authRedirect";
 
 const { Title, Paragraph } = Typography;
 
@@ -30,6 +31,12 @@ const Login = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (router.isReady && !router.query.buyNow && !router.query.email) {
+      clearPendingBuyNow();
+    }
+  }, [router.isReady, router.query.buyNow, router.query.email]);
 
   useEffect(() => {
     if (router.query.email && typeof router.query.email === "string") {
@@ -119,7 +126,11 @@ const Login = () => {
             {!isMfaEnabled ? (
               <>
                 <div className="mb-3">
-                  <Link href="/" style={{ textDecoration: "none" }}>
+                  <Link
+                    href="/"
+                    style={{ textDecoration: "none" }}
+                    onClick={() => clearPendingBuyNow()}
+                  >
                     <Button
                       type="text"
                       icon={<BsArrowLeft size={18} />}

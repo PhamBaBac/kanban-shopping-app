@@ -6,7 +6,10 @@ import HeadComponent from "@/components/HeadComponent";
 import { appInfo } from "@/constants/appInfos";
 import { ProductModel, SubProductModel } from "@/models/Products";
 import { cartSelector } from "@/redux/reducers/cartReducer";
+import { authSelector } from "@/redux/reducers/authReducer";
 import { VND } from "@/utils/handleCurrency";
+import { requireAuthForAction } from "@/utils/authRedirect";
+import { buildCartItemPayload } from "@/utils/cartItemHelper";
 import { useProductDetail, useCart } from "@/hooks";
 import { productService } from "@/services";
 import {
@@ -61,6 +64,7 @@ const ProductDetail = (props: any) => {
   const product: ProductModel =
     props?.pageProps?.product || props?.product || props?.pageProps;
   const cart = useSelector(cartSelector);
+  const auth = useSelector(authSelector);
   const { isFavorite, toggleFavorite } = useWishlist();
   const isFav = isFavorite(product?.id);
   const [selectedImage, setSelectedImage] = useState<string>("");
@@ -548,6 +552,25 @@ const ProductDetail = (props: any) => {
 
     if (availableQty <= 0) {
       message.warning("Sản phẩm đã hết hàng!");
+      return;
+    }
+
+    const pendingBuyNowItem = buildCartItemPayload({
+      subProduct: subProductSelected,
+      product,
+      count,
+      createdBy: auth?.userId || "",
+    });
+
+    if (
+      !requireAuthForAction(
+        auth,
+        router,
+        "Vui lòng đăng nhập để mua ngay!",
+        { id: product?.id, slug: product?.slug },
+        pendingBuyNowItem
+      )
+    ) {
       return;
     }
 

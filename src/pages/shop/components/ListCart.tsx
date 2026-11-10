@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ButtonRemoveCartItem } from "@/components";
+import { TransationSubProductModal } from "@/modals";
 import {
   CartItemModel,
   cartSelector,
@@ -14,8 +15,9 @@ import {
   isItemInvalid,
 } from "@/hooks";
 import { VND } from "@/utils/handleCurrency";
-import { Alert, Avatar, Button, Empty, Space, Table, Tag, Typography } from "antd";
+import { Alert, Avatar, Button, Empty, Table, Tag, Typography } from "antd";
 import { ColumnProps } from "antd/es/table";
+import { AiOutlineTransaction } from "react-icons/ai";
 import { LuMinus } from "react-icons/lu";
 import { MdAdd } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,21 +39,32 @@ const ListCart = ({
   } = useCartValidation();
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [visibleModalTransationProduct, setVisibleModalTransationProduct] =
+    useState(false);
+  const [productSelected, setProductSelected] = useState<CartItemModel>();
   const hasInitializedSelection = React.useRef(false);
+  const buyNowAppliedRef = React.useRef(false);
 
   useEffect(() => {
-    if (carts && carts.length > 0 && !hasInitializedSelection.current) {
-      const buyNowSubId = router.query.buyNowId as string;
-      if (buyNowSubId) {
-        const targetItem = carts.find(
-          (c) => String(c.subProductId) === String(buyNowSubId) && !isItemInvalid(c) && c.id
-        );
-        if (targetItem && targetItem.id) {
-          setSelectedRowKeys([targetItem.id]);
-          hasInitializedSelection.current = true;
-          return;
-        }
+    if (!router.isReady || !carts || carts.length === 0) return;
+
+    const buyNowSubId = router.query.buyNowId as string | undefined;
+    if (buyNowSubId && !buyNowAppliedRef.current) {
+      const targetItem = carts.find(
+        (c) =>
+          String(c.subProductId) === String(buyNowSubId) &&
+          !isItemInvalid(c) &&
+          c.id
+      );
+      if (targetItem && targetItem.id) {
+        setSelectedRowKeys([targetItem.id]);
+        hasInitializedSelection.current = true;
+        buyNowAppliedRef.current = true;
+        return;
       }
+    }
+
+    if (!hasInitializedSelection.current) {
       const validKeys = carts
         .filter((c) => !isItemInvalid(c) && c.id)
         .map((c) => c.id as React.Key);
@@ -60,7 +73,7 @@ const ListCart = ({
         hasInitializedSelection.current = true;
       }
     }
-  }, [carts, router.query.buyNowId]);
+  }, [carts, router.isReady, router.query.buyNowId]);
 
   useEffect(() => {
     setSelectedRowKeys((prev) =>
@@ -78,6 +91,49 @@ const ListCart = ({
   useEffect(() => {
     if (onSelectItems) onSelectItems(selectedItems);
   }, [selectedRowKeys, carts]);
+
+  const renderItemActions = (item: CartItemModel) => {
+    const deleted = isItemDeleted(item);
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          flexShrink: 0,
+        }}
+      >
+        <Button
+          type="text"
+          size="small"
+          disabled={deleted || !item.productId}
+          onClick={() => {
+            setProductSelected(item);
+            setVisibleModalTransationProduct(true);
+          }}
+          title={
+            deleted
+              ? "Sản phẩm đã ngừng kinh doanh"
+              : "Đổi biến thể sản phẩm"
+          }
+          aria-label="Đổi biến thể sản phẩm"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            minWidth: 28,
+            padding: 0,
+            borderRadius: 6,
+          }}
+          icon={<AiOutlineTransaction size={17} className="text-muted" />}
+        />
+        <ButtonRemoveCartItem item={item} />
+      </div>
+    );
+  };
 
   const columns: ColumnProps<CartItemModel>[] = [
     {
@@ -310,12 +366,8 @@ const ListCart = ({
       key: "action",
       dataIndex: "",
       align: "center",
-      width: 60,
-      render: (item: CartItemModel) => (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <ButtonRemoveCartItem item={item} />
-        </div>
-      ),
+      width: 88,
+      render: (item: CartItemModel) => renderItemActions(item),
     },
   ];
 
@@ -581,7 +633,7 @@ const ListCart = ({
                       >
                         {item.title}
                       </Typography.Text>
-                      <ButtonRemoveCartItem item={item} />
+                      {renderItemActions(item)}
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
@@ -735,6 +787,17 @@ const ListCart = ({
           })}
         </div>
       </div>
+
+      {productSelected && (
+        <TransationSubProductModal
+          visible={visibleModalTransationProduct}
+          onClose={() => {
+            setVisibleModalTransationProduct(false);
+            setProductSelected(undefined);
+          }}
+          productSelected={productSelected}
+        />
+      )}
     </div>
   );
 };
