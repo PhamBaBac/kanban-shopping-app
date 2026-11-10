@@ -1399,20 +1399,14 @@ body[data-theme="dark"] .site-header-wrapper {
   .site-header-center {
     display: flex;
   }
-}
 
-@media (min-width: 768px) {
+  /* Expanding Desktop Search Bar on Header */
   .site-header-center.search-active {
     display: flex !important;
+    width: 100%;
+    max-width: 700px;
+    animation: headerSearchFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
-}
-
-/* Expanding Desktop/Tablet Search Bar on Header */
-.site-header-center.search-active {
-  display: flex !important;
-  width: 100%;
-  max-width: 700px;
-  animation: headerSearchFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes headerSearchFadeIn {

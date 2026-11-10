@@ -75,7 +75,9 @@ const HeaderComponent = () => {
   const [isMounted, setIsMounted] = useState(false);
 
   const searchInputRef = useRef<InputRef>(null);
+  const mobileSearchInputRef = useRef<InputRef>(null);
   const searchBarContainerRef = useRef<HTMLDivElement>(null);
+  const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -85,7 +87,14 @@ const HeaderComponent = () => {
   useEffect(() => {
     if (searchOpen) {
       const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
+        const isVisible = (el: HTMLElement | null) =>
+          Boolean(el && window.getComputedStyle(el).display !== "none");
+
+        if (isVisible(mobileSearchContainerRef.current)) {
+          mobileSearchInputRef.current?.focus();
+        } else if (isVisible(searchBarContainerRef.current)) {
+          searchInputRef.current?.focus();
+        }
       }, 60);
       return () => clearTimeout(timer);
     }
@@ -99,17 +108,21 @@ const HeaderComponent = () => {
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        searchOpen &&
-        searchBarContainerRef.current &&
-        !searchBarContainerRef.current.contains(e.target as Node)
-      ) {
-        const toggleBtn = (e.target as HTMLElement).closest(
-          ".header-search-toggle-btn"
-        );
-        if (!toggleBtn) {
-          setSearchOpen(false);
-        }
+      if (!searchOpen) return;
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+
+      const isInsideDesktopSearch =
+        searchBarContainerRef.current?.contains(target) ?? false;
+      const isInsideMobileSearch =
+        mobileSearchContainerRef.current?.contains(target) ?? false;
+      const toggleBtn =
+        target instanceof Element
+          ? target.closest(".header-search-toggle-btn")
+          : null;
+
+      if (!isInsideDesktopSearch && !isInsideMobileSearch && !toggleBtn) {
+        setSearchOpen(false);
       }
     };
 
@@ -313,26 +326,36 @@ const HeaderComponent = () => {
             )}
           </div>
 
-          {/* Mobile Full-width Search Bar Overlay */}
+          {/* Mobile & Tablet Full-width Search Bar Overlay */}
           {searchOpen && (
             <div
-              className="site-header-mobile-search d-flex d-md-none"
+              ref={mobileSearchContainerRef}
+              className="site-header-mobile-search d-flex d-lg-none"
               style={{
                 backgroundColor: isDark ? "#1f1f1f" : "#ffffff",
               }}
             >
               <Input.Search
+                ref={mobileSearchInputRef}
                 placeholder="Tìm kiếm sản phẩm..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 allowClear
                 autoFocus
-                onSearch={handleSearch}
+                onSearch={(val, _e, info) => {
+                  if (info?.source === "clear") return;
+                  handleSearch(val);
+                }}
                 className="mobile-search-input"
                 style={{ flex: 1 }}
               />
               <Button
                 type="text"
                 className="mobile-search-close-btn"
-                onClick={() => setSearchOpen(false)}
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchValue("");
+                }}
                 style={{
                   color: isDark ? "rgba(255,255,255,0.75)" : "#4B5563",
                 }}
@@ -352,8 +375,10 @@ const HeaderComponent = () => {
                 type="text"
                 aria-label={searchOpen ? "Đóng tìm kiếm" : "Tìm kiếm"}
                 onClick={() => {
-                  setSearchOpen((prev) => !prev);
-                  if (searchOpen) setSearchValue("");
+                  setSearchOpen((prev) => {
+                    if (prev) setSearchValue("");
+                    return !prev;
+                  });
                 }}
               />
             </Tooltip>
