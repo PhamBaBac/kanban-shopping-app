@@ -2,12 +2,13 @@ import handleAPI from "@/apis/handleApi";
 import { PromotionModel } from "@/models/PromotionModel";
 import { CategoyModel, ProductModel } from "@/models/Products";
 import { ReviewModel } from "@/models/ReviewModel";
+import { filterActivePromotions } from "@/utils/promotionHelper";
 
 export const homeService = {
   getPromotions: async (): Promise<PromotionModel[]> => {
     try {
       const res = await handleAPI("/promotions");
-      return res.data || [];
+      return filterActivePromotions(res.data || []);
     } catch {
       return [];
     }

@@ -1480,10 +1480,12 @@ const ChatButton: React.FC = () => {
                                   product={product}
                                   isDarkMode={isDarkMode}
                                   onSelect={(p) => {
+                                    setIsOpen(false);
                                     router.push(
                                       `/products/${p.slug || "detail"}/${p.id}`
                                     );
                                   }}
+                                  onCloseChat={() => setIsOpen(false)}
                                 />
                               ))}
                             </div>

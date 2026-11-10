@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -31,6 +31,7 @@ import { themeSelector } from "@/redux/reducers/themeSlice";
 import { homeService } from "@/services";
 import Image from "next/image";
 import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
+import { filterActivePromotions } from "@/utils/promotionHelper";
 
 interface Props {
   promotions: PromotionModel[];
@@ -128,6 +129,29 @@ const HomePage = (props: Props) => {
   const [activeTab, setActiveTab] = useState<"best" | "new">("best");
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
+  const [clientNowMs, setClientNowMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setClientNowMs(Date.now());
+    const interval = setInterval(() => {
+      setClientNowMs(Date.now());
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const activePromotions = useMemo(
+    () =>
+      clientNowMs === null
+        ? promotions
+        : filterActivePromotions(promotions, clientNowMs),
+    [promotions, clientNowMs]
+  );
+
+  useEffect(() => {
+    if (activeHero >= activePromotions.length && activeHero !== 0) {
+      setActiveHero(0);
+    }
+  }, [activeHero, activePromotions.length]);
 
   // Countdown timer cho Flash Sale (đếm ngược tới nửa đêm)
   const [countdown, setCountdown] = useState({ hours: "08", minutes: "45", seconds: "30" });
@@ -221,6 +245,7 @@ const HomePage = (props: Props) => {
               {/* Carousel Banner Chính (70%) */}
               <div className="hp-hero-main">
                 <Carousel
+                  key={activePromotions.map((p) => p.id || p.code).join(",") || "fallback"}
                   ref={heroRef}
                   autoplay
                   autoplaySpeed={5500}
@@ -228,8 +253,8 @@ const HomePage = (props: Props) => {
                   afterChange={setActiveHero}
                   effect="fade"
                 >
-                  {promotions && promotions.length > 0 ? (
-                    promotions.map((item, idx) => (
+                  {activePromotions && activePromotions.length > 0 ? (
+                    activePromotions.map((item, idx) => (
                       <div key={item.id || idx}>
                         <div className="hp-hero-slide">
                           <Image
@@ -315,9 +340,9 @@ const HomePage = (props: Props) => {
                 </Carousel>
 
                 {/* Dots chỉ số */}
-                {promotions && promotions.length > 1 && (
+                {activePromotions && activePromotions.length > 1 && (
                   <div className="hp-hero-dots">
-                    {promotions.map((_, i) => (
+                    {activePromotions.map((_, i) => (
                       <div
                         key={i}
                         className={`hp-hero-dot${i === activeHero ? " active" : ""}`}

@@ -1,14 +1,22 @@
 /** @format */
 
 import React, { useState } from "react";
-import { Typography, Button, Tag } from "antd";
+import { Typography, Button, message } from "antd";
 import { VND } from "@/utils/handleCurrency";
-import { BsBagCheckFill, BsArrowRight } from "react-icons/bs";
+import { BsBagCheckFill } from "react-icons/bs";
 import { MdImage } from "react-icons/md";
 import Image from "next/image";
+import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import { authSelector } from "@/redux/reducers/authReducer";
+import { productService } from "@/services/productService";
+import { ProductModel, SubProductModel } from "@/models/Products";
 import { cloudinaryLoader } from "@/utils/imageOptimizer";
+import { buildCartItemPayload } from "@/utils/cartItemHelper";
+import { addOrSyncBuyNowItem, requireAuthForAction } from "@/utils/authRedirect";
+import { showErrorMessage } from "@/utils/errorHandler";
 
-const { Text, Paragraph } = Typography;
+const { Paragraph } = Typography;
 
 export interface ChatProductCardProps {
   product: {
@@ -27,19 +35,27 @@ export interface ChatProductCardProps {
       color?: string;
       imgURL?: string;
       images?: string[];
+      attributes?: Record<string, string>;
     }>;
   };
   isDarkMode?: boolean;
-  onSelect?: (product: any) => void;
+  onSelect?: (product: ChatProductCardProps["product"]) => void;
+  onCloseChat?: () => void;
 }
 
 export const ChatProductCard: React.FC<ChatProductCardProps> = ({
   product,
   isDarkMode = false,
   onSelect,
+  onCloseChat,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const auth = useSelector(authSelector);
 
   const image =
     !imageError && product.images && product.images.length > 0
@@ -73,9 +89,72 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
       ? Math.round(((minPrice - minDiscount) / minPrice) * 100)
       : 0;
 
-  const handleCardClick = () => {
+  const handleViewDetail = () => {
     if (onSelect) {
       onSelect(product);
+      return;
+    }
+    onCloseChat?.();
+    router.push(`/products/${product.slug || "detail"}/${product.id}`);
+  };
+
+  const resolveBuyNowSubProduct = async (): Promise<SubProductModel | null> => {
+    const inlineAvailable = subProducts.find(
+      (sp) => sp.id && (Number(sp.stock) || 0) > 0
+    );
+    if (inlineAvailable) {
+      return inlineAvailable as unknown as SubProductModel;
+    }
+
+    const fetched = await productService.getSubProductsByProductId(product.id);
+    const available = fetched.find((sp) => {
+      const spId = sp.id || (sp as SubProductModel & { _id?: string })._id;
+      return Boolean(spId) && (Number(sp.stock) || 0) > 0;
+    });
+    return available || null;
+  };
+
+  const handleBuyNow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isOutOfStock || isBuyingNow) return;
+
+    setIsBuyingNow(true);
+    try {
+      const targetSub = await resolveBuyNowSubProduct();
+      if (!targetSub) {
+        message.warning("Sản phẩm hiện đã hết hàng hoặc chưa có phân loại khả dụng!");
+        return;
+      }
+
+      const payload = buildCartItemPayload({
+        subProduct: targetSub,
+        product: product as unknown as ProductModel,
+        count: 1,
+        createdBy: auth?.userId || "",
+      });
+
+      if (
+        !requireAuthForAction(
+          auth,
+          router,
+          "Vui lòng đăng nhập để mua ngay!",
+          { id: product.id, slug: product.slug },
+          payload
+        )
+      ) {
+        onCloseChat?.();
+        return;
+      }
+
+      const checkoutUrl = await addOrSyncBuyNowItem(payload, dispatch, {
+        preserveExistingCount: true,
+      });
+      onCloseChat?.();
+      router.push(checkoutUrl);
+    } catch (error: unknown) {
+      showErrorMessage(error, "Không thể thực hiện mua ngay. Vui lòng thử lại!");
+    } finally {
+      setIsBuyingNow(false);
     }
   };
 
@@ -83,7 +162,6 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
 
   return (
     <div
-      onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -108,14 +186,19 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        cursor: "pointer",
         transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
         transform: isHovered ? "translateY(-3px)" : "translateY(0)",
         scrollSnapAlign: "start",
       }}
     >
-      {/* Khung ảnh sản phẩm */}
+      {/* Khung ảnh sản phẩm (click để xem chi tiết) */}
       <div
+        onClick={handleViewDetail}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") handleViewDetail();
+        }}
         style={{
           width: "100%",
           height: 140,
@@ -125,6 +208,7 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          cursor: "pointer",
         }}
       >
         {image && !imageError ? (
@@ -209,8 +293,9 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
         }}
       >
         <div>
-          {/* Tên sản phẩm */}
+          {/* Tên sản phẩm (click để xem chi tiết) */}
           <Paragraph
+            onClick={handleViewDetail}
             ellipsis={{ rows: 2, tooltip: product.title }}
             style={{
               fontSize: 12.5,
@@ -219,6 +304,7 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
               margin: 0,
               minHeight: 34,
               color: isDarkMode ? "#F4F4F5" : "#18181B",
+              cursor: "pointer",
             }}
           >
             {product.title}
@@ -283,10 +369,9 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
         <Button
           type="primary"
           icon={<BsBagCheckFill size={13} />}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCardClick();
-          }}
+          loading={isBuyingNow}
+          disabled={isOutOfStock}
+          onClick={handleBuyNow}
           style={{
             width: "100%",
             height: 32,
@@ -297,15 +382,21 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({
             alignItems: "center",
             justifyContent: "center",
             gap: 6,
-            background: isDarkMode
+            background: isOutOfStock
+              ? undefined
+              : isDarkMode
               ? "linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)"
               : "linear-gradient(135deg, #131118 0%, #27272A 100%)",
-            color: isDarkMode ? "#131118" : "#ffffff",
+            color: isOutOfStock
+              ? undefined
+              : isDarkMode
+              ? "#131118"
+              : "#ffffff",
             border: "none",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.12)",
+            boxShadow: isOutOfStock ? "none" : "0 2px 6px rgba(0, 0, 0, 0.12)",
           }}
         >
-          Mua ngay
+          {isOutOfStock ? "Hết hàng" : "Mua ngay"}
         </Button>
       </div>
     </div>

@@ -43,13 +43,13 @@ const ListCart = ({
     useState(false);
   const [productSelected, setProductSelected] = useState<CartItemModel>();
   const hasInitializedSelection = React.useRef(false);
-  const buyNowAppliedRef = React.useRef(false);
+  const appliedBuyNowIdRef = React.useRef<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady || !carts || carts.length === 0) return;
 
     const buyNowSubId = router.query.buyNowId as string | undefined;
-    if (buyNowSubId && !buyNowAppliedRef.current) {
+    if (buyNowSubId && appliedBuyNowIdRef.current !== buyNowSubId) {
       const targetItem = carts.find(
         (c) =>
           String(c.subProductId) === String(buyNowSubId) &&
@@ -59,7 +59,7 @@ const ListCart = ({
       if (targetItem && targetItem.id) {
         setSelectedRowKeys([targetItem.id]);
         hasInitializedSelection.current = true;
-        buyNowAppliedRef.current = true;
+        appliedBuyNowIdRef.current = buyNowSubId;
         return;
       }
     }

@@ -109,6 +109,38 @@ export const requireAuthForAction = (
 };
 
 /**
+ * Adds or updates a Buy Now item in the authenticated user's DB cart,
+ * refreshes Redux cart state, and returns the checkout URL targeting that item.
+ */
+export const addOrSyncBuyNowItem = async (
+  itemToSave: CartItem & { createdBy: string },
+  dispatch: Dispatch<UnknownAction>,
+  options?: { preserveExistingCount?: boolean }
+): Promise<string> => {
+  const dbCart = await cartService.getCart();
+  const existing = Array.isArray(dbCart)
+    ? dbCart.find(
+        (c) => String(c.subProductId) === String(itemToSave.subProductId) && c.id
+      )
+    : undefined;
+
+  if (existing?.id) {
+    if (!options?.preserveExistingCount) {
+      await cartService.updateCartItem(existing.id, itemToSave);
+    }
+  } else {
+    await cartService.addToCart(itemToSave);
+  }
+
+  const updatedCart = await cartService.getCart();
+  if (Array.isArray(updatedCart)) {
+    dispatch(syncProducts(updatedCart));
+  }
+
+  return `/shop/checkout?buyNowId=${encodeURIComponent(itemToSave.subProductId)}`;
+};
+
+/**
  * Completes a pending Buy Now action immediately after login:
  * adds/updates the item in the authenticated user's DB cart, syncs Redux,
  * and returns the checkout URL targeting that exact subProductId.
@@ -123,13 +155,6 @@ export const completePendingBuyNowAfterLogin = async (
   clearPendingBuyNow();
 
   try {
-    const dbCart = await cartService.getCart();
-    const existing = Array.isArray(dbCart)
-      ? dbCart.find(
-          (c) => String(c.subProductId) === String(pending.subProductId) && c.id
-        )
-      : undefined;
-
     const itemToSave: CartItem & { createdBy: string } = {
       subProductId: pending.subProductId,
       productId: pending.productId,
@@ -143,18 +168,7 @@ export const completePendingBuyNowAfterLogin = async (
       createdBy: userId,
     };
 
-    if (existing?.id) {
-      await cartService.updateCartItem(existing.id, itemToSave);
-    } else {
-      await cartService.addToCart(itemToSave);
-    }
-
-    const updatedCart = await cartService.getCart();
-    if (Array.isArray(updatedCart)) {
-      dispatch(syncProducts(updatedCart));
-    }
-
-    return `/shop/checkout?buyNowId=${encodeURIComponent(pending.subProductId)}`;
+    return await addOrSyncBuyNowItem(itemToSave, dispatch);
   } catch (error: unknown) {
     showErrorMessage(
       error,
