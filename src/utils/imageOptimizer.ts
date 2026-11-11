@@ -46,7 +46,9 @@ export const getOptimizedImageUrl = (
 
 /**
  * Next.js Image Loader cho Cloudinary & External CDN
+ * Đảm bảo kích thước tối thiểu 240px để ảnh thumbnail trên màn hình Retina/High-DPI không bị mờ/nhòe
  */
 export const cloudinaryLoader = ({ src, width }: ImageLoaderProps): string => {
-  return getOptimizedImageUrl(src, width);
+  const safeWidth = Math.max(width, 240);
+  return getOptimizedImageUrl(src, safeWidth);
 };

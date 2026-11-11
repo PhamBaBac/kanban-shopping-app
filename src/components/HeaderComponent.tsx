@@ -287,6 +287,7 @@ const HeaderComponent = () => {
                   Trang chủ
                 </Link>
                 <Dropdown
+                  overlayClassName="header-mega-menu-dropdown"
                   placement="bottom"
                   destroyPopupOnHide={false}
                   mouseEnterDelay={0.12}

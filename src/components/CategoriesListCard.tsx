@@ -30,19 +30,46 @@ let cachedCategories: CategoyModel[] | null = null;
 let fetchCategoriesPromise: Promise<CategoyModel[]> | null = null;
 
 export const prefetchCategories = async (): Promise<CategoyModel[]> => {
-  if (cachedCategories) return cachedCategories;
+  if (cachedCategories && cachedCategories.length > 0) return cachedCategories;
   if (!fetchCategoriesPromise) {
     fetchCategoriesPromise = (async () => {
       try {
         const categoriesRes = await shopService.getCategoriesForFilter();
-        const items = categoriesRes.filter((element: any) => !element.parentId);
+        if (!Array.isArray(categoriesRes)) return [];
+
+        // Sắp xếp ổn định (theo thời gian tạo hoặc theo bảng chữ cái tiếng Việt)
+        const stableSort = (a: any, b: any) => {
+          if (a.createdAt && b.createdAt) {
+            const timeDiff =
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            if (timeDiff !== 0) return timeDiff;
+          }
+          return (a.title || "").localeCompare(b.title || "", "vi", {
+            sensitivity: "base",
+          });
+        };
+
+        const items = categoriesRes.filter(
+          (element: any) => !element.parentId || element.parentId === ""
+        );
+        items.sort(stableSort);
+
         const values: CategoyModel[] = [];
         items.forEach((item: any) => {
-          const vals = categoriesRes.filter((element: any) => element.parentId === item.id);
+          const vals = categoriesRes.filter(
+            (element: any) => element.parentId === item.id
+          );
+          vals.sort(stableSort);
           if (vals.length > 0) {
             values.push({ ...item, children: vals });
           }
         });
+
+        // Nếu các danh mục gốc không có danh mục con, hiển thị trực tiếp để không bị trống
+        if (values.length === 0 && items.length > 0) {
+          items.forEach((item: any) => values.push({ ...item, children: [] }));
+        }
+
         cachedCategories = values;
         return values;
       } catch (error) {
@@ -95,12 +122,8 @@ const CategoriesListCard = (props: Props) => {
 
   if (type === "card") {
     const colCount = Math.min(Math.max(categories.length, 1), 5);
-    const cardWidth =
-      categories.length >= 5
-        ? Math.min(Math.max((width || 1200) * 0.9, 1100), 1320)
-        : categories.length >= 3
-        ? Math.min(Math.max((width || 1200) * 0.75, 860), 1050)
-        : Math.min(Math.max((width || 1200) * 0.55, 640), 800);
+    // Độ rộng cố định ổn định theo viewport để không bị giật khi hover hoặc chuyển đổi
+    const cardWidth = Math.min(Math.max((width || 1200) * 0.88, 980), 1260);
 
     return (
       <div

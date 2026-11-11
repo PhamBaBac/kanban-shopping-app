@@ -11,4 +11,14 @@ export const promotionService = {
     const res = await handleAPI(`/promotions/code/${code}`);
     return res.data;
   },
+
+  getActiveCampaign: async (): Promise<any> => {
+    const res = await handleAPI(`/promotions/active-campaign`);
+    return res.data;
+  },
+
+  getActivePromotions: async (): Promise<any[]> => {
+    const res = await handleAPI(`/promotions/active`);
+    return res.data || [];
+  },
 };

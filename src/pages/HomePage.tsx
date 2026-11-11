@@ -496,7 +496,7 @@ const HomePage = (props: Props) => {
                 {/* Grid Sản Phẩm Flash Sale */}
                 <div className="row g-2 g-sm-3">
                   {flashSaleItems.map((item) => (
-                    <ProductItem item={item} key={item.id} />
+                    <ProductItem item={item} key={item.id} promotion={activePromotions[0] || null} />
                   ))}
                 </div>
               </div>
@@ -525,20 +525,6 @@ const HomePage = (props: Props) => {
                     Khám Phá Theo Danh Mục
                   </h2>
                 </div>
-                <Link
-                  href="/shop"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: "0.86rem",
-                    fontWeight: 700,
-                    color: isDark ? "#fff" : "#131118",
-                    textDecoration: "none",
-                  }}
-                >
-                  Tất cả danh mục <BsArrowRight size={13} />
-                </Link>
               </div>
 
               <div className="row g-2 g-sm-3">
@@ -624,7 +610,7 @@ const HomePage = (props: Props) => {
             <div className="row g-2 g-sm-3">
               {displayedCurated.length > 0 ? (
                 displayedCurated.map((item) => (
-                  <ProductItem item={item} key={item.id} />
+                  <ProductItem item={item} key={item.id} promotion={activePromotions[0] || null} />
                 ))
               ) : (
                 <div style={{ textAlign: "center", width: "100%", padding: "40px 0", color: "#9CA3AF" }}>
@@ -807,67 +793,6 @@ const HomePage = (props: Props) => {
           </div>
         </section>
 
-        {/* ================= 8. VIP CLUB / NEWSLETTER SUBSCRIPTION ================= */}
-        <section className="hp-section">
-          <div className="container">
-            <div className="hp-newsletter-box">
-              <div className="row align-items-center g-4">
-                <div className="col-12 col-lg-6">
-                  <span
-                    style={{
-                      fontSize: "0.76rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: 1.5,
-                      color: "#FBBF24",
-                      marginBottom: 8,
-                      display: "block",
-                    }}
-                  >
-                    Đặc Quyền Thành Viên
-                  </span>
-                  <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.2rem)", fontWeight: 800, margin: "0 0 10px", color: "#fff" }}>
-                    Nhận Ngay Mã Giảm 10%
-                  </h2>
-                  <p style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.8)", margin: 0 }}>
-                    Đăng ký bản tin để nhận voucher ưu đãi đặc quyền cho đơn hàng đầu tiên và thông tin bộ sưu tập mới nhất.
-                  </p>
-                </div>
-
-                <div className="col-12 col-lg-6">
-                  <form onSubmit={handleNewsletterSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <input
-                      type="email"
-                      value={newsletterEmail}
-                      onChange={(e) => setNewsletterEmail(e.target.value)}
-                      placeholder="Nhập địa chỉ email của bạn..."
-                      required
-                      style={{
-                        flex: 1,
-                        minWidth: 240,
-                        padding: "12px 20px",
-                        borderRadius: 100,
-                        border: "1px solid rgba(255,255,255,0.25)",
-                        background: "rgba(255,255,255,0.1)",
-                        color: "#fff",
-                        fontSize: "0.9rem",
-                        outline: "none",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={subscribing}
-                      className="hp-btn-primary"
-                      style={{ padding: "12px 28px", border: "none" }}
-                    >
-                      {subscribing ? <Spin size="small" /> : "Đăng ký ngay"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

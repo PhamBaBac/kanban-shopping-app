@@ -1641,6 +1641,27 @@ body[data-theme="dark"] .mega-menu-category-header:hover .mega-menu-category-und
   background-color: #60A5FA !important;
 }
 
+/* Mega menu dropdown cố định vị trí căn giữa dưới header, chống nhảy vị trí */
+.header-mega-menu-dropdown {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  top: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  pointer-events: none;
+  z-index: 1050 !important;
+}
+
+.header-mega-menu-dropdown.ant-dropdown-hidden {
+  display: none !important;
+}
+
+.header-mega-menu-dropdown > * {
+  pointer-events: auto;
+}
+
 /* Bullet reset for any Ant Design menu */
 ul.ant-menu {
   list-style: none !important;

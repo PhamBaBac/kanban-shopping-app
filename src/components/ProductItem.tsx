@@ -24,16 +24,21 @@ import { getOptimizedImageUrl, cloudinaryLoader } from "@/utils/imageOptimizer";
 import { sortVariantValues, sortAttributeKeys } from "@/utils/variantSorter";
 import { requireAuthForAction } from "@/utils/authRedirect";
 import { buildCartItemPayload } from "@/utils/cartItemHelper";
+import { PromotionModel } from "@/models/PromotionModel";
+import { useActiveCampaign } from "@/hooks/useActiveCampaign";
+import CampaignRibbon from "./CampaignRibbon";
 
 interface Props {
   item: ProductModel;
   className?: string;
+  promotion?: PromotionModel | null;
 }
 
 const { Title, Text, Paragraph } = Typography;
 
 const ProductItem = (props: Props) => {
-  const { item } = props;
+  const { item, promotion } = props;
+  const { activeCampaign } = useActiveCampaign(promotion);
   const [elementWidth, setElementWidth] = useState();
   const [supplier, setSupplier] = useState<SupplierModel | null>(null);
   const [subProducts, setSubProducts] = useState<SubProductModel[]>([]);
@@ -643,6 +648,9 @@ const ProductItem = (props: Props) => {
                 </Space>
               </div>
             </div>
+
+            {/* Campaign Ribbon tự động từ Admin */}
+            <CampaignRibbon promotion={activeCampaign} />
           </div>
           <div
             className="px-2 px-sm-3 py-2"

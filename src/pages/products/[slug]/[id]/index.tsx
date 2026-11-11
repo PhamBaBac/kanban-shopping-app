@@ -68,6 +68,7 @@ const ProductDetail = (props: any) => {
   const { isFavorite, toggleFavorite } = useWishlist();
   const isFav = isFavorite(product?.id);
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [imgAspect, setImgAspect] = useState<number | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductModel[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(true);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
@@ -864,69 +865,90 @@ const ProductDetail = (props: any) => {
           <div className="row g-4">
             {/* Left Column: Image Viewer & Gallery */}
             <div className="col-12 col-lg-6">
-              <div
-                className="bg-white text-center p-3 p-md-4 border shadow-sm position-relative"
-                style={{
-                  borderRadius: 14,
-                  borderColor: "#E5E7EB",
-                  minHeight: "clamp(280px, 45vw, 440px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                }}
-              >
-                {currentImage ? (
+              <div className="d-flex flex-row gap-2 gap-md-3 align-items-start">
+                {/* Thumbnails nằm dọc bên trái */}
+                {carouselItems.length > 1 && (
                   <div
                     style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "clamp(260px, 45vw, 440px)",
+                      width: "clamp(64px, 11vw, 84px)",
+                      flexShrink: 0,
                     }}
                   >
-                    <Image
-                      src={currentImage}
-                      loader={cloudinaryLoader}
-                      alt={product.title}
-                      fill
-                      priority
-                      sizes="(max-width: 768px) 100vw, 550px"
-                      style={{
-                        objectFit: "contain",
-                        transition: "transform 0.3s ease",
+                    <CarouselImages
+                      orientation="vertical"
+                      maxHeight="clamp(550px, 75vw, 820px)"
+                      items={carouselItems}
+                      selectedImageUrl={currentImage}
+                      onClick={(val: any) => {
+                        const url =
+                          val?.imgURL ||
+                          (typeof val === "string" ? val : "") ||
+                          val?.subProduct?.imgURL;
+
+                        if (url) {
+                          setSelectedImage(
+                            typeof url === "string" ? url : url?.url || ""
+                          );
+                        }
+
+                        if (val?.subProduct) {
+                          setSubProductSelected(val.subProduct);
+                        } else if (val?.price !== undefined && val?.id) {
+                          setSubProductSelected(val);
+                        }
                       }}
                     />
                   </div>
-                ) : (
-                  <PiCableCar size={48} className="text-muted" />
                 )}
-              </div>
-              {carouselItems.length > 1 && (
-                <div className="mt-3">
-                  <CarouselImages
-                    items={carouselItems}
-                    selectedImageUrl={currentImage}
-                    onClick={(val: any) => {
-                      const url =
-                        val?.imgURL ||
-                        (typeof val === "string" ? val : "") ||
-                        val?.subProduct?.imgURL;
 
-                      if (url) {
-                        setSelectedImage(
-                          typeof url === "string" ? url : url?.url || ""
-                        );
-                      }
-
-                      if (val?.subProduct) {
-                        setSubProductSelected(val.subProduct);
-                      } else if (val?.price !== undefined && val?.id) {
-                        setSubProductSelected(val);
-                      }
-                    }}
-                  />
+                {/* Khung hiển thị ảnh chính - Cho khung dài ra tự động ôm khít tỉ lệ ảnh thực tế, lấp đầy 2 bên khung và không bị cắt ảnh */}
+                <div
+                  className="bg-white position-relative flex-grow-1"
+                  style={{
+                    aspectRatio: imgAspect ? `${imgAspect}` : "3 / 4",
+                    maxHeight: "clamp(550px, 75vw, 820px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    width: "100%",
+                    backgroundColor: "#FFFFFF",
+                    transition: "aspect-ratio 0.2s ease",
+                  }}
+                >
+                  {currentImage ? (
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    >
+                      <Image
+                        key={currentImage}
+                        src={currentImage}
+                        loader={cloudinaryLoader}
+                        alt={product.title}
+                        fill
+                        priority
+                        sizes="(max-width: 768px) 100vw, 550px"
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          if (img.naturalWidth && img.naturalHeight) {
+                            setImgAspect(img.naturalWidth / img.naturalHeight);
+                          }
+                        }}
+                        style={{
+                          objectFit: "contain",
+                          transition: "transform 0.3s ease",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <PiCableCar size={48} className="text-muted" />
+                  )}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Right Column: Product Info & Configuration */}
