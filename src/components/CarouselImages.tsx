@@ -31,7 +31,7 @@ const CarouselImages: React.FC<Props> = ({
   onClick,
   selectedImageUrl,
   orientation = "vertical",
-  maxHeight = "clamp(550px, 75vw, 820px)",
+  maxHeight = "clamp(420px, 46vw, 520px)",
 }) => {
   const isVertical = orientation === "vertical";
   const [images, setImages] = useState<CarouselImageItem[]>([]);

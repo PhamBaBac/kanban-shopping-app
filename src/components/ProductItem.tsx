@@ -507,13 +507,93 @@ const ProductItem = (props: Props) => {
           onMouseLeave={() => setIsHovered(false)}
           ref={ref}
           className="cursor-pointer product-item"
+          style={{ overflow: "visible" }}
         >
+          {/* Badge Hàng mới - Đặt ở góc phải ngoài khung, khúc gập 3D chồi lên trên mép khung */}
+          {(() => {
+            const isNewBadge = item.isNew ||
+              (item.createdAt && (Date.now() - new Date(item.createdAt).getTime()) <= 30 * 24 * 60 * 60 * 1000);
+            return isNewBadge ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: -10,
+                  right: -6,
+                  zIndex: 10,
+                  pointerEvents: "none",
+                  filter: "drop-shadow(0 2px 5px rgba(2, 69, 162, 0.35))",
+                  lineHeight: 0,
+                }}
+              >
+                <svg
+                  width="84"
+                  height="25"
+                  viewBox="0 0 84 25"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <linearGradient
+                      id={`badgeGrad-${item.id}`}
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#073EC9" />
+                      <stop offset="50%" stopColor="#0655BE" />
+                      <stop offset="100%" stopColor="#0245A2" />
+                    </linearGradient>
+                    <linearGradient
+                      id={`foldGrad-${item.id}`}
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor="#0B4FC7" />
+                      <stop offset="100%" stopColor="#022868" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Mép gấp 3D phía trên bên phải */}
+                  <path
+                    d="M 72 4 L 73.5 0.8 C 74.2 0.2 75.5 0 77 0.5 L 80.5 2 C 82 2.8 82.5 3.5 82.5 5 L 78 5 Z"
+                    fill={`url(#foldGrad-${item.id})`}
+                  />
+
+                  {/* Thân nhãn hình dải ruy băng vát cạnh trái */}
+                  <path
+                    d="M 5 4 L 81 4 C 82.5 4 83 4.8 83 6 L 83 20 C 83 21.5 82 22 80.5 22 L 0.5 22 C 0 22 0.2 20.8 0.5 19.5 L 3.8 5 C 4.1 4.2 4.5 4 5 4 Z"
+                    fill={`url(#badgeGrad-${item.id})`}
+                  />
+
+                  {/* Chữ HÀNG MỚI in hoa đậm nét trắng */}
+                  <text
+                    x="42"
+                    y="15.8"
+                    fill="#FFFFFF"
+                    fontSize="10"
+                    fontWeight="900"
+                    fontFamily="var(--font-heading), system-ui, -apple-system, sans-serif"
+                    textAnchor="middle"
+                    letterSpacing="0.6px"
+                  >
+                    HÀNG MỚI
+                  </text>
+                </svg>
+              </div>
+            ) : null;
+          })()}
+
           <div
             style={{
               position: "relative",
               width: "100%",
-              height: imageHeight,
+              aspectRatio: "3 / 4",
               overflow: "hidden",
+              borderRadius: "12px 12px 0 0",
+              backgroundColor: "transparent",
             }}
           >
             {primaryImage ? (
@@ -525,11 +605,11 @@ const ProductItem = (props: Props) => {
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   style={{
-                    objectFit: "contain",
-                    padding: "8px 8px 0 8px",
-                    transition: "opacity 0.35s ease, transform 0.35s ease",
+                    objectFit: "cover",
+                    padding: 8,
+                    borderRadius: 10,
+                    transition: "opacity 0.3s ease",
                     opacity: isHovered && secondaryImage ? 0 : 1,
-                    transform: isHovered && !secondaryImage ? "scale(1.04)" : "scale(1)",
                   }}
                 />
                 {secondaryImage && (
@@ -540,11 +620,11 @@ const ProductItem = (props: Props) => {
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     style={{
-                      objectFit: "contain",
-                      padding: "8px 8px 0 8px",
-                      transition: "opacity 0.35s ease, transform 0.35s ease",
+                      objectFit: "cover",
+                      padding: 8,
+                      borderRadius: 10,
+                      transition: "opacity 0.3s ease",
                       opacity: isHovered ? 1 : 0,
-                      transform: isHovered ? "scale(1.04)" : "scale(1)",
                       pointerEvents: "none",
                     }}
                   />
@@ -565,39 +645,15 @@ const ProductItem = (props: Props) => {
               </div>
             )}
 
-            {/* Badge Hàng mới */}
-            {(() => {
-              const isNewBadge = item.isNew ||
-                (item.createdAt && (Date.now() - new Date(item.createdAt).getTime()) <= 30 * 24 * 60 * 60 * 1000);
-              return isNewBadge ? (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 8,
-                    left: 8,
-                    background: "linear-gradient(135deg, #000000, #000000)",
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "3px 8px",
-                    borderRadius: 20,
-                    letterSpacing: 0.3,
-                    boxShadow: "0 2px 6px rgba(29, 31, 30, 0.4)",
-                    zIndex: 5,
-                    pointerEvents: "none",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Hàng mới
-                </div>
-              ) : null;
-            })()}
-
             <div className="button-container">
               <div
-                className="btn-list text-right pr-2"
+                className="btn-list text-right"
                 style={{
-                  height: (elementWidth ? elementWidth * 1.2 : 250) * 0.72,
+                  position: "absolute",
+                  top: 40,
+                  right: 12,
+                  zIndex: 6,
+                  padding: 2,
                 }}
                 onClick={(e) => {
                   e.preventDefault();
@@ -606,6 +662,7 @@ const ProductItem = (props: Props) => {
               >
                 <Space
                   direction="vertical"
+                  size={6}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -616,9 +673,9 @@ const ProductItem = (props: Props) => {
                     className="btn-icon"
                     icon={
                       isFav ? (
-                        <BiSolidHeart size={20} style={{ color: "#EF4444" }} />
+                        <BiSolidHeart size={18} style={{ color: "#EF4444" }} />
                       ) : (
-                        <BiHeart size={20} className="text-muted" />
+                        <BiHeart size={18} className="text-muted" />
                       )
                     }
                     onClick={(e) => {
@@ -627,11 +684,20 @@ const ProductItem = (props: Props) => {
                       toggleFavorite(item);
                     }}
                     aria-label={isFav ? "Bỏ yêu thích" : "Thêm vào yêu thích"}
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
+                    }}
                   />
                   <Button
                     size="large"
                     className="btn-icon"
-                    icon={<BsEye size={20} className="text-muted" />}
+                    icon={<BsEye size={18} className="text-muted" />}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -644,17 +710,34 @@ const ProductItem = (props: Props) => {
                       }
                       fetchSubProducts();
                     }}
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
+                    }}
                   />
                 </Space>
               </div>
             </div>
 
-            {/* Campaign Ribbon tự động từ Admin */}
-            <CampaignRibbon promotion={activeCampaign} />
+            {/* Campaign Ribbon tự động từ Admin - Căn đều với 2 bên mép ảnh, không tràn ra khung */}
+            <CampaignRibbon
+              promotion={activeCampaign}
+              style={{
+                left: 8,
+                right: 8,
+                bottom: 8,
+              }}
+            />
           </div>
           <div
-            className="px-2 px-sm-3 py-2"
+            className="p-2"
             style={{
+              padding: 8,
               display: "flex",
               flexDirection: "column",
               flex: 1,
@@ -662,21 +745,41 @@ const ProductItem = (props: Props) => {
             }}
           >
             <div>
-              <div className="mb-1">
-                <Paragraph style={{ fontWeight: "bold", margin: 0 }}>
-                  {supplier ? supplier.name : ""}
-                </Paragraph>
-              </div>
+              {supplier?.name && (
+                <div style={{ marginBottom: 2 }}>
+                  <Paragraph
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: isDark ? "#E5E7EB" : "#111827",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      margin: 0,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {supplier.name}
+                  </Paragraph>
+                </div>
+              )}
               <Paragraph
                 ellipsis={{ rows: 2, tooltip: item.title }}
-                style={{ marginBottom: 6 }}
+                style={{
+                  fontSize: "0.88rem",
+                  lineHeight: 1.35,
+                  color: isDark ? "#D1D5DB" : "#374151",
+                  marginBottom: 4,
+                  fontWeight: 500,
+                }}
               >
                 {item.title}
               </Paragraph>
             </div>
-            <Paragraph
+            <div
               style={{
-                fontSize: "0.85rem",
+                fontSize: "0.88rem",
                 margin: 0,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -684,7 +787,7 @@ const ProductItem = (props: Props) => {
               }}
             >
               {isLoading ? "Đang tải..." : getPriceRange()}
-            </Paragraph>
+            </div>
           </div>
         </div>
       </div>
@@ -710,9 +813,9 @@ const ProductItem = (props: Props) => {
               style={{
                 position: "relative",
                 width: "100%",
-                height: 320,
+                height: 340,
                 background: isDark ? "#242428" : "#f8f9fa",
-                borderRadius: 8,
+                borderRadius: 10,
                 overflow: "hidden",
               }}
             >
@@ -733,7 +836,7 @@ const ProductItem = (props: Props) => {
                   alt={item.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 400px"
-                  style={{ objectFit: "contain", padding: 12 }}
+                  style={{ objectFit: "cover" }}
                 />
               ) : null}
             </div>

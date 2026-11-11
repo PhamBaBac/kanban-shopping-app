@@ -68,7 +68,6 @@ const ProductDetail = (props: any) => {
   const { isFavorite, toggleFavorite } = useWishlist();
   const isFav = isFavorite(product?.id);
   const [selectedImage, setSelectedImage] = useState<string>("");
-  const [imgAspect, setImgAspect] = useState<number | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductModel[]>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(true);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
@@ -719,6 +718,221 @@ const ProductDetail = (props: any) => {
     );
   };
 
+  const renderTabs = () => (
+    <div
+      className="p-3 p-md-4 bg-white border shadow-sm"
+      style={{ borderRadius: 14, borderColor: "#E5E7EB" }}
+    >
+      <Tabs
+        defaultActiveKey="1"
+        tabBarStyle={{
+          marginBottom: 20,
+          borderBottom: "1px solid #F3F4F6",
+        }}
+        items={[
+          {
+            key: "1",
+            label: (
+              <span
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                }}
+              >
+                Mô tả sản phẩm
+              </span>
+            ),
+            children: (
+              <div
+                className="py-2"
+                dangerouslySetInnerHTML={{
+                  __html: product.content || product.description,
+                }}
+                style={{
+                  textAlign: "justify",
+                  fontSize: "0.95rem",
+                  lineHeight: 1.7,
+                  color: "#374151",
+                }}
+              />
+            ),
+          },
+          {
+            key: "2",
+            label: (
+              <span
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                }}
+              >
+                Đánh giá ({reviews.length})
+              </span>
+            ),
+            children: (
+              <div className="py-2">
+                {reviews.length === 0 ? (
+                  <div className="text-muted py-4 text-center">
+                    Chưa có đánh giá nào cho sản phẩm này.
+                  </div>
+                ) : (
+                  reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      style={{
+                        marginBottom: 20,
+                        paddingBottom: 16,
+                        borderBottom: "1px solid #F3F4F6",
+                        display: "flex",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Avatar
+                        src={review.userAvatar}
+                        size={44}
+                        style={{
+                          marginRight: 16,
+                          border: "1px solid #E5E7EB",
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              color: "#131118",
+                            }}
+                          >
+                            {review.userFirstname} {review.userLastname}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 12,
+                              color: "#9CA3AF",
+                            }}
+                          >
+                            {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                          </span>
+                        </div>
+                        <div className="my-1">
+                          <Rate
+                            disabled
+                            value={review.star}
+                            style={{ fontSize: 14 }}
+                          />
+                        </div>
+                        {(review.size || review.color) && (
+                          <div
+                            className="d-flex align-items-center gap-2 mb-2"
+                            style={{
+                              fontSize: 12.5,
+                              color: "#6B7280",
+                            }}
+                          >
+                            {review.size && (
+                              <span>
+                                Phân loại: <b>{review.size}</b>
+                              </span>
+                            )}
+                            {review.color && (
+                              <span className="d-flex align-items-center gap-1">
+                                Màu:{" "}
+                                {isHexColor(review.color) ? (
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      width: 12,
+                                      height: 12,
+                                      background: review.color,
+                                      border: "1px solid #ccc",
+                                      borderRadius: 3,
+                                    }}
+                                  />
+                                ) : (
+                                  <b>{review.color}</b>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            fontSize: "0.92rem",
+                            color: "#374151",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {review.comment}
+                        </div>
+
+                        {review.images &&
+                          Array.isArray(review.images) &&
+                          review.images.length > 0 && (
+                            <div className="d-flex gap-2 mt-2">
+                              {review.images.map((img: any, idx: any) => (
+                                <Image
+                                  key={idx}
+                                  src={img}
+                                  loader={cloudinaryLoader}
+                                  alt="review-img"
+                                  width={64}
+                                  height={64}
+                                  style={{
+                                    objectFit: "cover",
+                                    borderRadius: 6,
+                                    border: "1px solid #E5E7EB",
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                        {(review as any).shopReply && (
+                          <div
+                            style={{
+                              marginTop: 10,
+                              padding: "10px 14px",
+                              background: "#f0fdf4",
+                              borderLeft: "3px solid #16a34a",
+                              borderRadius: "0 8px 8px 0",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: "0.82rem",
+                                fontWeight: 600,
+                                color: "#15803d",
+                                marginBottom: 4,
+                              }}
+                            >
+                              Phản hồi của Người Bán
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "0.88rem",
+                                color: "#166534",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {(review as any).shopReply}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
+
   const averageRate = reviews.length
     ? reviews.reduce((sum, r) => sum + (r.star || 0), 0) / reviews.length
     : 0;
@@ -876,7 +1090,7 @@ const ProductDetail = (props: any) => {
                   >
                     <CarouselImages
                       orientation="vertical"
-                      maxHeight="clamp(550px, 75vw, 820px)"
+                      maxHeight="clamp(460px, 48vw, 580px)"
                       items={carouselItems}
                       selectedImageUrl={currentImage}
                       onClick={(val: any) => {
@@ -901,19 +1115,22 @@ const ProductDetail = (props: any) => {
                   </div>
                 )}
 
-                {/* Khung hiển thị ảnh chính - Cho khung dài ra tự động ôm khít tỉ lệ ảnh thực tế, lấp đầy 2 bên khung và không bị cắt ảnh */}
+                {/* Khung hiển thị ảnh chính - Bỏ hoàn toàn đường viền & bóng đổ, cố định tỉ lệ 3/4 không thay đổi kích thước khi đổi ảnh */}
                 <div
-                  className="bg-white position-relative flex-grow-1"
+                  className="position-relative flex-grow-1"
                   style={{
-                    aspectRatio: imgAspect ? `${imgAspect}` : "3 / 4",
-                    maxHeight: "clamp(550px, 75vw, 820px)",
+                    aspectRatio: "3 / 4",
+                    maxHeight: "clamp(460px, 48vw, 580px)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     overflow: "hidden",
                     width: "100%",
-                    backgroundColor: "#FFFFFF",
-                    transition: "aspect-ratio 0.2s ease",
+                    border: "none",
+                    boxShadow: "none",
+                    outline: "none",
+                    backgroundColor: "transparent",
+                    borderRadius: 12,
                   }}
                 >
                   {currentImage ? (
@@ -932,15 +1149,9 @@ const ProductDetail = (props: any) => {
                         fill
                         priority
                         sizes="(max-width: 768px) 100vw, 550px"
-                        onLoad={(e) => {
-                          const img = e.currentTarget;
-                          if (img.naturalWidth && img.naturalHeight) {
-                            setImgAspect(img.naturalWidth / img.naturalHeight);
-                          }
-                        }}
                         style={{
                           objectFit: "contain",
-                          transition: "transform 0.3s ease",
+                          borderRadius: 12,
                         }}
                       />
                     </div>
@@ -1263,7 +1474,7 @@ const ProductDetail = (props: any) => {
 
                 {/* Trust Badges */}
                 <div
-                  className="mt-4 p-3 border"
+                  className="mt-3 p-3 border"
                   style={{
                     borderColor: "#E5E7EB",
                     backgroundColor: "#FAFAFA",
@@ -1327,225 +1538,9 @@ const ProductDetail = (props: any) => {
             </div>
           </div>
 
-          {/* Description & Reviews Tabs */}
-          <div
-            className="mt-5 p-3 p-md-4 bg-white border shadow-sm"
-            style={{ borderRadius: 14, borderColor: "#E5E7EB" }}
-          >
-            <Tabs
-              defaultActiveKey="1"
-              tabBarStyle={{
-                marginBottom: 20,
-                borderBottom: "1px solid #F3F4F6",
-              }}
-              items={[
-                {
-                  key: "1",
-                  label: (
-                    <span
-                      style={{
-                        fontFamily:
-                          "var(--font-heading)",
-                        fontWeight: 600,
-                        fontSize: "1rem",
-                      }}
-                    >
-                      Mô tả sản phẩm
-                    </span>
-                  ),
-                  children: (
-                    <div
-                      className="py-2"
-                      dangerouslySetInnerHTML={{
-                        __html: product.content || product.description,
-                      }}
-                      style={{
-                        textAlign: "justify",
-                        fontSize: "0.95rem",
-                        lineHeight: 1.7,
-                        color: "#374151",
-                      }}
-                    />
-                  ),
-                },
-                {
-                  key: "2",
-                  label: (
-                    <span
-                      style={{
-                        fontFamily:
-                          "var(--font-heading)",
-                        fontWeight: 600,
-                        fontSize: "1rem",
-                      }}
-                    >
-                      Đánh giá ({reviews.length})
-                    </span>
-                  ),
-                  children: (
-                    <div className="py-2">
-                      {reviews.length === 0 ? (
-                        <div className="text-muted py-4 text-center">
-                          Chưa có đánh giá nào cho sản phẩm này.
-                        </div>
-                      ) : (
-                        reviews.map((review) => (
-                          <div
-                            key={review.id}
-                            style={{
-                              marginBottom: 20,
-                              paddingBottom: 16,
-                              borderBottom: "1px solid #F3F4F6",
-                              display: "flex",
-                              alignItems: "flex-start",
-                            }}
-                          >
-                            <Avatar
-                              src={review.userAvatar}
-                              size={44}
-                              style={{
-                                marginRight: 16,
-                                border: "1px solid #E5E7EB",
-                              }}
-                            />
-                            <div style={{ flex: 1 }}>
-                              <div className="d-flex align-items-center justify-content-between flex-wrap gap-1">
-                                <span
-                                  style={{
-                                    fontWeight: 600,
-                                    fontSize: "0.95rem",
-                                    color: "#131118",
-                                  }}
-                                >
-                                  {review.userFirstname}{" "}
-                                  {review.userLastname}
-                                </span>
-                                <span
-                                  style={{
-                                    fontSize: 12,
-                                    color: "#9CA3AF",
-                                  }}
-                                >
-                                  {new Date(
-                                    review.createdAt
-                                  ).toLocaleDateString("vi-VN")}
-                                </span>
-                              </div>
-                              <div className="my-1">
-                                <Rate
-                                  disabled
-                                  value={review.star}
-                                  style={{ fontSize: 14 }}
-                                />
-                              </div>
-                              {(review.size || review.color) && (
-                                <div
-                                  className="d-flex align-items-center gap-2 mb-2"
-                                  style={{
-                                    fontSize: 12.5,
-                                    color: "#6B7280",
-                                  }}
-                                >
-                                  {review.size && (
-                                    <span>
-                                      Phân loại: <b>{review.size}</b>
-                                    </span>
-                                  )}
-                                  {review.color && (
-                                    <span className="d-flex align-items-center gap-1">
-                                      Màu:{" "}
-                                      {isHexColor(review.color) ? (
-                                        <span
-                                          style={{
-                                            display: "inline-block",
-                                            width: 12,
-                                            height: 12,
-                                            background: review.color,
-                                            border: "1px solid #ccc",
-                                            borderRadius: 3,
-                                          }}
-                                        />
-                                      ) : (
-                                        <b>{review.color}</b>
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              <div
-                                style={{
-                                  fontSize: "0.92rem",
-                                  color: "#374151",
-                                  lineHeight: 1.5,
-                                }}
-                              >
-                                {review.comment}
-                              </div>
-
-                              {review.images &&
-                                Array.isArray(review.images) &&
-                                review.images.length > 0 && (
-                                  <div className="d-flex gap-2 mt-2">
-                                    {review.images.map(
-                                      (img: any, idx: any) => (
-                                        <Image
-                                          key={idx}
-                                          src={img}
-                                          loader={cloudinaryLoader}
-                                          alt="review-img"
-                                          width={64}
-                                          height={64}
-                                          style={{
-                                            objectFit: "cover",
-                                            borderRadius: 6,
-                                            border: "1px solid #E5E7EB",
-                                          }}
-                                        />
-                                      )
-                                    )}
-                                  </div>
-                                )}
-
-                              {(review as any).shopReply && (
-                                <div
-                                  style={{
-                                    marginTop: 10,
-                                    padding: "10px 14px",
-                                    background: "#f0fdf4",
-                                    borderLeft: "3px solid #16a34a",
-                                    borderRadius: "0 8px 8px 0",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      fontSize: "0.82rem",
-                                      fontWeight: 600,
-                                      color: "#15803d",
-                                      marginBottom: 4,
-                                    }}
-                                  >
-                                    Phản hồi của Người Bán
-                                  </div>
-                                  <div
-                                    style={{
-                                      fontSize: "0.88rem",
-                                      color: "#166534",
-                                      lineHeight: 1.5,
-                                    }}
-                                  >
-                                    {(review as any).shopReply}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
-            />
+          {/* Description & Reviews Tabs - Nằm dưới và full 100% chiều ngang */}
+          <div className="mt-3 mt-md-4">
+            {renderTabs()}
           </div>
 
           {/* Related Products */}

@@ -1006,7 +1006,6 @@ a {
 .product-item:hover {
   border-color: #9CA3AF;
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
 }
 
 body[data-theme="dark"] .product-item {
@@ -1617,11 +1616,12 @@ body[data-theme="dark"] .site-header-nav-link.active::after {
 }
 
 .mega-menu-category-header:hover .mega-menu-category-title {
-  color: #2563EB !important;
+  color: var(--color-primary, #131118) !important;
+  opacity: 0.75;
 }
 
 .mega-menu-category-header:hover .mega-menu-category-underline {
-  background-color: #2563EB !important;
+  background-color: var(--color-primary, #131118) !important;
   height: 2.5px !important;
 }
 
@@ -1634,11 +1634,13 @@ body[data-theme="dark"] .mega-menu-category-underline {
 }
 
 body[data-theme="dark"] .mega-menu-category-header:hover .mega-menu-category-title {
-  color: #60A5FA !important;
+  color: #FFFFFF !important;
+  opacity: 1;
 }
 
 body[data-theme="dark"] .mega-menu-category-header:hover .mega-menu-category-underline {
-  background-color: #60A5FA !important;
+  background-color: #FFFFFF !important;
+  height: 2.5px !important;
 }
 
 /* Mega menu dropdown cố định vị trí căn giữa dưới header, chống nhảy vị trí */

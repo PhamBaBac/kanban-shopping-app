@@ -40,6 +40,7 @@ import {
   updateFilterValues,
   setFilterValues,
   resetFilterValues,
+  setRootCatId,
 } from "@/redux/reducers/filterSlice";
 import { VND } from "@/utils/handleCurrency";
 import ServerError from "../ServerError";
@@ -129,10 +130,12 @@ const ShopPageContent: React.FC<ShopPageProps> = ({
   const handleRemovePriceFilter = () => {
     const updated = { ...filterValues };
     delete updated.price;
+    lastFiltersRef.current = "";
     dispatch(setFilterValues(updated));
   };
 
   const handleRemoveSearchFilter = () => {
+    lastFiltersRef.current = "";
     dispatch(updateFilterValues({ search: "" }));
     if (router && router.isReady) {
       const newQuery = { ...router.query };
@@ -146,55 +149,74 @@ const ShopPageContent: React.FC<ShopPageProps> = ({
     }
   };
 
-  const handleClearAllFilters = () => {
-    const activeCatId =
-      (router.query.catId as string) ||
-      (filterValues.catIds && filterValues.catIds.length > 0
-        ? filterValues.catIds[0]
-        : "") ||
-      rootCatId;
+  const handleClearAllFilters = async () => {
+    // 1. Xác định danh mục gốc (root category) cần reset về:
+    // Ưu tiên rootCatId trong redux; nếu chưa có, tìm từ danh mục hiện tại; fallback danh mục mặc định
+    let targetCatId: string | undefined = rootCatId;
 
-    if (activeCatId) {
-      dispatch(
-        setFilterValues({
-          catIds: [activeCatId],
-          colors: [],
-          sizes: [],
-          search: "",
-        })
-      );
-      if (router && router.isReady) {
-        router.replace(
-          { pathname: "/shop", query: { catId: activeCatId } },
-          undefined,
-          { shallow: true }
-        );
-      }
-    } else {
-      shopService.getCategoriesForFilter().then((cats) => {
-        const defaultCat = findDefaultOrFeaturedCategory(cats);
-        const defaultId = defaultCat?.id || (defaultCat as any)?._id;
-        if (defaultId) {
-          dispatch(
-            setFilterValues({
-              catIds: [defaultId],
-              colors: [],
-              sizes: [],
-              search: "",
-            })
-          );
-          if (router && router.isReady) {
-            router.replace(
-              { pathname: "/shop", query: { catId: defaultId } },
-              undefined,
-              { shallow: true }
-            );
+    const currentCatRaw = router.query.catId || (filterValues.catIds && filterValues.catIds[0]);
+    const currentFirstCatId = Array.isArray(currentCatRaw)
+      ? currentCatRaw[0]
+      : (currentCatRaw as string);
+
+    if (!targetCatId) {
+      try {
+        const allCats = await shopService.getCategoriesForFilter();
+        if (currentFirstCatId) {
+          const foundRoot = findRootCategory(currentFirstCatId, allCats);
+          if (foundRoot?.id) {
+            targetCatId = foundRoot.id;
           }
-        } else {
-          dispatch(resetFilterValues());
         }
-      });
+        if (!targetCatId) {
+          const defaultCat = findDefaultOrFeaturedCategory(allCats);
+          targetCatId = defaultCat?.id || (defaultCat as any)?._id;
+        }
+      } catch (e) {
+        console.error("Error resolving root category on clear filters:", e);
+      }
     }
+
+    // 2. Reset Redux store: chỉ giữ 1 catId gốc, xóa sạch price, colors, sizes, search
+    dispatch(
+      setFilterValues({
+        catIds: targetCatId ? [targetCatId] : [],
+        colors: [],
+        sizes: [],
+        search: "",
+      })
+    );
+    if (targetCatId) {
+      dispatch(setRootCatId(targetCatId));
+    }
+
+    setPage(1);
+    lastFiltersRef.current = ""; // Reset ref cache để đảm bảo fetchProducts được kích hoạt ngay
+
+    // 3. Cập nhật lại URL query (loại bỏ toàn bộ params lọc: search, q, subcategories, price...)
+    if (router && router.isReady) {
+      const cleanQuery: Record<string, any> = {};
+      if (targetCatId) {
+        cleanQuery.catId = targetCatId;
+      }
+      if (sortBy && sortBy !== "relevance") {
+        cleanQuery.sortBy = sortBy;
+      }
+      router.replace(
+        { pathname: "/shop", query: cleanQuery },
+        undefined,
+        { shallow: true }
+      );
+    }
+
+    // 4. Chủ động fetch lại danh sách sản phẩm với bộ lọc sạch sẽ
+    const cleanFilters: any = {
+      page: 1,
+      pageSize: 8,
+      sortBy,
+      catIds: targetCatId ? [targetCatId] : [],
+    };
+    fetchProducts(cleanFilters);
   };
 
   const hasActivePrice = Boolean(
